@@ -154,7 +154,7 @@ struct all_nanboxable_impl<type_list<H, Ts...>> : std::integral_constant<bool,
 #  define MEOW_ORDER_LITTLE __ORDER_LITTLE_ENDIAN__
 #endif
 
-#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) ) && (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE) && (sizeof(void*) == 8)
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) ) && (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE) /* && (sizeof(void*) == 8 */)
 #  define MEOW_LITTLE_64 1
 #else
 #  define MEOW_LITTLE_64 0
