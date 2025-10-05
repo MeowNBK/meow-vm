@@ -583,12 +583,12 @@ private:
 template <typename... Ts>
 inline void swap(Variant<Ts...>& a, Variant<Ts...>& b) noexcept(noexcept(a.swap(b))) { a.swap(b); }
 
-} // namespace meow::utils::fast
+} // namespace meow::utils
 
 // =======================================================================================
 // Example usage (quick):
 /*
-using V1 = meow::utils::fast::Variant<int, std::string, double>;
+using V1 = meow::utils::Variant<int, std::string, double>;
 V1 a = 42;
 V1 b(std::in_place_type<double>, 3.14);
 a.visit([](auto& x){ /* do stuff * /; });
