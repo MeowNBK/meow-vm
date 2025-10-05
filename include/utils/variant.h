@@ -20,14 +20,7 @@
 
 #pragma once
 
-#include <type_traits>
-#include <utility>
-#include <new>
-#include <optional>
-#include <cstddef>
-#include <stdexcept>
-#include <utility>   // std::swap
-#include <cassert>
+#include "common/pch.h"
 
 namespace meow::utils {
 

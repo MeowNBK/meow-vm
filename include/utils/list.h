@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "utils/node.h"
+
 namespace meow::utils {
     template <typename T>
     class List {
@@ -15,7 +17,7 @@ namespace meow::utils {
         using value_t = T;
         using const_reference_t = const value_t&;
         using move_t = value_t&&;
-        using node_t = Node<value_t>;
+        using node_t = utils::Node<value_t>;
         using node_pointer_t = node_t*;
         using const_node_pointer_t = const node_t*;
 

@@ -44,22 +44,13 @@
  *
  * @copyright
  * Copyright (c) 2025
- * Mèo mất não & GPT-5 Ultra Thinking Mode
+ * LazyPaws & GPT-5 Ultra Thinking Mode
  * All rights reserved. Unauthorized reproduction, distribution, or modification is prohibited.
  */
 
-
 #pragma once
 
-#include <type_traits>
-#include <utility>
-#include <new>
-#include <cstddef>
-#include <array>
-#include <stdexcept>
-#include <optional>
-#include <cstring> // memcpy
-#include <cassert>
+#include "common/pch.h"
 
 namespace meow::utils {
 

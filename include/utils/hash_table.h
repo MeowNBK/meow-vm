@@ -10,7 +10,9 @@
 
 #include "utils/vector.h"
 #include "utils/list.h"
+#include "utils/optional.h"
 #include "utils/pair.h"
+#include "utils/hash.h"
 
 namespace meow::utils {
     template <typename T, typename U>
@@ -24,7 +26,6 @@ namespace meow::utils {
         using table_t = utils::Vector<utils::List<utils::Pair<key_t, value_type>>>;
 
         table_t table_;
-        value_type temp_value_ = value_type();
     public:
         HashTable(size_t new_size = 10, const_value_reference_t temp_value = value_type()) noexcept: table_(new_size) {
             table_.resize(new_size);
@@ -33,14 +34,12 @@ namespace meow::utils {
             size_t index = hash(key, table_.size());
             table_[index].push_front(pair_type(key, value));
         }
-        [[nodiscard]] inline const_value_reference_t get(const_key_reference_t key) noexcept {
+        [[nodiscard]] inline utils::Optional<const_value_reference_t> get(const_key_reference_t key) noexcept {
             size_t index = hash(key, table_.size());
             for (auto it = table_[index].begin(); it != table_[index].end(); it = it->next()) {
                 if (it->data_.first_ == key) return it->data_.second_;
             }
             return temp_value_;
         }
-
-        [[nodiscard]] inline constexpr const_value_reference_t temp() const noexcept { return temp_value_; }
     };
 }
