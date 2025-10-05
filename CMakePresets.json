@@ -1,0 +1,48 @@
+{
+    "version": 8,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug (Clang)",
+            "description": "Build với Clang để có thông báo lỗi chi tiết hơn, build nhanh hơn",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+                "CMAKE_CXX_FLAGS_DEBUG": "-g3 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer -fsanitize=address,undefined -fno-common"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release (GCC)",
+            "description": "Build tối ưu hóa hiệu năng với GCC",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+                "CMAKE_CXX_FLAGS_RELEASE": "-Ofast -march=native -flto -DNDEBUG"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "description": "Build phiên bản debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "description": "Build phiên bản release"
+        }
+    ]
+}
