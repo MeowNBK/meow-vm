@@ -145,6 +145,7 @@
 
 #include "common/pch.h"
 #include "core/type.h"
+#include "utils/types/variant.h"
 
 namespace meow::core { struct MeowObject; }
 
@@ -164,52 +165,37 @@ namespace meow::core {
         Value(int i): data_(static_cast<int64_t>(i)) {}
         Value(double r): data_(r) {}
 
-        [[nodiscard]] inline bool is_null() const noexcept { return std::holds_alternative<Null>(data_); }
-        [[nodiscard]] inline bool is_bool() const noexcept { return std::holds_alternative<Bool>(data_); }
-        [[nodiscard]] inline bool is_int() const noexcept { return std::holds_alternative<Int>(data_); }
-        [[nodiscard]] inline bool is_real() const noexcept { return std::holds_alternative<Real>(data_); }
-        [[nodiscard]] inline bool is_array() const noexcept { return std::holds_alternative<Array>(data_); }
-        [[nodiscard]] inline bool is_string() const noexcept { return std::holds_alternative<String>(data_); }
-        [[nodiscard]] inline bool is_hash() const noexcept { return std::holds_alternative<Hash>(data_); }
-        [[nodiscard]] inline bool is_upvalue() const noexcept { return std::holds_alternative<Upvalue>(data_); }
-        [[nodiscard]] inline bool is_proto() const noexcept { return std::holds_alternative<Proto>(data_); }
-        [[nodiscard]] inline bool is_function() const noexcept { return std::holds_alternative<Function>(data_); }
-        [[nodiscard]] inline bool is_native_fn() const noexcept { return std::holds_alternative<NativeFn>(data_); }
-        [[nodiscard]] inline bool is_class() const noexcept { return std::holds_alternative<Class>(data_); }
-        [[nodiscard]] inline bool is_instance() const noexcept { return std::holds_alternative<Instance>(data_); }
-        [[nodiscard]] inline bool is_bound_method() const noexcept { return std::holds_alternative<BoundMethod>(data_); }
-        [[nodiscard]] inline bool is_module() const noexcept { return std::holds_alternative<Module>(data_); }
-        [[nodiscard]] inline bool is_object() const noexcept {
-            return std::visit([](auto&& arg) -> bool {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (
-                    std::is_same_v<T, String> || std::is_same_v<T, Array> ||
-                    std::is_same_v<T, Hash> || std::is_same_v<T, Upvalue> ||
-                    std::is_same_v<T, Proto> || std::is_same_v<T, Function> ||
-                    std::is_same_v<T, NativeFn> || std::is_same_v<T, Class> ||
-                    std::is_same_v<T, Instance> || std::is_same_v<T, BoundMethod> ||
-                    std::is_same_v<T, Module>
-                ) {
-                    return true;
-                }
-                return false;
-            }, data_);
-        }
+        [[nodiscard]] inline bool is_null() const noexcept { return data_.holds<Null>(); }
+        [[nodiscard]] inline bool is_bool() const noexcept { return data_.holds<Bool>(); }
+        [[nodiscard]] inline bool is_int() const noexcept { return data_.holds<Int>(); }
+        [[nodiscard]] inline bool is_real() const noexcept { return data_.holds<Real>(); }
+        [[nodiscard]] inline bool is_array() const noexcept { return data_.holds<Array>(); }
+        [[nodiscard]] inline bool is_string() const noexcept { return data_.holds<String>(); }
+        [[nodiscard]] inline bool is_hash() const noexcept { return data_.holds<Hash>(); }
+        [[nodiscard]] inline bool is_upvalue() const noexcept { return data_.holds<Upvalue>(); }
+        [[nodiscard]] inline bool is_proto() const noexcept { return data_.holds<Proto>(); }
+        [[nodiscard]] inline bool is_function() const noexcept { return data_.holds<Function>(); }
+        [[nodiscard]] inline bool is_native_fn() const noexcept { return data_.holds<NativeFn>(); }
+        [[nodiscard]] inline bool is_class() const noexcept { return data_.holds<Class>(); }
+        [[nodiscard]] inline bool is_instance() const noexcept { return data_.holds<Instance>(); }
+        [[nodiscard]] inline bool is_bound_method() const noexcept { return data_.holds<BoundMethod>(); }
+        [[nodiscard]] inline bool is_module() const noexcept { return data_.holds<Module>(); }
+        [[nodiscard]] inline bool is_object() const noexcept { return data_.holds<Object>()}
 
-        [[nodiscard]] inline bool as_bool() const { return std::get<Bool>(data_); }
-        [[nodiscard]] inline int64_t as_int() const { return std::get<Int>(data_); }
-        [[nodiscard]] inline double as_real() const { return std::get<Real>(data_); }
-        [[nodiscard]] inline Array as_array() const { return std::get<Array>(data_); }
-        [[nodiscard]] inline String as_string() const { return std::get<String>(data_); }
-        [[nodiscard]] inline Hash as_hash() const { return std::get<Hash>(data_); }
-        [[nodiscard]] inline Upvalue as_upvalue() const { return std::get<Upvalue>(data_); }
-        [[nodiscard]] inline Proto as_proto() const { return std::get<Proto>(data_); }
-        [[nodiscard]] inline Function as_function() const { return std::get<Function>(data_); }
-        [[nodiscard]] inline NativeFn as_native_fn() const { return std::get<NativeFn>(data_); }
-        [[nodiscard]] inline Class as_class() const { return std::get<Class>(data_); }
-        [[nodiscard]] inline Instance as_instance() const { return std::get<Instance>(data_); }
-        [[nodiscard]] inline BoundMethod as_bound_method() const { return std::get<BoundMethod>(data_); }
-        [[nodiscard]] inline Module as_module() const { return std::get<Module>(data_); }
+        [[nodiscard]] inline bool as_bool() const { return data_.try_get<Bool>(); }
+        [[nodiscard]] inline int64_t as_int() const { return data_.try_get<Int>(); }
+        [[nodiscard]] inline double as_real() const { return data_.try_get<Real>(); }
+        [[nodiscard]] inline Array as_array() const { return data_.try_get<Array>(); }
+        [[nodiscard]] inline String as_string() const { return data_.try_get<String>(); }
+        [[nodiscard]] inline Hash as_hash() const { return data_.try_get<Hash>(); }
+        [[nodiscard]] inline Upvalue as_upvalue() const { return data_.try_get<Upvalue>(); }
+        [[nodiscard]] inline Proto as_proto() const { return data_.try_get<Proto>(); }
+        [[nodiscard]] inline Function as_function() const { return data_.try_get<Function>(); }
+        [[nodiscard]] inline NativeFn as_native_fn() const { return data_.try_get<NativeFn>(); }
+        [[nodiscard]] inline Class as_class() const { return data_.try_get<Class>(); }
+        [[nodiscard]] inline Instance as_instance() const { return data_.try_get<Instance>(); }
+        [[nodiscard]] inline BoundMethod as_bound_method() const { return data_.try_get<BoundMethod>(); }
+        [[nodiscard]] inline Module as_module() const { return data_.try_get<Module>(); }
         [[nodiscard]] inline meow::core::MeowObject* as_object() const {
             meow::core::MeowObject* object = nullptr;
             std::visit([&object](auto&& arg) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/pch.h"
+#include "utils/types/variant.h"
 
 namespace meow::core {
     struct MeowObject;
