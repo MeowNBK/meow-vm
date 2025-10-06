@@ -28,7 +28,9 @@
 
 // --- Bước 2: Gọi "chiến binh" tương ứng ra trận ---
 #if MEOW_USE_NAN_BOXING
-    #include "utils/types/variant_nanbox.h"
+#  include "utils/types/variant_nanbox.h"
+namespace meow::utils { template <typename... Ts> using Variant = NaNBoxedVariant<Ts...>; }
 #else
-    #include "utils/types/variant_jumptable.h"
+#  include "utils/types/variant_jumptable.h"
+namespace meow::utils { template <typename... Ts> using Variant = Variant<Ts...>; }
 #endif
