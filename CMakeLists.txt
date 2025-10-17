@@ -1,34 +1,88 @@
-# Phiên bản CMake tối thiểu để dùng C++ Modules
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.25)
+project(meow-vm LANGUAGES CXX)
 
-# Định nghĩa project
-project(meow LANGUAGES CXX)
+option(ENABLE_UNITY_BUILD "Enable Unity/ Jumbo build to reduce compiler overhead" ON)
+option(MEOW_STD_SHARED "Build stdlib as a shared library instead of linking object library into executable" OFF)
 
-# Cấu hình cho chuẩn C++
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Tìm các file nguồn (.cpp)
-file(GLOB_RECURSE MEOW_IMPLEMENT_SOURCES
-    "src/*.cpp"
+set(MEOW_ROOT_CONTENT "$ORIGIN/..")
+set(MEOW_ROOT_FILE "${CMAKE_BINARY_DIR}/bin/meow-root")
+file(WRITE ${MEOW_ROOT_FILE} "${MEOW_ROOT_CONTENT}\n")
+
+file(GLOB_RECURSE VM_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+add_executable(${PROJECT_NAME} ${VM_SOURCES})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin"
 )
 
-# Tạo file Executable chính
-add_executable(meow)
-
-# Thêm tất cả các file implementation vào target
-target_sources(meow PRIVATE
-    ${MEOW_IMPLEMENT_SOURCES}
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${PROJECT_SOURCE_DIR}/include"
+    "${PROJECT_SOURCE_DIR}/include/common"
+    "${PROJECT_SOURCE_DIR}/include/runtime"
+    "${PROJECT_SOURCE_DIR}/include/vm"
+    "${PROJECT_SOURCE_DIR}/include/memory"
+    "${PROJECT_SOURCE_DIR}/include/loader"
+    "${PROJECT_SOURCE_DIR}/include/module"
 )
 
-# Thiết lập đường dẫn Include
-target_include_directories(meow PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+# --- Precompiled Headers (PCH) ---
+set(PCH_HEADER "${PROJECT_SOURCE_DIR}/include/common/pch.h")
+if (EXISTS "${PCH_HEADER}")
+    message(STATUS "PCH: Found ${PCH_HEADER} -> Enabling precompiled headers.")
+    target_precompile_headers(${PROJECT_NAME} PRIVATE "${PCH_HEADER}")
+else()
+    message(STATUS "PCH: ${PCH_HEADER} not found -> Precompiled headers disabled.")
+endif()
 
-# Biên dịch precompiled headers
-target_precompile_headers(meow PRIVATE "include/common/pch.h")
+file(GLOB STD_SOURCES CONFIGURE_DEPENDS "stdlib/src/*.cpp")
 
-# Đặt vị trí output cho file Executable
-set_target_properties(meow PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
+if (STD_SOURCES)
+    add_library(meow_std_objects OBJECT ${STD_SOURCES})
+
+    target_include_directories(meow_std_objects PUBLIC
+        "${PROJECT_SOURCE_DIR}/stdlib/common"
+        "${PROJECT_SOURCE_DIR}/include"
+        "${PROJECT_SOURCE_DIR}/include/common"
+        "${PROJECT_SOURCE_DIR}/include/runtime"
+        "${PROJECT_SOURCE_DIR}/include/vm"
+        "${PROJECT_SOURCE_DIR}/include/memory"
+        "${PROJECT_SOURCE_DIR}/include/loader"
+        "${PROJECT_SOURCE_DIR}/include/module"
+    )
+
+    target_compile_definitions(meow_std_objects PRIVATE MEOW_STDLIB_EXPORTS)
+
+    if (EXISTS "${PCH_HEADER}")
+        target_precompile_headers(meow_std_objects PRIVATE "${PCH_HEADER}")
+    endif()
+
+    if (MEOW_STD_SHARED)
+        add_library(meow_std_shared SHARED $<TARGET_OBJECTS:meow_std_objects>)
+        set_target_properties(meow_std_shared PROPERTIES
+            PREFIX ""
+            LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin/stdlib"
+        )
+        target_link_libraries(${PROJECT_NAME} PRIVATE meow_std_shared)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE $<TARGET_OBJECTS:meow_std_objects>)
+    endif()
+endif()
+
+if (ENABLE_UNITY_BUILD)
+    message(STATUS "UNITY_BUILD: Enabled for ${PROJECT_NAME} (may greatly speed up builds).")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY UNITY_BUILD ON)
+    if (TARGET meow_std_objects)
+        set_property(TARGET meow_std_objects PROPERTY UNITY_BUILD ON)
+    endif()
+else()
+    message(STATUS "UNITY_BUILD: Disabled.")
+endif()
+
+# --- Helpful defaults: allow overriding JOBS env if provided ---
+if(NOT DEFINED ENV{JOBS})
+    set(ENV{JOBS} "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()

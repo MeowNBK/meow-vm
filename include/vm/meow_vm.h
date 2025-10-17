@@ -3,6 +3,14 @@
 #include "common/pch.h"
 #include "vm/meow_engine.h"
 
+namespace meow::runtime {
+    struct ExecutionContext;
+    struct BuiltinRegistry;
+    class OperatorDispatcher;
+}
+namespace meow::memory { class MemoryManager; }
+namespace meow::module { class ModuleManager; }
+
 namespace meow::vm {
     struct VMError : public std::runtime_error {
         explicit VMError(const std::string& message): std::runtime_error(message) {}
@@ -13,12 +21,6 @@ namespace meow::vm {
         std::string entry_point_directory_;
         std::string entry_path_;
     };
-
-    struct ExecutionContext;
-    struct BuiltinRegistry;
-    class MemoryManager;
-    class ModuleManager;
-    class OperatorDispatcher;
 
     class MeowVM : public MeowEngine {
     public:
@@ -33,11 +35,11 @@ namespace meow::vm {
         // Value interpret() noexcept;
     private:
         // --- Subsystems ---
-        std::unique_ptr<ExecutionContext> context_;
-        std::unique_ptr<BuiltinRegistry> builtins_;
-        std::unique_ptr<MemoryManager> heap_;
-        std::unique_ptr<ModuleManager> mod_manager_;
-        std::unique_ptr<OperatorDispatcher> op_dispatcher_;
+        std::unique_ptr<meow::runtime::ExecutionContext> context_;
+        std::unique_ptr<meow::runtime::BuiltinRegistry> builtins_;
+        std::unique_ptr<meow::memory::MemoryManager> heap_;
+        std::unique_ptr<meow::module::ModuleManager> mod_manager_;
+        std::unique_ptr<meow::runtime::OperatorDispatcher> op_dispatcher_;
 
         // --- Runtime arguments ---
         VMArgs args_;
@@ -47,8 +49,6 @@ namespace meow::vm {
         void run();
 
         // --- Error helpers ---
-        [[noreturn]] inline void throwVMError(const std::string& message) {
-            throw VMError(message);
-        }
+        [[noreturn]] inline void throwVMError(const std::string& message) { throw VMError(message); }
     };
 }
