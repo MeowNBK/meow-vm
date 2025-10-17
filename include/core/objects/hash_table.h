@@ -1,7 +1,7 @@
 /**
- * @file hash.h
+ * @file hash_table.h
  * @author LazyPaws
- * @brief Core definition of Hash in TrangMeo
+ * @brief Core definition of HashTable in TrangMeo
  * @copyright Copyright (c) 2025 LazyPaws
  * @license All rights reserved. Unauthorized copying of this file, in any form or medium, is strictly prohibited
  */
@@ -15,26 +15,27 @@
 #include "core/type.h"
 
 namespace meow::core::objects {
-    class ObjHash : public MeowObject {
+    class ObjHashTable : public MeowObject {
     private:
         using key_t = meow::core::String;
         using value_t = meow::core::Value;
         using const_reference_t = const value_t&;
         using map_t = std::unordered_map<key_t, value_t>;
+        using visitor_t = meow::memory::GCVisitor;
 
         map_t fields_;
     public:
         // --- Constructors & destructor---
-        ObjHash() = default;
-        explicit ObjHash(const map_t& fields): fields_(fields) {}
-        explicit ObjHash(map_t&& fields) noexcept: fields_(std::move(fields)) {}
+        ObjHashTable() = default;
+        explicit ObjHashTable(const map_t& fields): fields_(fields) {}
+        explicit ObjHashTable(map_t&& fields) noexcept: fields_(std::move(fields)) {}
 
         // --- Rule of 5 ---
-        ObjHash(const ObjHash&) = delete;
-        ObjHash(ObjHash&&) = delete;
-        ObjHash& operator=(const ObjHash&) = delete;
-        ObjHash& operator=(ObjHash&&) = delete;
-        ~ObjHash() override = default;
+        ObjHashTable(const ObjHashTable&) = delete;
+        ObjHashTable(ObjHashTable&&) = delete;
+        ObjHashTable& operator=(const ObjHashTable&) = delete;
+        ObjHashTable& operator=(ObjHashTable&&) = delete;
+        ~ObjHashTable() override = default;
 
         // --- Iterator types ---
         using iterator = map_t::iterator;
@@ -65,6 +66,7 @@ namespace meow::core::objects {
         inline iterator end() noexcept { return fields_.end(); }
         inline const_iterator begin() const noexcept { return fields_.begin(); }
         inline const_iterator end() const noexcept { return fields_.end();}
-    };
 
+        void trace(visitor_t& visitor) const noexcept override;
+    };
 }

@@ -10,6 +10,7 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/meow_object.h"
 #include "memory/gc_visitor.h"
 #include "core/type.h"
@@ -19,13 +20,13 @@ namespace meow::core::objects {
     struct UpvalueDesc {
         bool is_local_;
         size_t index_;
-        explicit UpvalueDesc(bool is_local = false, size_t index = 0) noexcept: is_local_(is_local), index_(index) {}
+        explicit UpvalueDesc(bool is_local = false, size_t index = 0) noexcept : 
+            is_local_(is_local), index_(index) {}
     };
 
-    class ObjUpvalue : public MeowObject {
+    class ObjUpvalue : public meow::core::MeowObject {
     private:
-        using value_t = meow::core::Value;
-        using const_reference_t = const value_t&;
+        using visitor_t = meow::memory::GCVisitor;
 
         enum class State { OPEN, CLOSED };
         State state_ = State::OPEN;
@@ -33,19 +34,22 @@ namespace meow::core::objects {
         Value closed_ = Null{};
     public:
         explicit ObjUpvalue(size_t index = 0) noexcept: index_(index) {}
-        inline void close(const_reference_t value) noexcept { 
+        inline void close(meow::core::param_t value) noexcept { 
             closed_ = value; 
             state_ = State::CLOSED; 
         }
         inline bool is_closed() const noexcept { return state_ == State::CLOSED; }
-        inline const_reference_t get_value() const noexcept { return closed_; }
+        inline meow::core::return_t get_value() const noexcept { return closed_; }
         inline size_t get_index() const noexcept { return index_; }
+
+        void trace(visitor_t& visitor) const noexcept override;
     };
 
-    class ObjFunctionProto : public MeowObject {
+    class ObjFunctionProto : public meow::core::MeowObject {
     private:
         using chunk_t = meow::runtime::Chunk;
         using string_t = meow::core::String;
+        using visitor_t = meow::memory::GCVisitor;
 
         size_t num_registers_;
         size_t num_upvalues_;
@@ -69,12 +73,15 @@ namespace meow::core::objects {
         [[nodiscard]] inline string_t get_name() const noexcept { return name_; }
         [[nodiscard]] inline const chunk_t& get_chunk() const noexcept { return chunk_; }
         [[nodiscard]] inline size_t desc_size() const noexcept { return upvalue_descs_.size(); }
+
+        void trace(visitor_t& visitor) const noexcept override;
     };
 
-    class ObjClosure : public MeowObject {
+    class ObjClosure : public meow::core::MeowObject {
     private:
         using proto_t = meow::core::Proto;
         using upvalue_t = meow::core::Upvalue;
+        using visitor_t = meow::memory::GCVisitor;
 
         proto_t proto_;
         std::vector<upvalue_t> upvalues_;
@@ -94,5 +101,7 @@ namespace meow::core::objects {
         [[nodiscard]] inline upvalue_t at_upvalue(size_t index) const {
             return upvalues_.at(index);
         }
+
+        void trace(visitor_t& visitor) const noexcept override;
     };
 }

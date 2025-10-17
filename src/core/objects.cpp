@@ -9,7 +9,7 @@ void ObjArray::trace(meow::memory::GCVisitor& visitor) const noexcept {
     }
 }
 
-void ObjHash::trace(meow::memory::GCVisitor& visitor) const noexcept {
+void ObjHashTable::trace(meow::memory::GCVisitor& visitor) const noexcept {
     for (const auto& [key, value] : fields_) {
         visitor.visit_object(key);
         visitor.visit_value(value);

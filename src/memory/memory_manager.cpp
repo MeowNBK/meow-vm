@@ -27,8 +27,8 @@ meow::core::Array MemoryManager::new_array(const std::vector<meow::core::Value>&
     return new_object<meow::core::objects::ObjArray>(elements);
 }
 
-meow::core::Hash MemoryManager::new_hash(const std::unordered_map<meow::core::String, meow::core::Value>& fields) {
-    return new_object<meow::core::objects::ObjHash>(fields);
+meow::core::HashTable MemoryManager::new_hash(const std::unordered_map<meow::core::String, meow::core::Value>& fields) {
+    return new_object<meow::core::objects::ObjHashTable>(fields);
 }
 
 meow::core::Upvalue MemoryManager::new_upvalue(size_t index) {

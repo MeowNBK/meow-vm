@@ -10,16 +10,15 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/meow_object.h"
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
     class ObjArray : public meow::core::MeowObject {
     private:
-        using value_t = meow::core::Value;
-        using reference_t = value_t&;
-        using const_reference_t = const value_t&;
-        using container_t = std::vector<value_t>;
+        using container_t = std::vector<meow::core::value_t>;
+        using visitor_t = meow::memory::GCVisitor;
 
         container_t elements_;
     public:
@@ -27,7 +26,7 @@ namespace meow::core::objects {
         ObjArray() = default;
         explicit ObjArray(const container_t& elements) : elements_(elements) {}
         explicit ObjArray(container_t&& elements) noexcept : elements_(std::move(elements)) {}
-        explicit ObjArray(std::initializer_list<value_t> elements) : elements_(elements) {}
+        explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {}
 
         // --- Rule of 5 ---
         ObjArray(const ObjArray&) = delete;
@@ -45,7 +44,7 @@ namespace meow::core::objects {
         // --- Element access ---
         
         /// @brief Unchecked element access. For performance-critical code
-        [[nodiscard]] inline const_reference_t get(size_t index) const noexcept {
+        [[nodiscard]] inline meow::core::return_t get(size_t index) const noexcept {
             return elements_[index];
         }
         /// @brief Unchecked element modification. For performance-critical code
@@ -53,15 +52,15 @@ namespace meow::core::objects {
             elements_[index] = std::forward<T>(value);
         }
         /// @brief Checked element access. Throws if index is OOB
-        [[nodiscard]] inline const_reference_t at(size_t index) const {
+        [[nodiscard]] inline meow::core::return_t at(size_t index) const {
             return elements_.at(index);
         }
-        inline const_reference_t operator[](size_t index) const noexcept { return elements_[index]; }
-        inline reference_t operator[](size_t index) noexcept { return elements_[index]; }
-        [[nodiscard]] inline const_reference_t front() const noexcept { return elements_.front(); }
-        [[nodiscard]] inline reference_t front() noexcept { return elements_.front(); }
-        [[nodiscard]] inline const_reference_t back() const noexcept { return elements_.back(); }
-        [[nodiscard]] inline reference_t back() noexcept { return elements_.back(); }
+        inline meow::core::return_t operator[](size_t index) const noexcept { return elements_[index]; }
+        inline meow::core::mutable_t operator[](size_t index) noexcept { return elements_[index]; }
+        [[nodiscard]] inline meow::core::return_t front() const noexcept { return elements_.front(); }
+        [[nodiscard]] inline meow::core::mutable_t front() noexcept { return elements_.front(); }
+        [[nodiscard]] inline meow::core::return_t back() const noexcept { return elements_.back(); }
+        [[nodiscard]] inline meow::core::mutable_t back() noexcept { return elements_.back(); }
 
         // --- Capacity ---
         [[nodiscard]] inline size_t size() const noexcept { return elements_.size(); }
@@ -90,5 +89,8 @@ namespace meow::core::objects {
         inline reverse_iterator rend() noexcept { return elements_.rend(); }
         inline const_reverse_iterator rbegin() const noexcept { return elements_.rbegin(); }
         inline const_reverse_iterator rend() const noexcept { return elements_.rend(); }
+
+
+        void trace(visitor_t& visitor) const noexcept override;
     };
 }

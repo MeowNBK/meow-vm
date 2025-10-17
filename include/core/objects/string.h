@@ -14,25 +14,27 @@
 namespace meow::core::objects {
     class ObjString : public MeowObject {
     private:
-        using string_t = std::string;
-        string_t data_;
+        using storage_t = std::string;
+        using visitor_t = meow::memory::GCVisitor;
+
+        storage_t data_;
     public:
         // --- Constructors & destructor ---
         ObjString() = default;
-        explicit ObjString(const string_t& data): data_(data) {}
-        explicit ObjString(string_t&& data) noexcept: data_(std::move(data)) {}
-        explicit ObjString(const char* data): data_(data) {}
+        explicit ObjString(const storage_t& data) : data_(data) {}
+        explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {}
+        explicit ObjString(const char* data) : data_(data) {}
 
         // --- Rule of 5 ---
         ObjString(const ObjString&) = delete;
-        ObjString(ObjString&&) = delete;
+        ObjString(ObjString&&) = default;
         ObjString& operator=(const ObjString&) = delete;
-        ObjString& operator=(ObjString&&) = delete;
+        ObjString& operator=(ObjString&&) = default;
         ~ObjString() override = default;
 
         // --- Iterator types ---
-        using const_iterator = string_t::const_iterator;
-        using const_reverse_iterator = string_t::const_reverse_iterator;
+        using const_iterator = storage_t::const_iterator;
+        using const_reverse_iterator = storage_t::const_reverse_iterator;
 
         // --- Character access ---
 
@@ -53,5 +55,7 @@ namespace meow::core::objects {
         inline const_iterator end() const noexcept { return data_.end(); }
         inline const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
         inline const_reverse_iterator rend() const noexcept { return data_.rend(); }
+
+        inline void trace(visitor_t& visitor) const noexcept override {}
     };
 }

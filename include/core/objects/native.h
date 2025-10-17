@@ -10,38 +10,43 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/meow_object.h"
+
+#include "utils/types/variant.h"
 
 namespace meow::vm { class MeowEngine; }
 
 namespace meow::core::objects {
-    class ObjNativeFunction : public MeowObject {
+    class ObjNativeFunction : public meow::core::MeowObject {
     private:
         using value_t = meow::core::Value;
         using engine_t = meow::vm::MeowEngine;
+        using visitor_t = meow::memory::GCVisitor;
     public:
-        using arguments = const std::vector<value_t>&;
-        using native_fn_simple = std::function<value_t(arguments)>;
-        using native_fn_double = std::function<value_t(engine_t*, arguments)>;
+        using native_fn_simple = std::function<meow::core::return_t(meow::core::arguments_t)>;
+        using native_fn_double = std::function<meow::core::return_t(engine_t*, meow::core::arguments_t)>;
     private:
         std::variant<native_fn_simple, native_fn_double> function_;
     public:
         explicit ObjNativeFunction(native_fn_simple f): function_(f) {}
         explicit ObjNativeFunction(native_fn_double f): function_(f) {}
 
-        [[nodiscard]] inline value_t call(arguments args) {
+        [[nodiscard]] inline meow::core::return_t call(meow::core::arguments_t args) {
             if (auto p = std::get_if<native_fn_simple>(&function_)) {
                 return (*p)(args);
             }
-            return value_t();
+            return meow::core::value_t();
         }
-        [[nodiscard]] inline value_t call(engine_t* engine, arguments args) {
+        [[nodiscard]] inline meow::core::return_t call(engine_t* engine, meow::core::arguments_t args) {
             if (auto p = std::get_if<native_fn_double>(&function_)) {
                 return (*p)(engine, args);
             } else if (auto p = std::get_if<native_fn_simple>(&function_)) {
                 return (*p)(args);
             }
-            return value_t();
+            return meow::core::value_t();
         }
+
+        void trace(visitor_t& visitor) const noexcept override {}
     };
 }

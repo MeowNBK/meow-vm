@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <common/pch.h>
-#include <core/type.h>
-#include <utils/types/variant.h>
+#include "common/pch.h"
+#include "core/type.h"
+#include "utils/types/variant.h"
 
 namespace meow::core { struct MeowObject; }
 
@@ -36,7 +36,7 @@ namespace meow::core {
         [[nodiscard]] inline bool is_real() const noexcept { return data_.holds<Real>(); }
         [[nodiscard]] inline bool is_array() const noexcept { return data_.holds<Array>(); }
         [[nodiscard]] inline bool is_string() const noexcept { return data_.holds<String>(); }
-        [[nodiscard]] inline bool is_hash() const noexcept { return data_.holds<Hash>(); }
+        [[nodiscard]] inline bool is_hash_table() const noexcept { return data_.holds<HashTable>(); }
         [[nodiscard]] inline bool is_upvalue() const noexcept { return data_.holds<Upvalue>(); }
         [[nodiscard]] inline bool is_proto() const noexcept { return data_.holds<Proto>(); }
         [[nodiscard]] inline bool is_function() const noexcept { return data_.holds<Function>(); }
@@ -52,7 +52,7 @@ namespace meow::core {
         [[nodiscard]] inline double as_real() const { return data_.get<Real>(); }
         [[nodiscard]] inline Array as_array() const { return data_.get<Array>(); }
         [[nodiscard]] inline String as_string() const { return data_.get<String>(); }
-        [[nodiscard]] inline Hash as_hash() const { return data_.get<Hash>(); }
+        [[nodiscard]] inline HashTable as_hash_table() const { return data_.get<HashTable>(); }
         [[nodiscard]] inline Upvalue as_upvalue() const { return data_.get<Upvalue>(); }
         [[nodiscard]] inline Proto as_proto() const { return data_.get<Proto>(); }
         [[nodiscard]] inline Function as_function() const { return data_.get<Function>(); }

@@ -9,7 +9,7 @@ namespace meow::core {
     namespace objects {
         struct ObjString;
         struct ObjArray;
-        struct ObjHash;
+        struct ObjHashTable;
         struct ObjClass;
         struct ObjInstance;
         struct ObjBoundMethod;
@@ -22,7 +22,7 @@ namespace meow::core {
     
     using Array = objects::ObjArray*;
     using String = const objects::ObjString*;
-    using Hash = objects::ObjHash*;
+    using HashTable = objects::ObjHashTable*;
 
     using Instance = objects::ObjInstance*;
     using Class = objects::ObjClass*;
@@ -38,7 +38,7 @@ namespace meow::core {
     using Int = int64_t;
     using Real = double;
     using Object = meow::variant<
-        Array, String, Hash,
+        Array, String, HashTable,
         Instance, Class, BoundMethod,
         Upvalue, Proto, Function,
         NativeFn, Module

@@ -1,7 +1,7 @@
 /**
  * @file hash_table.h
  * @author LazyPaws
- * @brief An util for Hash Table in TrangMeo
+ * @brief An util for HashTable in TrangMeo
  * @copyright Copyright (c) 2025 LazyPaws
  * @license All rights reserved. Unauthorized copying of this file, in any form or medium, is strictly prohibited
  */

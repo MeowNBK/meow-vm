@@ -32,7 +32,7 @@ namespace meow::memory {
         meow::core::Array new_array(const std::vector<meow::core::Value>& elements = {});
         meow::core::String new_string(const std::string& string);
         meow::core::String new_string(const char* chars, size_t length);
-        meow::core::Hash new_hash(const std::unordered_map<meow::core::String, meow::core::Value>& fields = {});
+        meow::core::HashTable new_hash(const std::unordered_map<meow::core::String, meow::core::Value>& fields = {});
         meow::core::Upvalue new_upvalue(size_t index);
         meow::core::Proto new_proto(size_t registers, size_t upvalues, meow::core::String name, meow::runtime::Chunk&& chunk);
         meow::core::Function new_function(meow::core::Proto proto);

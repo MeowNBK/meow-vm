@@ -10,18 +10,18 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/meow_object.h"
 #include "memory/gc_visitor.h"
 #include "core/type.h"
 
 namespace meow::core::objects {
-    class ObjModule : public MeowObject {
+    class ObjModule : public meow::core::MeowObject {
     private:
-        using value_t = meow::core::Value;
-        using const_reference_t = const value_t&;
         using string_t = meow::core::String;
         using proto_t = meow::core::Proto;
         using module_map = std::unordered_map<String, value_t>;
+        using visitor_t = meow::memory::GCVisitor;
 
         enum class State { EXECUTING, EXECUTED };
 
@@ -38,13 +38,13 @@ namespace meow::core::objects {
             : file_name_(file_name), file_path_(file_path), main_proto_(main_proto) {}
 
         // --- Globals ---
-        [[nodiscard]] inline const_reference_t get_global(string_t name) noexcept { return globals_[name]; }
-        [[nodiscard]] inline void set_global(string_t name, const_reference_t value) noexcept { globals_[name] = value; } 
+        [[nodiscard]] inline meow::core::return_t get_global(string_t name) noexcept { return globals_[name]; }
+        [[nodiscard]] inline void set_global(string_t name, meow::core::param_t value) noexcept { globals_[name] = value; } 
         [[nodiscard]] inline bool has_global(string_t name) { return globals_.find(name) != globals_.end(); }
 
         // --- Exports ---
-        [[nodiscard]] inline const_reference_t get_export(string_t name) noexcept { return exports_[name]; }
-        [[nodiscard]] inline void set_export(string_t name, const_reference_t value) noexcept { exports_[name] = value; }
+        [[nodiscard]] inline meow::core::return_t get_export(string_t name) noexcept { return exports_[name]; }
+        [[nodiscard]] inline void set_export(string_t name, meow::core::param_t value) noexcept { exports_[name] = value; }
         [[nodiscard]] inline bool has_export(string_t name) { return exports_.find(name) != exports_.end(); }
 
         // --- File info ---
@@ -61,5 +61,7 @@ namespace meow::core::objects {
         inline void set_executed() noexcept { state = State::EXECUTED;}
         [[nodiscard]] inline bool is_executing() const noexcept { return state == State::EXECUTING; }
         [[nodiscard]] inline bool is_executed() const noexcept { return state == State::EXECUTED; }
+
+        void trace(visitor_t& visitor) const noexcept override;
     };
 }
