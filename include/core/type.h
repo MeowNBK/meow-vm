@@ -37,7 +37,7 @@ namespace meow::core {
     using Bool = bool;
     using Int = int64_t;
     using Real = double;
-    using Object = meow::utils::Variant<
+    using Object = meow::variant<
         Array, String, Hash,
         Instance, Class, BoundMethod,
         Upvalue, Proto, Function,

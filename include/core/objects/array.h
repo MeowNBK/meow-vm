@@ -31,9 +31,9 @@ namespace meow::core::objects {
 
         // --- Rule of 5 ---
         ObjArray(const ObjArray&) = delete;
-        ObjArray(ObjArray&&) = delete;
+        ObjArray(ObjArray&&) = default;
         ObjArray& operator=(const ObjArray&) = delete;
-        ObjArray& operator=(ObjArray&&) = delete;
+        ObjArray& operator=(ObjArray&&) = default;
         ~ObjArray() override = default;
 
         // --- Iterator types ---

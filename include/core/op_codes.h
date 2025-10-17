@@ -1,5 +1,5 @@
 /**
- * @file op_code.h
+ * @file op_codes.h
  * @author LazyPaws
  * @brief Declaration of operating code in TrangMeo
  * @copyright Copyright (c) 2025 LazyPaws
