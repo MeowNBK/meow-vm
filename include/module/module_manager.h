@@ -10,18 +10,18 @@ namespace meow::memory { class MemoryManager; }
 namespace meow::module {
     class ModuleManager {
     public:
-        meow::core::Module load_module(meow::core::String module_path, meow::core::String importer_path, meow::memory::MemoryManager* heap, meow::vm::MeowEngine* engine);
+        meow::core::module_t load_module(meow::core::string_t module_path, meow::core::string_t importer_path, meow::memory::MemoryManager* heap, meow::vm::MeowEngine* engine);
 
-        inline void reset_module_cache() noexcept {
+        inline void reset_cache() noexcept {
             module_cache_.clear();
         }
 
-        inline void add_cache(meow::core::String name, const meow::core::Module& mod) {
+        inline void add_cache(meow::core::string_t name, const meow::core::module_t& mod) {
             module_cache_[name] = mod;
         }
     private:
-        std::unordered_map<meow::core::String, meow::core::Module> module_cache_;
-        meow::core::String entry_path_;
+        std::unordered_map<meow::core::string_t, meow::core::module_t> module_cache_;
+        meow::core::string_t entry_path_;
 
         meow::vm::MeowEngine* engine_;
         meow::memory::MemoryManager* heap_;

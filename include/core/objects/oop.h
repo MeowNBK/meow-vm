@@ -18,8 +18,8 @@
 namespace meow::core::objects {
     class ObjClass : public meow::core::MeowObject {
     private:
-        using string_t = meow::core::String;
-        using class_t = meow::core::Class;
+        using string_t = meow::core::string_t;
+        using class_t = meow::core::class_t;
         using method_map = std::unordered_map<string_t, meow::core::value_t>;
         using visitor_t = meow::memory::GCVisitor;
 
@@ -45,10 +45,10 @@ namespace meow::core::objects {
 
     class ObjInstance : public meow::core::MeowObject {
     private:
-        using string_t = meow::core::String;
-        using class_t = meow::core::Class;
+        using string_t = meow::core::string_t;
+        using class_t = meow::core::class_t;
         using field_map = std::unordered_map<string_t, meow::core::value_t>;
-        using visitor_t = meow::core::memory;
+        using visitor_t = meow::memory::GCVisitor;
 
         class_t klass_;
         field_map fields_;
@@ -69,8 +69,8 @@ namespace meow::core::objects {
 
     class ObjBoundMethod : public MeowObject {
     private:
-        using instance_t = meow::core::Instance;
-        using function_t = meow::core::Function;
+        using instance_t = meow::core::instance_t;
+        using function_t = meow::core::function_t;
         using visitor_t = meow::memory::GCVisitor;
 
         instance_t instance_;

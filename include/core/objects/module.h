@@ -18,9 +18,9 @@
 namespace meow::core::objects {
     class ObjModule : public meow::core::MeowObject {
     private:
-        using string_t = meow::core::String;
-        using proto_t = meow::core::Proto;
-        using module_map = std::unordered_map<String, value_t>;
+        using string_t = meow::core::string_t;
+        using proto_t = meow::core::proto_t;
+        using module_map = std::unordered_map<string_t, value_t>;
         using visitor_t = meow::memory::GCVisitor;
 
         enum class State { EXECUTING, EXECUTED };

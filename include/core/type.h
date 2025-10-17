@@ -20,31 +20,31 @@ namespace meow::core {
         struct ObjModule;
     }
     
-    using Array = objects::ObjArray*;
-    using String = const objects::ObjString*;
-    using HashTable = objects::ObjHashTable*;
+    using array_t = objects::ObjArray*;
+    using string_t = const objects::ObjString*;
+    using hash_table_t = objects::ObjHashTable*;
 
-    using Instance = objects::ObjInstance*;
-    using Class = objects::ObjClass*;
-    using BoundMethod = objects::ObjBoundMethod*;
-    using Upvalue = objects::ObjUpvalue*;
-    using Proto = objects::ObjFunctionProto*;
-    using Function = objects::ObjClosure*;
-    using NativeFn = objects::ObjNativeFunction*;
-    using Module = objects::ObjModule*;
+    using instance_t = objects::ObjInstance*;
+    using class_t = objects::ObjClass*;
+    using bound_method_t = objects::ObjBoundMethod*;
+    using upvalue_t = objects::ObjUpvalue*;
+    using proto_t = objects::ObjFunctionProto*;
+    using function_t = objects::ObjClosure*;
+    using native_fn_t = objects::ObjNativeFunction*;
+    using module_t = objects::ObjModule*;
 
-    using Null = std::monostate;
-    using Bool = bool;
-    using Int = int64_t;
-    using Real = double;
-    using Object = meow::variant<
-        Array, String, HashTable,
-        Instance, Class, BoundMethod,
-        Upvalue, Proto, Function,
-        NativeFn, Module
+    using null_t = std::monostate;
+    using bool_t = bool;
+    using int_t = int64_t;
+    using float_t = double;
+    using object_t = meow::variant<
+        array_t, string_t, hash_table_t,
+        instance_t, class_t, bound_method_t,
+        upvalue_t, proto_t, function_t,
+        native_fn_t, module_t
     >;
 
     enum class ValueType : uint8_t {
-        Null, Int, Real, Bool, String, Array, Object, Upvalue, Function, Class, Instance, BoundMethod, Proto, NativeFn, TotalValueTypes
+        Null, Int, Float, Bool, String, Array, Object, Upvalue, Function, Class, Instance, BoundMethod, Proto, NativeFn, TotalValueTypes
     };
 }

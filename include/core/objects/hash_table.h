@@ -1,7 +1,7 @@
 /**
  * @file hash_table.h
  * @author LazyPaws
- * @brief Core definition of HashTable in TrangMeo
+ * @brief Core definition of Hash Table in TrangMeo
  * @copyright Copyright (c) 2025 LazyPaws
  * @license All rights reserved. Unauthorized copying of this file, in any form or medium, is strictly prohibited
  */
@@ -10,6 +10,7 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/meow_object.h"
 #include "memory/gc_visitor.h"
 #include "core/type.h"
@@ -17,9 +18,8 @@
 namespace meow::core::objects {
     class ObjHashTable : public MeowObject {
     private:
-        using key_t = meow::core::String;
+        using key_t = meow::core::string_t;
         using value_t = meow::core::Value;
-        using const_reference_t = const value_t&;
         using map_t = std::unordered_map<key_t, value_t>;
         using visitor_t = meow::memory::GCVisitor;
 
@@ -44,7 +44,7 @@ namespace meow::core::objects {
         // --- Lookup ---
 
         // Unchecked lookup. For performance-critical code
-        [[nodiscard]] inline const_reference_t get(key_t key) noexcept {
+        [[nodiscard]] inline meow::core::return_t get(key_t key) noexcept {
             return fields_[key];
         }
         // Unchecked lookup/update. For performance-critical code
@@ -52,7 +52,7 @@ namespace meow::core::objects {
             fields_[key] = std::forward<T>(value);
         }
         // Checked lookup. Throws if key is not found
-        [[nodiscard]] inline const_reference_t at(key_t key) const {
+        [[nodiscard]] inline meow::core::return_t at(key_t key) const {
             return fields_.at(key);
         }
         [[nodiscard]] inline bool has(key_t key) const { return fields_.find(key) != fields_.end(); }

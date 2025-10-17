@@ -9,7 +9,7 @@ namespace meow::memory {
     class MemoryManager {
     private:
         std::unique_ptr<meow::memory::GarbageCollector> gc_;
-        std::unordered_map<std::string, meow::core::String> string_pool_;
+        std::unordered_map<std::string, meow::core::string_t> string_pool_;
 
         size_t gc_threshold_;
         size_t object_allocated_;
@@ -29,19 +29,19 @@ namespace meow::memory {
     public:
         explicit MemoryManager(std::unique_ptr<meow::memory::GarbageCollector> gc);
 
-        meow::core::Array new_array(const std::vector<meow::core::Value>& elements = {});
-        meow::core::String new_string(const std::string& string);
-        meow::core::String new_string(const char* chars, size_t length);
-        meow::core::HashTable new_hash(const std::unordered_map<meow::core::String, meow::core::Value>& fields = {});
-        meow::core::Upvalue new_upvalue(size_t index);
-        meow::core::Proto new_proto(size_t registers, size_t upvalues, meow::core::String name, meow::runtime::Chunk&& chunk);
-        meow::core::Function new_function(meow::core::Proto proto);
-        meow::core::Module new_module(meow::core::String file_name, meow::core::String file_path, meow::core::Proto main_proto = nullptr);
-        meow::core::NativeFn new_native(meow::core::objects::ObjNativeFunction::native_fn_simple fn);
-        meow::core::NativeFn new_native(meow::core::objects::ObjNativeFunction::native_fn_double fn);
-        meow::core::Class new_class(meow::core::String name = nullptr);
-        meow::core::Instance new_instance(meow::core::Class klass);
-        meow::core::BoundMethod new_bound_method(meow::core::Instance instance, meow::core::Function function);
+        meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {});
+        meow::core::string_t new_string(const std::string& string);
+        meow::core::string_t new_string(const char* chars, size_t length);
+        meow::core::hash_table_t new_hash(const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {});
+        meow::core::upvalue_t new_upvalue(size_t index);
+        meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name, meow::runtime::Chunk&& chunk);
+        meow::core::function_t new_function(meow::core::proto_t proto);
+        meow::core::module_t new_module(meow::core::string_t file_name, meow::core::string_t file_path, meow::core::proto_t main_proto = nullptr);
+        meow::core::native_fn_t new_native(meow::core::objects::ObjNativeFunction::native_fn_simple fn);
+        meow::core::native_fn_t new_native(meow::core::objects::ObjNativeFunction::native_fn_double fn);
+        meow::core::class_t new_class(meow::core::string_t name = nullptr);
+        meow::core::instance_t new_instance(meow::core::class_t klass);
+        meow::core::bound_method_t new_bound_method(meow::core::instance_t instance, meow::core::function_t function);
 
         inline void enable_gc() noexcept { gc_enabled_ = true; }
         inline void disable_gc() noexcept { gc_enabled_ = false; }

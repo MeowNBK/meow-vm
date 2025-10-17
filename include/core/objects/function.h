@@ -31,9 +31,9 @@ namespace meow::core::objects {
         enum class State { OPEN, CLOSED };
         State state_ = State::OPEN;
         size_t index_ = 0;
-        Value closed_ = Null{};
+        Value closed_ = null_t{};
     public:
-        explicit ObjUpvalue(size_t index = 0) noexcept: index_(index) {}
+        explicit ObjUpvalue(size_t index = 0) noexcept : index_(index) {}
         inline void close(meow::core::param_t value) noexcept { 
             closed_ = value; 
             state_ = State::CLOSED; 
@@ -48,7 +48,7 @@ namespace meow::core::objects {
     class ObjFunctionProto : public meow::core::MeowObject {
     private:
         using chunk_t = meow::runtime::Chunk;
-        using string_t = meow::core::String;
+        using string_t = meow::core::string_t;
         using visitor_t = meow::memory::GCVisitor;
 
         size_t num_registers_;
@@ -79,8 +79,8 @@ namespace meow::core::objects {
 
     class ObjClosure : public meow::core::MeowObject {
     private:
-        using proto_t = meow::core::Proto;
-        using upvalue_t = meow::core::Upvalue;
+        using proto_t = meow::core::proto_t;
+        using upvalue_t = meow::core::upvalue_t;
         using visitor_t = meow::memory::GCVisitor;
 
         proto_t proto_;

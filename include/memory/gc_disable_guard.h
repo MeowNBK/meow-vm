@@ -9,9 +9,9 @@ namespace meow::memory {
     public:
         explicit GCDisableGuard(MemoryManager* heap) noexcept : heap_(heap) { if (heap_) heap_->disable_gc(); }
         GCDisableGuard(const GCDisableGuard&) = delete;
+        GCDisableGuard(GCDisableGuard&&) = default;
         GCDisableGuard& operator=(const GCDisableGuard&) = delete;
-        GCDisableGuard(GCDisableGuard&&) = delete;
-        GCDisableGuard& operator=(GCDisableGuard&&) = delete;
+        GCDisableGuard& operator=(GCDisableGuard&&) = default;
         ~GCDisableGuard() noexcept { if (heap_) heap_->enable_gc(); }
     };
 }

@@ -2,6 +2,7 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/definitions.h"
 #include "core/op_codes.h"
 
 namespace meow::memory { class MemoryManager; }
@@ -10,10 +11,10 @@ namespace meow::runtime {
     constexpr size_t NUM_VALUE_TYPES = static_cast<size_t>(core::ValueType::TotalValueTypes); 
     constexpr size_t NUM_OPCODES = static_cast<size_t>(core::OpCode::TOTAL_OPCODES);
 
-    inline core::ValueType get_value_type(const core::Value& value) noexcept {
+    inline core::ValueType get_value_type(meow::core::param_t value) noexcept {
         if (value.is_null()) return core::ValueType::Null;
         if (value.is_int()) return core::ValueType::Int;
-        if (value.is_real()) return core::ValueType::Real;
+        if (value.is_float()) return core::ValueType::Float;
         if (value.is_object()) return core::ValueType::Bool;
         return core::ValueType::Null;
     }
@@ -27,8 +28,8 @@ namespace meow::runtime {
 
     class OperatorDispatcher {
     private:
-        using BinaryOpFunction = core::Value(*)(const core::Value&, const core::Value&);
-        using UnaryOpFunction = core::Value(*)(const core::Value&);
+        using BinaryOpFunction = core::Value(*)(meow::core::param_t, meow::core::param_t);
+        using UnaryOpFunction = core::Value(*)(meow::core::param_t);
 
         memory::MemoryManager* heap_;
         BinaryOpFunction binary_dispatch_table_[NUM_OPCODES][NUM_VALUE_TYPES][NUM_VALUE_TYPES];
@@ -36,14 +37,14 @@ namespace meow::runtime {
     public:
         explicit OperatorDispatcher(memory::MemoryManager* heap) noexcept;
 
-        [[nodiscard]] inline const BinaryOpFunction* find(core::OpCode op_code, const core::Value& left, const core::Value& right) const noexcept {
+        [[nodiscard]] inline const BinaryOpFunction* find(core::OpCode op_code, meow::core::param_t left, meow::core::param_t right) const noexcept {
             auto left_type = get_value_type(left);
             auto right_type = get_value_type(right);
             const BinaryOpFunction* function = &binary_dispatch_table_[+op_code][+left_type][+right_type];
             return (*function) ? function : nullptr;
         }
 
-        [[nodiscard]] inline const UnaryOpFunction* find(core::OpCode op_code, const core::Value& right) const noexcept {
+        [[nodiscard]] inline const UnaryOpFunction* find(core::OpCode op_code, meow::core::param_t right) const noexcept {
             auto right_type = get_value_type(right);
             const UnaryOpFunction* function = &unary_dispatch_table_[+op_code][+right_type];
             return (*function) ? function : nullptr;

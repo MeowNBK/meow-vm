@@ -7,11 +7,11 @@
 
 namespace meow::runtime {
     struct CallFrame {
-        meow::core::Function function_;
+        meow::core::function_t function_;
         size_t start_reg_;
         size_t ret_reg_;
         const uint8_t* ip_;
-        CallFrame(meow::core::Function function, size_t start_reg, size_t ret_reg, const uint8_t* ip)
+        CallFrame(meow::core::function_t function, size_t start_reg, size_t ret_reg, const uint8_t* ip)
             : function_(function), start_reg_(start_reg), ret_reg_(ret_reg), ip_(ip) {}
     };
 
@@ -26,7 +26,7 @@ namespace meow::runtime {
     struct ExecutionContext {
         std::vector<CallFrame> call_stack_;
         std::vector<meow::core::Value> registers_;
-        std::vector<meow::core::Upvalue> open_upvalues_;
+        std::vector<meow::core::upvalue_t> open_upvalues_;
         std::vector<ExceptionHandler> execption_handlers_;
 
         size_t current_base_ = 0;

@@ -18,49 +18,49 @@ namespace meow::core {
     class Value {
     private:
         using BaseValue = meow::variant<
-            Null, Bool, Int, Real, Object
+            null_t, bool_t, int_t, float_t, object_t
         >;
         BaseValue data_;
     public:
         // --- Constructors ---
-        Value(): data_(Null{}) {}
-        Value(std::monostate): data_(Null{}) {}
+        Value(): data_(null_t{}) {}
+        Value(std::monostate): data_(null_t{}) {}
         Value(bool b): data_(b) {}
         Value(int64_t i): data_(i) {}
         Value(int i): data_(static_cast<int64_t>(i)) {}
         Value(double r): data_(r) {}
 
-        [[nodiscard]] inline bool is_null() const noexcept { return data_.holds<Null>(); }
-        [[nodiscard]] inline bool is_bool() const noexcept { return data_.holds<Bool>(); }
-        [[nodiscard]] inline bool is_int() const noexcept { return data_.holds<Int>(); }
-        [[nodiscard]] inline bool is_real() const noexcept { return data_.holds<Real>(); }
-        [[nodiscard]] inline bool is_array() const noexcept { return data_.holds<Array>(); }
-        [[nodiscard]] inline bool is_string() const noexcept { return data_.holds<String>(); }
-        [[nodiscard]] inline bool is_hash_table() const noexcept { return data_.holds<HashTable>(); }
-        [[nodiscard]] inline bool is_upvalue() const noexcept { return data_.holds<Upvalue>(); }
-        [[nodiscard]] inline bool is_proto() const noexcept { return data_.holds<Proto>(); }
-        [[nodiscard]] inline bool is_function() const noexcept { return data_.holds<Function>(); }
-        [[nodiscard]] inline bool is_native_fn() const noexcept { return data_.holds<NativeFn>(); }
-        [[nodiscard]] inline bool is_class() const noexcept { return data_.holds<Class>(); }
-        [[nodiscard]] inline bool is_instance() const noexcept { return data_.holds<Instance>(); }
-        [[nodiscard]] inline bool is_bound_method() const noexcept { return data_.holds<BoundMethod>(); }
-        [[nodiscard]] inline bool is_module() const noexcept { return data_.holds<Module>(); }
-        [[nodiscard]] inline bool is_object() const noexcept { return data_.holds<Object>(); }
+        [[nodiscard]] inline bool is_null() const noexcept { return data_.holds<null_t>(); }
+        [[nodiscard]] inline bool is_bool() const noexcept { return data_.holds<bool_t>(); }
+        [[nodiscard]] inline bool is_int() const noexcept { return data_.holds<int_t>(); }
+        [[nodiscard]] inline bool is_float() const noexcept { return data_.holds<float_t>(); }
+        [[nodiscard]] inline bool is_array() const noexcept { return data_.holds<array_t>(); }
+        [[nodiscard]] inline bool is_string() const noexcept { return data_.holds<string_t>(); }
+        [[nodiscard]] inline bool is_hash_table() const noexcept { return data_.holds<hash_table_t>(); }
+        [[nodiscard]] inline bool is_upvalue() const noexcept { return data_.holds<upvalue_t>(); }
+        [[nodiscard]] inline bool is_proto() const noexcept { return data_.holds<proto_t>(); }
+        [[nodiscard]] inline bool is_function() const noexcept { return data_.holds<function_t>(); }
+        [[nodiscard]] inline bool is_native_fn() const noexcept { return data_.holds<native_fn_t>(); }
+        [[nodiscard]] inline bool is_class() const noexcept { return data_.holds<class_t>(); }
+        [[nodiscard]] inline bool is_instance() const noexcept { return data_.holds<instance_t>(); }
+        [[nodiscard]] inline bool is_bound_method() const noexcept { return data_.holds<bound_method_t>(); }
+        [[nodiscard]] inline bool is_module() const noexcept { return data_.holds<module_t>(); }
+        [[nodiscard]] inline bool is_object() const noexcept { return data_.holds<object_t>(); }
 
-        [[nodiscard]] inline bool as_bool() const { return data_.get<Bool>(); }
-        [[nodiscard]] inline int64_t as_int() const { return data_.get<Int>(); }
-        [[nodiscard]] inline double as_real() const { return data_.get<Real>(); }
-        [[nodiscard]] inline Array as_array() const { return data_.get<Array>(); }
-        [[nodiscard]] inline String as_string() const { return data_.get<String>(); }
-        [[nodiscard]] inline HashTable as_hash_table() const { return data_.get<HashTable>(); }
-        [[nodiscard]] inline Upvalue as_upvalue() const { return data_.get<Upvalue>(); }
-        [[nodiscard]] inline Proto as_proto() const { return data_.get<Proto>(); }
-        [[nodiscard]] inline Function as_function() const { return data_.get<Function>(); }
-        [[nodiscard]] inline NativeFn as_native_fn() const { return data_.get<NativeFn>(); }
-        [[nodiscard]] inline Class as_class() const { return data_.get<Class>(); }
-        [[nodiscard]] inline Instance as_instance() const { return data_.get<Instance>(); }
-        [[nodiscard]] inline BoundMethod as_bound_method() const { return data_.get<BoundMethod>(); }
-        [[nodiscard]] inline Module as_module() const { return data_.get<Module>(); }
+        [[nodiscard]] inline bool as_bool() const { return data_.get<bool_t>(); }
+        [[nodiscard]] inline int64_t as_int() const { return data_.get<int_t>(); }
+        [[nodiscard]] inline double as_float() const { return data_.get<float_t>(); }
+        [[nodiscard]] inline array_t as_array() const { return data_.get<array_t>(); }
+        [[nodiscard]] inline string_t as_string() const { return data_.get<string_t>(); }
+        [[nodiscard]] inline hash_table_t as_hash_table() const { return data_.get<hash_table_t>(); }
+        [[nodiscard]] inline upvalue_t as_upvalue() const { return data_.get<upvalue_t>(); }
+        [[nodiscard]] inline proto_t as_proto() const { return data_.get<proto_t>(); }
+        [[nodiscard]] inline function_t as_function() const { return data_.get<function_t>(); }
+        [[nodiscard]] inline native_fn_t as_native_fn() const { return data_.get<native_fn_t>(); }
+        [[nodiscard]] inline class_t as_class() const { return data_.get<class_t>(); }
+        [[nodiscard]] inline instance_t as_instance() const { return data_.get<instance_t>(); }
+        [[nodiscard]] inline bound_method_t as_bound_method() const { return data_.get<bound_method_t>(); }
+        [[nodiscard]] inline module_t as_module() const { return data_.get<module_t>(); }
 
         [[nodiscard]] inline meow::core::MeowObject* as_object() const {
             return data_.visit([](auto&& arg) -> meow::core::MeowObject* {
@@ -77,9 +77,9 @@ namespace meow::core {
             });
         }
 
-        inline const bool* as_if_bool() const noexcept { return data_.get_if<Bool>(); }
-        inline const int64_t* as_if_int() const noexcept { return data_.get_if<Int>(); }
-        inline const double* as_if_real() const noexcept { return data_.get_if<Real>(); }
+        inline const bool* as_if_bool() const noexcept { return data_.get_if<bool_t>(); }
+        inline const int64_t* as_if_int() const noexcept { return data_.get_if<int_t>(); }
+        inline const double* as_if_float() const noexcept { return data_.get_if<float_t>(); }
         inline meow::core::MeowObject* const* as_if_object() const noexcept {
             static meow::core::MeowObject* object = nullptr;
             if (is_object()) {
@@ -89,9 +89,9 @@ namespace meow::core {
             return nullptr;
         }
 
-        inline bool* as_if_bool() noexcept { return data_.get_if<Bool>(); }
-        inline int64_t* as_if_int() noexcept { return data_.get_if<Int>(); }
-        inline double* as_if_real() noexcept { return data_.get_if<Real>(); }
+        inline bool* as_if_bool() noexcept { return data_.get_if<bool_t>(); }
+        inline int64_t* as_if_int() noexcept { return data_.get_if<int_t>(); }
+        inline double* as_if_float() noexcept { return data_.get_if<float_t>(); }
         inline meow::core::MeowObject** as_if_object() noexcept {
             static meow::core::MeowObject* object = nullptr;
             if (is_object()) {

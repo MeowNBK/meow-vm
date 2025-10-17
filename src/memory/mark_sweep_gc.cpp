@@ -39,7 +39,7 @@ size_t MarkSweepGC::collect() noexcept {
     return metadata_.size();
 }
 
-void MarkSweepGC::visit_value(const meow::core::Value& value) noexcept {
+void MarkSweepGC::visit_value(meow::core::param_t value) noexcept {
     if (value.is_object()) mark(value.as_object());
 }
 

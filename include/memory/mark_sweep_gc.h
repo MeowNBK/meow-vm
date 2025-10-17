@@ -3,6 +3,7 @@
 #include "common/pch.h"
 #include "memory/gc_visitor.h"
 #include "memory/garbage_collector.h"
+#include "core/definitions.h"
 
 namespace meow::runtime {
     struct ExecutionContext;
@@ -26,7 +27,7 @@ namespace meow::memory {
         size_t collect() noexcept override;
 
         // --- Visitor ---
-        void visit_value(const meow::core::Value& value) noexcept override;
+        void visit_value(meow::core::param_t value) noexcept override;
         void visit_object(const meow::core::MeowObject* object) noexcept override;
     private:
         void mark(const meow::core::MeowObject* object);
