@@ -1006,3 +1006,1059 @@ void MeowVM::run() {
       }
     }
 }
+
+// --- Bad codes ---
+
+// #include "vm/meow_vm.h"
+// #include "common/pch.h"
+// #include "runtime/execution_context.h"
+// #include "runtime/builtin_registry.h"
+// #include "memory/memory_manager.h"
+// #include "memory/mark_sweep_gc.h"
+// #include "module/module_manager.h"
+// #include "runtime/operator_dispatcher.h"
+// #include "core/op_codes.h"
+// #include "core/definitions.h"
+
+// #include "core/objects/function.h"
+// #include "core/objects/array.h"
+// #include "core/objects/hash_table.h"
+// #include "core/objects/oop.h"
+// #include "core/objects/module.h"
+
+// // Macro cho việc in log, sử dụng std::format
+// template <typename... Args>
+// inline void printl(const std::format_string<Args...> fmt, Args&&... args) {
+//     std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...) << '\n';
+// }
+
+// using namespace meow::vm;
+// using namespace meow::core;
+// using namespace meow::runtime;
+// using namespace meow::memory;
+
+// // =========================================================================
+// // Khởi tạo & Tiện ích
+// // =========================================================================
+
+// MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
+//     args_.entry_point_directory_ = entry_point_directory;
+//     args_.entry_path_ = entry_path;
+//     for (int i = 0; i < argc; ++i) {
+//         args_.command_line_arguments_.emplace_back(argv[i]);
+//     }
+
+//     context_ = std::make_unique<ExecutionContext>();
+//     builtins_ = std::make_unique<BuiltinRegistry>();
+
+//     auto gc = std::make_unique<meow::memory::MarkSweepGC>(context_.get(), builtins_.get());
+    
+//     heap_ = std::make_unique<meow::memory::MemoryManager>(std::move(gc));
+
+//     mod_manager_ = std::make_unique<meow::module::ModuleManager>();
+//     op_dispatcher_ = std::make_unique<OperatorDispatcher>(heap_.get());
+
+//     printl("MeowVM initialized successfully!");
+// }
+
+// MeowVM::~MeowVM() {
+//     printl("MeowVM shutting down.");
+// }
+
+// // Hàm tiện ích để tạo Chunk từ danh sách Value thô (chỉ dùng cho mục đích khởi tạo)
+// using raw_value_t = meow::variant<OpCode, uint64_t, double, int64_t, uint16_t>;
+// [[nodiscard]] inline Chunk make_chunk(const std::vector<raw_value_t>& code) {
+//     Chunk chunk;
+
+//     for (size_t i = 0; i < code.size(); ++i) {
+//         code[i].visit(
+//             [&chunk](OpCode value) {
+//                 chunk.write_byte(static_cast<uint8_t>(value));
+//             },
+//             [&chunk](uint64_t value) {
+//                 chunk.write_u64(value);
+//             },
+//             [&chunk](double value) {
+//                 chunk.write_f64(value);
+//             },
+//             [&chunk](int64_t value) {
+//                 chunk.write_u64(std::bit_cast<uint64_t>(value));
+//             },
+//             [&chunk](uint16_t value) {
+//                 chunk.write_u16(value);
+//             }
+//         );
+//     }
+
+//     return chunk;
+// }
+
+// void MeowVM::interpret() noexcept {
+//     try {
+//         prepare();
+//         run();
+//     } catch (const std::exception& e) {
+//         std::cerr << "[error] An execption was threw: " << e.what() << "\n";
+//     }
+// }
+
+// // =========================================================================
+// // Trợ giúp Runtime
+// // =========================================================================
+
+// inline bool is_truthy(param_t value) noexcept {
+//     if (value.is_null()) return false;
+//     if (value.is_bool()) return value.as_bool();
+//     if (value.is_int()) return value.as_int() != 0;
+//     if (value.is_float()) {
+//         double r = value.as_float();
+//         return r != 0.0 && !std::isnan(r);
+//     }
+//     // Đối với các loại Object khác, trả về true nếu không rỗng (string, array, hash_table)
+//     if (value.is_string()) return !value.as_string()->empty();
+//     if (value.is_array()) return !value.as_array()->empty();
+//     if (value.is_hash_table()) return !value.as_hash_table()->empty();
+//     // Đối với các object khác (function, class, instance...), luôn là true
+//     return true;
+// }
+
+// inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap, size_t register_index) {
+//     // Tìm kiếm upvalue đã mở (open upvalue)
+//     for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
+//         upvalue_t uv = *it;
+//         if (uv->get_index() == register_index) return uv;
+//         if (uv->get_index() < register_index) break; // Đã đi qua, không cần tìm nữa
+//     }
+
+//     // Không tìm thấy, tạo mới và chèn vào danh sách đã sắp xếp
+//     upvalue_t new_uv = heap->new_upvalue(register_index);
+//     auto it = std::lower_bound(context->open_upvalues_.begin(), context->open_upvalues_.end(), new_uv,
+//         [](auto a, auto b) { return a->get_index() < b->get_index(); });
+//     context->open_upvalues_.insert(it, new_uv);
+//     return new_uv;
+// }
+
+// inline void close_upvalues(ExecutionContext* context, size_t last_index) noexcept {
+//     // Đóng tất cả upvalue có chỉ số register >= last_index
+//     while (!context->open_upvalues_.empty() && context->open_upvalues_.back()->get_index() >= last_index) {
+//         upvalue_t uv = context->open_upvalues_.back();
+//         // Lưu giá trị từ thanh ghi vào upvalue đã đóng
+//         uv->close(context->registers_[uv->get_index()]);
+//         context->open_upvalues_.pop_back();
+//     }
+// }
+
+// // =========================================================================
+// // Logic Xử lý CALL/RETURN (Tách mô-đun)
+// // =========================================================================
+
+// // Hàm trợ giúp cho opcode CALL/CALL_VOID
+// [[nodiscard]] bool MeowVM::handle_call_op(uint16_t dst, uint16_t fn_reg, uint16_t arg_start, uint16_t argc, bool is_void) {
+//     size_t ret_reg = is_void ? static_cast<size_t>(-1) : static_cast<size_t>(dst);
+//     Value& callee = REGISTER(fn_reg);
+
+//     // --- TRƯỜNG HỢP 1: Native Function (Gọi nhanh) ---
+//     if (callee.is_native_fn()) {
+//         native_fn_t native = callee.as_native_fn();
+//         std::vector<Value> args(argc);
+//         for (size_t i = 0; i < argc; ++i) {
+//             args[i] = REGISTER(arg_start + i);
+//         }
+        
+//         Value result = native->call(this, args); 
+        
+//         if (!is_void) {
+//             REGISTER(dst) = result;
+//         }
+//         return true; // Xử lý xong, tiếp tục vòng lặp chính
+//     }
+
+//     instance_t self = nullptr;
+//     function_t closure_to_call = nullptr;
+//     bool is_constructor_call = false;
+
+//     // --- TRƯỜNG HỢP 2: Xác định hàm (closure) và 'self' (this) ---
+//     if (callee.is_function()) {
+//         closure_to_call = callee.as_function();
+//     } else if (callee.is_bound_method()) {
+//         bound_method_t bound = callee.as_bound_method();
+//         self = bound->get_instance();
+//         closure_to_call = bound->get_function();
+//     } else if (callee.is_class()) {
+//         // --- TRƯỜNG HỢP 3: Gọi hàm khởi tạo (Class Constructor) ---
+//         class_t k = callee.as_class();
+//         self = heap_->new_instance(k);
+//         is_constructor_call = true;
+        
+//         if (!is_void) {
+//             REGISTER(dst) = Value(self);
+//         }
+        
+//         Value init_val = k->get_method(heap_->new_string("init"));
+//         if (init_val.is_function()) {
+//             closure_to_call = init_val.as_function();
+//         } else {
+//             return true; // Không có 'init', chỉ tạo instance. Hoàn tất.
+//         }
+//     } else {
+//         throw_vm_error("CALL: Giá trị không thể gọi được (không phải function, class, hay native).");
+//     }
+
+//     // --- TRƯỜNG HỢP 4: Setup Call Frame và Push vào Stack ---
+//     proto_t proto = closure_to_call->get_proto();
+//     size_t new_base = context_->registers_.size();
+    
+//     context_->registers_.resize(new_base + proto->get_num_registers());
+    
+//     size_t arg_offset = 0;
+//     if (self != nullptr) {
+//         if (proto->get_num_registers() > 0) {
+//             context_->registers_[new_base + 0] = Value(self);
+//             arg_offset = 1; // Các đối số thông thường bắt đầu từ R1
+//         }
+//     }
+    
+//     // Copy các đối số (từ arg_start đến arg_start + argc)
+//     for (size_t i = 0; i < argc; ++i) {
+//         if ((arg_offset + i) < proto->get_num_registers()) {
+//             context_->registers_[new_base + arg_offset + i] = REGISTER(arg_start + i);
+//         }
+//     }
+    
+//     context_->current_frame_->ip_ = ip_; // Lưu IP của frame cũ
+    
+//     module_t current_module = context_->current_frame_->module_;
+//     size_t frame_ret_reg = is_constructor_call ? static_cast<size_t>(-1) : ret_reg;
+
+//     // Push frame mới
+//     context_->call_stack_.emplace_back(closure_to_call, current_module, new_base, frame_ret_reg, proto->get_chunk().get_code());
+    
+//     // Thiết lập lại trạng thái VM để chạy frame mới
+//     context_->current_frame_ = &context_->call_stack_.back();
+//     ip_ = context_->current_frame_->ip_;
+//     context_->current_base_ = context_->current_frame_->start_reg_;
+
+//     return false; // Cần DISPATCH ngay lập tức
+// }
+
+// // Hàm trợ giúp cho opcode RETURN
+// [[nodiscard]] bool MeowVM::handle_return_op(uint16_t ret_reg_idx, bool is_implicit) {
+//     Value return_value = (ret_reg_idx == 0xFFFF) ? Value(null_t{}) : REGISTER(ret_reg_idx);
+    
+//     CallFrame popped_frame = *context_->current_frame_;
+//     size_t old_base = popped_frame.start_reg_;
+
+//     // Đóng upvalues trước khi pop frame
+//     close_upvalues(context_.get(), popped_frame.start_reg_);
+
+//     context_->call_stack_.pop_back();
+
+//     if (context_->call_stack_.empty()) {
+//         if (is_implicit) printl("End of chunk reached. Call stack empty. Halting.");
+//         else printl("Return executed. Call stack empty. Halting.");
+//         if (!context_->registers_.empty()) context_->registers_[0] = return_value;
+//         return true; // HALT
+//     }
+
+//     // Khôi phục trạng thái frame gọi
+//     context_->current_frame_ = &context_->call_stack_.back();
+//     ip_ = context_->current_frame_->ip_;
+//     context_->current_base_ = context_->current_frame_->start_reg_;
+    
+//     // Gán giá trị trả về
+//     if (popped_frame.ret_reg_ != static_cast<size_t>(-1)) {
+//         context_->registers_[context_->current_base_ + popped_frame.ret_reg_] = return_value;
+//     }
+    
+//     // Xóa các thanh ghi đã sử dụng
+//     context_->registers_.resize(old_base);
+    
+//     return false; // Tiếp tục vòng lặp
+// }
+
+// // =========================================================================
+// // Logic Xử lý Ngoại lệ (Tách mô-đun)
+// // =========================================================================
+
+// [[nodiscard]] bool MeowVM::handle_exception_unwind(const std::string& message) {
+//     printl("An exception was threw: {}", message);
+            
+//     if (context_->exception_handlers_.empty()) {
+//         printl("No exception handler. Halting.");
+//         throw VMError(message); // Re-throw để thoát VM
+//     }
+    
+//     // Lấy handler và pop nó
+//     ExceptionHandler handler = context_->exception_handlers_.back();
+//     context_->exception_handlers_.pop_back();
+
+//     // 1. Unwind call stack về đúng frame
+//     while (context_->call_stack_.size() - 1 > handler.frame_depth_) {
+//         close_upvalues(context_.get(), context_->call_stack_.back().start_reg_);
+//         context_->call_stack_.pop_back();
+//     }
+    
+//     // 2. Khôi phục kích thước ngăn xếp thanh ghi
+//     context_->registers_.resize(handler.stack_depth_);
+    
+//     // 3. Thiết lập lại trạng thái VM để nhảy đến code catch
+//     context_->current_frame_ = &context_->call_stack_.back();
+//     // Vị trí nhảy đến trong chunk của frame hiện tại
+//     ip_ = context_->current_frame_->function_->get_proto()->get_chunk().get_code() + handler.catch_ip_;
+//     context_->current_base_ = context_->current_frame_->start_reg_;
+
+//     // 4. Đẩy đối tượng exception (string) vào thanh ghi R0
+//     if (context_->current_base_ < context_->registers_.size()) {
+//         REGISTER(0) = Value(heap_->new_string(message));
+//     }
+//     return true; // Tiếp tục vòng lặp tại vị trí nhảy
+// }
+
+
+// // =========================================================================
+// // Hàm Prepare & Vòng lặp chính Run()
+// // =========================================================================
+
+// void MeowVM::prepare() noexcept {
+//     printl("Preparing for execution...");
+
+//     using enum OpCode;
+
+//     // Tạo chunk mã lệnh thử nghiệm: R0 = 1802, R1 = true, HALT
+//     Chunk test_chunk = make_chunk(
+//         { 
+//             LOAD_INT, (uint16_t)0, (uint64_t)1802,
+//             LOAD_TRUE, (uint16_t)1,
+//             HALT
+//         }
+//     );
+//     size_t num_register = 2;
+    
+//     auto main_proto = heap_->new_proto(num_register, 0, heap_->new_string("main"), std::move(test_chunk));
+//     auto main_func = heap_->new_function(main_proto);
+    
+//     auto main_module = heap_->new_module(heap_->new_string("main"), heap_->new_string(args_.entry_path_), main_proto);
+
+//     context_->registers_.resize(num_register);
+    
+//     // Khởi tạo Call Frame đầu tiên
+//     context_->call_stack_.emplace_back(main_func, main_module, 0, static_cast<size_t>(-1), main_func->get_proto()->get_chunk().get_code());
+
+//     if (context_->call_stack_.empty()) {
+//         printl("Execution finished: Call stack is empty.");
+//         return;
+//     }
+
+//     // Thiết lập trạng thái ban đầu của VM
+//     context_->current_frame_ = &context_->call_stack_.back();
+//     context_->current_base_ = context_->current_frame_->start_reg_;
+//     ip_ = context_->current_frame_->ip_;
+// }
+
+// // Macro cho việc đọc byte, u16, u64 từ mã lệnh
+// #define READ_BYTE() (*ip_++)
+// #define READ_U16() (ip_ += 2, (uint16_t)((ip_[-2] | (ip_[-1] << 8))))
+// #define READ_U64() ( \
+//     ip_ += 8, \
+//     (uint64_t)(ip_[-8]) | \
+//     ((uint64_t)(ip_[-7]) << 8) | \
+//     ((uint64_t)(ip_[-6]) << 16) | \
+//     ((uint64_t)(ip_[-5]) << 24) | \
+//     ((uint64_t)(ip_[-4]) << 32) | \
+//     ((uint64_t)(ip_[-3]) << 40) | \
+//     ((uint64_t)(ip_[-2]) << 48) | \
+//     ((uint64_t)(ip_[-1]) << 56) \
+// )
+// #define READ_I64() (std::bit_cast<int64_t>(READ_U64()))
+// #define READ_F64() (std::bit_cast<double>(READ_U64()))
+// #define READ_ADDRESS() READ_U16()
+
+// // Macro cho việc truy cập tài nguyên
+// #define CURRENT_CHUNK() (context_->current_frame_->function_->get_proto()->get_chunk())
+// #define READ_CONSTANT() (CURRENT_CHUNK().get_constant(READ_U16()))
+// #define REGISTER(idx) (context_->registers_[context_->current_base_ + (idx)])
+// #define CONSTANT(idx) (CURRENT_CHUNK().get_constant(idx))
+
+// // Macro cho Computed Goto
+// #define VM_OPCODE_HANDLER_LIST(V) \
+//     V(LOAD_CONST) V(LOAD_NULL) V(LOAD_TRUE) V(LOAD_FALSE) V(MOVE) V(LOAD_INT) V(LOAD_FLOAT) \
+//     V(ADD) V(SUB) V(MUL) V(DIV) V(MOD) V(POW) V(EQ) V(NEQ) V(GT) V(GE) V(LT) V(LE) \
+//     V(NEG) V(NOT) V(GET_GLOBAL) V(SET_GLOBAL) V(GET_UPVALUE) V(SET_UPVALUE) V(CLOSURE) \
+//     V(CLOSE_UPVALUES) V(JUMP) V(JUMP_IF_FALSE) V(JUMP_IF_TRUE) V(CALL) V(CALL_VOID) V(RETURN) V(HALT) \
+//     V(NEW_ARRAY) V(NEW_HASH) V(GET_INDEX) V(SET_INDEX) V(GET_KEYS) V(GET_VALUES) \
+//     V(NEW_CLASS) V(NEW_INSTANCE) V(GET_PROP) V(SET_PROP) V(SET_METHOD) V(INHERIT) V(GET_SUPER) \
+//     V(BIT_AND) V(BIT_OR) V(BIT_XOR) V(BIT_NOT) V(LSHIFT) V(RSHIFT) V(THROW) V(SETUP_TRY) V(POP_TRY) \
+//     V(IMPORT_MODULE) V(EXPORT) V(GET_EXPORT) V(IMPORT_ALL)
+
+// // Mảng Jump Table (Computed Goto)
+// static void* const kOpcodeHandlers[] = {
+//     #define LABEL_ADDR(OP) &&op_##OP,
+//     VM_OPCODE_HANDLER_LIST(LABEL_ADDR)
+// };
+// #undef LABEL_ADDR
+
+// #define DISPATCH() \
+//     goto *kOpcodeHandlers[static_cast<size_t>(instruction)]
+
+// // Vòng lặp chính của VM đã được tái cấu trúc
+// void MeowVM::run() {
+//     printl("Starting MeowVM execution loop...");
+
+//     using enum OpCode;
+
+//     uint8_t instruction;
+    
+//     // Điểm nhập (Entry point)
+//     goto dispatch_start;
+
+// // Lệnh nhảy cho vòng lặp chính
+// dispatch_start:
+//     try {
+//         const uint8_t* code_end = CURRENT_CHUNK().get_code() + CURRENT_CHUNK().get_code_size();
+        
+//         // Kiểm tra kết thúc chunk hoặc stack trống
+//         if (ip_ >= code_end) {
+//             goto end_of_chunk;
+//         }
+
+//         instruction = READ_BYTE();
+//         DISPATCH();
+
+//     // ------------------------------------------------------------------------
+//     // --- Load/Store Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_LOAD_CONST: {
+//         uint16_t dst = READ_U16();
+//         Value value = READ_CONSTANT();
+//         REGISTER(dst) = value;
+//         goto next_instruction;
+//     }
+//     op_LOAD_NULL: {
+//         uint16_t dst = READ_U16();
+//         REGISTER(dst) = Value(null_t{});
+//         goto next_instruction;
+//     }
+//     op_LOAD_TRUE: {
+//         uint16_t dst = READ_U16();
+//         REGISTER(dst) = Value(true);
+//         goto next_instruction;
+//     }
+//     op_LOAD_FALSE: {
+//         uint16_t dst = READ_U16();
+//         REGISTER(dst) = Value(false);
+//         goto next_instruction;
+//     }
+//     op_MOVE: {
+//         uint16_t dst = READ_U16();
+//         uint16_t src = READ_U16();
+//         REGISTER(dst) = REGISTER(src);
+//         goto next_instruction;
+//     }
+//     op_LOAD_INT: {
+//         uint16_t dst = READ_U16();
+//         int64_t value = READ_I64();
+//         REGISTER(dst) = Value(value);
+//         goto next_instruction;
+//     }
+//     op_LOAD_FLOAT: {
+//         uint16_t dst = READ_U16();
+//         double value = READ_F64();
+//         REGISTER(dst) = Value(value);
+//         goto next_instruction;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- Binary Opcodes (Tái sử dụng Macro) ---
+//     // ------------------------------------------------------------------------
+
+//     // Macro cũ được chuyển sang dùng với Computed Goto
+//     #define HANDLE_BINARY_OP(OP) \
+//     op_##OP: { \
+//         uint16_t dst = READ_U16(); \
+//         uint16_t r1 = READ_U16(); \
+//         uint16_t r2 = READ_U16(); \
+//         auto& left = REGISTER(r1); \
+//         auto& right = REGISTER(r2); \
+//         if (auto func = op_dispatcher_->find(OpCode::OP, left, right)) { \
+//             REGISTER(dst) = (*func)(left, right); \
+//         } else { \
+//             throw_vm_error("Unsupported binary operator " #OP); \
+//         } \
+//         goto next_instruction; \
+//     }
+
+//     HANDLE_BINARY_OP(ADD)
+//     HANDLE_BINARY_OP(SUB)
+//     HANDLE_BINARY_OP(MUL)
+//     HANDLE_BINARY_OP(DIV)
+//     HANDLE_BINARY_OP(MOD)
+//     HANDLE_BINARY_OP(POW)
+//     HANDLE_BINARY_OP(EQ)
+//     HANDLE_BINARY_OP(NEQ)
+//     HANDLE_BINARY_OP(GT)
+//     HANDLE_BINARY_OP(GE)
+//     HANDLE_BINARY_OP(LT)
+//     HANDLE_BINARY_OP(LE)
+//     HANDLE_BINARY_OP(BIT_AND)
+//     HANDLE_BINARY_OP(BIT_OR)
+//     HANDLE_BINARY_OP(BIT_XOR)
+//     HANDLE_BINARY_OP(LSHIFT)
+//     HANDLE_BINARY_OP(RSHIFT)
+
+//     // ------------------------------------------------------------------------
+//     // --- Unary Opcodes (Tái sử dụng Macro) ---
+//     // ------------------------------------------------------------------------
+
+//     #define HANDLE_UNARY_OP(OP) \
+//     op_##OP: { \
+//         uint16_t dst = READ_U16(); \
+//         uint16_t src = READ_U16(); \
+//         auto& val = REGISTER(src); \
+//         if (auto func = op_dispatcher_->find(OpCode::OP, val)) { \
+//             REGISTER(dst) = (*func)(val); \
+//         } else { \
+//             throw_vm_error("Unsupported unary operator " #OP); \
+//         } \
+//         goto next_instruction; \
+//     }
+
+//     HANDLE_UNARY_OP(NEG)
+//     HANDLE_UNARY_OP(NOT)
+//     HANDLE_UNARY_OP(BIT_NOT)
+
+//     // ------------------------------------------------------------------------
+//     // --- Constant & Variable Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_GET_GLOBAL: {
+//         uint16_t dst = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         string_t name = CONSTANT(name_idx).as_string();
+//         module_t module = context_->current_frame_->module_;
+//         if (module->has_global(name)) {
+//             REGISTER(dst) = module->get_global(name);
+//         } else {
+//             REGISTER(dst) = Value(null_t{});
+//         }
+//         goto next_instruction;
+//     }
+//     op_SET_GLOBAL: {
+//         uint16_t name_idx = READ_U16();
+//         uint16_t src = READ_U16();
+//         string_t name = CONSTANT(name_idx).as_string();
+//         module_t module = context_->current_frame_->module_;
+//         module->set_global(name, REGISTER(src));
+//         goto next_instruction;
+//     }
+//     op_GET_UPVALUE: {
+//         uint16_t dst = READ_U16();
+//         uint16_t uv_idx = READ_U16();
+//         upvalue_t uv = context_->current_frame_->function_->get_upvalue(uv_idx);
+//         if (uv->is_closed()) {
+//             REGISTER(dst) = uv->get_value();
+//         } else {
+//             REGISTER(dst) = context_->registers_[uv->get_index()];
+//         }
+//         goto next_instruction;
+//     }
+//     op_SET_UPVALUE: {
+//         uint16_t uv_idx = READ_U16();
+//         uint16_t src = READ_U16();
+//         upvalue_t uv = context_->current_frame_->function_->get_upvalue(uv_idx);
+//         if (uv->is_closed()) {
+//             uv->close(REGISTER(src));
+//         } else {
+//             context_->registers_[uv->get_index()] = REGISTER(src);
+//         }
+//         goto next_instruction;
+//     }
+//     op_CLOSURE: {
+//         uint16_t dst = READ_U16();
+//         uint16_t proto_idx = READ_U16();
+//         proto_t proto = CONSTANT(proto_idx).as_proto();
+//         function_t closure = heap_->new_function(proto);
+        
+//         for (size_t i = 0; i < proto->get_num_upvalues(); ++i) {
+//             // Đọc mô tả upvalue (is_local, index) từ code stream.
+//             // **LƯU Ý:** Logic này khác với VM gốc: VM gốc lấy upvalue_descs từ proto,
+//             // nhưng bytecode compiler có thể đã viết upvalue desc vào chunk (sau OpCode::CLOSURE)
+//             // theo mô hình Lox/Crafting Interpreters.
+//             // *Để tuân thủ logic VM gốc, ta giả định upvalue_descs có sẵn trong proto.*
+//             const auto& desc = proto->get_desc(i);
+
+//             if (desc.is_local_) {
+//                 // Bắt upvalue từ thanh ghi của frame hiện tại (local variable)
+//                 closure->set_upvalue(i, capture_upvalue(context_.get(), heap_.get(), context_->current_base_ + desc.index_));
+//             } else {
+//                 // Chuyển tiếp upvalue từ closure cha (parent upvalue)
+//                 closure->set_upvalue(i, context_->current_frame_->function_->get_upvalue(desc.index_));
+//             }
+//         }
+//         REGISTER(dst) = Value(closure);
+//         goto next_instruction;
+//     }
+//     op_CLOSE_UPVALUES: {
+//         uint16_t last_reg = READ_U16();
+//         close_upvalues(context_.get(), context_->current_base_ + last_reg);
+//         goto next_instruction;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- Control Flow Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_JUMP: {
+//         uint16_t target = READ_ADDRESS();
+//         ip_ = CURRENT_CHUNK().get_code() + target;
+//         goto next_instruction;
+//     }
+//     op_JUMP_IF_FALSE: {
+//         uint16_t reg = READ_U16();
+//         uint16_t target = READ_ADDRESS();
+//         if (!is_truthy(REGISTER(reg))) {
+//             ip_ = CURRENT_CHUNK().get_code() + target;
+//         }
+//         goto next_instruction;
+//     }
+//     op_JUMP_IF_TRUE: {
+//         uint16_t reg = READ_U16();
+//         uint16_t target = READ_ADDRESS();
+//         if (is_truthy(REGISTER(reg))) {
+//             ip_ = CURRENT_CHUNK().get_code() + target;
+//         }
+//         goto next_instruction;
+//     }
+//     op_CALL:
+//     op_CALL_VOID: {
+//         uint16_t dst, fn_reg, arg_start, argc;
+//         bool is_void = (static_cast<OpCode>(instruction) == OpCode::CALL_VOID);
+
+//         if (!is_void) {
+//             dst = READ_U16();
+//             fn_reg = READ_U16();
+//             arg_start = READ_U16();
+//             argc = READ_U16();
+//         } else {
+//             fn_reg = READ_U16();
+//             arg_start = READ_U16();
+//             argc = READ_U16();
+//             dst = 0xFFFF; // Giá trị giả cho trường hợp void
+//         }
+        
+//         // **Modularization:** Gọi hàm helper cho logic CALL phức tạp
+//         if (handle_call_op(dst, fn_reg, arg_start, argc, is_void)) {
+//             // Native call hoặc constructor không cần init (đã xử lý xong)
+//             goto next_instruction;
+//         } else {
+//             // Gọi hàm/closure (đã push frame mới)
+//             goto dispatch_start; // Bắt đầu thực thi frame mới ngay lập tức
+//         }
+//     }
+//     op_RETURN: {
+//         uint16_t ret_reg_idx = READ_U16();
+//         // **Modularization:** Gọi hàm helper cho logic RETURN phức tạp
+//         if (handle_return_op(ret_reg_idx, false)) {
+//             goto op_HALT; // Call stack rỗng, dừng VM
+//         } else {
+//             goto next_instruction; // Tiếp tục thực thi frame cũ
+//         }
+//     }
+//     op_HALT: {
+//         printl("halt");
+//         if (!context_->registers_.empty()) {
+//             if (REGISTER(0).is_int()) {
+//                 printl("Final value in R0: {}", REGISTER(0).as_int());
+//             }
+//         }
+//         return;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- Data Structure Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_NEW_ARRAY: {
+//         uint16_t dst = READ_U16();
+//         uint16_t start_idx = READ_U16();
+//         uint16_t count = READ_U16();
+        
+//         auto array = heap_->new_array();
+//         array->reserve(count);
+//         for (size_t i = 0; i < count; ++i) {
+//             array->push(REGISTER(start_idx + i));
+//         }
+//         REGISTER(dst) = Value(array);
+//         goto next_instruction;
+//     }
+//     op_NEW_HASH: {
+//         uint16_t dst = READ_U16();
+//         uint16_t start_idx = READ_U16();
+//         uint16_t count = READ_U16();
+        
+//         auto hash_table = heap_->new_hash();
+//         for (size_t i = 0; i < count; ++i) {
+//             Value& key = REGISTER(start_idx + i * 2);
+//             Value& val = REGISTER(start_idx + i * 2 + 1);
+//             if (!key.is_string()) {
+//                 throw_vm_error("NEW_HASH: Key is not a string.");
+//             }
+//             hash_table->set(key.as_string(), val);
+//         }
+//         REGISTER(dst) = Value(hash_table);
+//         goto next_instruction;
+//     }
+//     op_GET_INDEX: {
+//         uint16_t dst = READ_U16();
+//         uint16_t src_reg = READ_U16();
+//         uint16_t key_reg = READ_U16();
+//         Value& src = REGISTER(src_reg);
+//         Value& key = REGISTER(key_reg);
+
+//         if (src.is_array()) {
+//             if (!key.is_int()) throw_vm_error("Array index must be an integer.");
+//             int64_t idx = key.as_int();
+//             array_t arr = src.as_array();
+//             if (idx < 0 || (uint64_t)idx >= arr->size()) {
+//                 throw_vm_error("Array index out of bounds.");
+//             }
+//             REGISTER(dst) = arr->get(idx);
+//         } else if (src.is_hash_table()) {
+//             if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
+//             hash_table_t hash = src.as_hash_table();
+//             if (hash->has(key.as_string())) {
+//                 REGISTER(dst) = hash->get(key.as_string());
+//             } else {
+//                 REGISTER(dst) = Value(null_t{});
+//             }
+//         } else if (src.is_string()) {
+//              if (!key.is_int()) throw_vm_error("String index must be an integer.");
+//             int64_t idx = key.as_int();
+//             string_t str = src.as_string();
+//             if (idx < 0 || (uint64_t)idx >= str->size()) {
+//                 throw_vm_error("String index out of bounds.");
+//             }
+//             REGISTER(dst) = Value(heap_->new_string(std::string(1, str->get(idx))));
+//         } else {
+//             throw_vm_error("Cannot apply index operator to this type.");
+//         }
+//         goto next_instruction;
+//     }
+//     op_SET_INDEX: {
+//         uint16_t src_reg = READ_U16();
+//         uint16_t key_reg = READ_U16();
+//         uint16_t val_reg = READ_U16();
+//         Value& src = REGISTER(src_reg);
+//         Value& key = REGISTER(key_reg);
+//         Value& val = REGISTER(val_reg);
+
+//         if (src.is_array()) {
+//             if (!key.is_int()) throw_vm_error("Array index must be an integer.");
+//             int64_t idx = key.as_int();
+//             array_t arr = src.as_array();
+//             if (idx < 0) throw_vm_error("Array index cannot be negative.");
+//             if ((uint64_t)idx >= arr->size()) {
+//                 arr->resize(idx + 1);
+//             }
+//             arr->set(idx, val);
+//         } else if (src.is_hash_table()) {
+//             if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
+//             hash_table_t hash = src.as_hash_table();
+//             hash->set(key.as_string(), val);
+//         } else {
+//             throw_vm_error("Cannot apply index set operator to this type.");
+//         }
+//         goto next_instruction;
+//     }
+//     op_GET_KEYS: {
+//         uint16_t dst = READ_U16();
+//         uint16_t src_reg = READ_U16();
+//         Value& src = REGISTER(src_reg);
+//         auto keys_array = heap_->new_array();
+
+//         if (src.is_hash_table()) {
+//             hash_table_t hash = src.as_hash_table();
+//             keys_array->reserve(hash->size());
+//             for (auto it = hash->begin(); it != hash->end(); ++it) {
+//                 keys_array->push(Value(it->first));
+//             }
+//         } else if (src.is_array()) {
+//             array_t arr = src.as_array();
+//             keys_array->reserve(arr->size());
+//             for (size_t i = 0; i < arr->size(); ++i) {
+//                 keys_array->push(Value(static_cast<int64_t>(i)));
+//             }
+//         } else if (src.is_string()) {
+//             string_t str = src.as_string();
+//             keys_array->reserve(str->size());
+//             for (size_t i = 0; i < str->size(); ++i) {
+//                 keys_array->push(Value(static_cast<int64_t>(i)));
+//             }
+//         }
+        
+//         REGISTER(dst) = Value(keys_array);
+//         goto next_instruction;
+//     }
+//     op_GET_VALUES: {
+//         uint16_t dst = READ_U16();
+//         uint16_t src_reg = READ_U16();
+//         Value& src = REGISTER(src_reg);
+//         auto vals_array = heap_->new_array();
+
+//         if (src.is_hash_table()) {
+//             hash_table_t hash = src.as_hash_table();
+//             vals_array->reserve(hash->size());
+//             for (auto it = hash->begin(); it != hash->end(); ++it) {
+//                 vals_array->push(it->second);
+//             }
+//         } else if (src.is_array()) {
+//             array_t arr = src.as_array();
+//             vals_array->reserve(arr->size());
+//             for (size_t i = 0; i < arr->size(); ++i) {
+//                 vals_array->push(arr->get(i));
+//             }
+//         } else if (src.is_string()) {
+//             string_t str = src.as_string();
+//             vals_array->reserve(str->size());
+//             for (size_t i = 0; i < str->size(); ++i) {
+//                 vals_array->push(Value(heap_->new_string(std::string(1, str->get(i)))));
+//             }
+//         }
+        
+//         REGISTER(dst) = Value(vals_array);
+//         goto next_instruction;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- OOP Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_NEW_CLASS: {
+//         uint16_t dst = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         string_t name = CONSTANT(name_idx).as_string();
+//         REGISTER(dst) = Value(heap_->new_class(name));
+//         goto next_instruction;
+//     }
+//     op_NEW_INSTANCE: {
+//         uint16_t dst = READ_U16();
+//         uint16_t class_reg = READ_U16();
+//         Value& class_val = REGISTER(class_reg);
+//         if (!class_val.is_class()) throw_vm_error("NEW_INSTANCE: operand is not a class.");
+//         REGISTER(dst) = Value(heap_->new_instance(class_val.as_class()));
+//         goto next_instruction;
+//     }
+//     op_GET_PROP: {
+//         uint16_t dst = READ_U16();
+//         uint16_t obj_reg = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         Value& obj = REGISTER(obj_reg);
+//         string_t name = CONSTANT(name_idx).as_string();
+
+//         if (obj.is_instance()) {
+//             instance_t inst = obj.as_instance();
+//             // 1. Tìm trong fields
+//             if (inst->has_field(name)) {
+//                 REGISTER(dst) = inst->get_field(name);
+//                 goto next_instruction;
+//             }
+//             // 2. Tìm trong methods (và bind) - duyệt cả superclass
+//             class_t k = inst->get_class();
+//             while (k) {
+//                 if (k->has_method(name)) {
+//                     REGISTER(dst) = Value(heap_->new_bound_method(inst, k->get_method(name).as_function()));
+//                     goto next_instruction;
+//                 }
+//                 k = k->get_super();
+//             }
+//         }
+//         // 3. Cho phép truy cập export của module
+//         else if (obj.is_module()) {
+//             module_t mod = obj.as_module();
+//             if (mod->has_export(name)) {
+//                 REGISTER(dst) = mod->get_export(name);
+//                 goto next_instruction;
+//             }
+//         }
+
+//         // 4. Không tìm thấy
+//         REGISTER(dst) = Value(null_t{}); 
+//         goto next_instruction;
+//     }
+//     op_SET_PROP: {
+//         uint16_t obj_reg = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         uint16_t val_reg = READ_U16();
+//         Value& obj = REGISTER(obj_reg);
+//         string_t name = CONSTANT(name_idx).as_string();
+//         Value& val = REGISTER(val_reg);
+
+//         if (obj.is_instance()) {
+//             obj.as_instance()->set_field(name, val);
+//         } else {
+//             throw_vm_error("SET_PROP: can only set properties on instances.");
+//         }
+//         goto next_instruction;
+//     }
+//     op_SET_METHOD: {
+//         uint16_t call_reg = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         uint16_t method_reg = READ_U16();
+//         Value& class_val = REGISTER(call_reg);
+//         string_t name = CONSTANT(name_idx).as_string();
+//         Value& methodVal = REGISTER(method_reg);
+//         if (!class_val.is_class()) throw_vm_error("SET_METHOD: target is not a class.");
+//         if (!methodVal.is_function()) throw_vm_error("SET_METHOD: value is not a function.");
+//         class_val.as_class()->set_method(name, methodVal);
+//         goto next_instruction;
+//     }
+//     op_INHERIT: {
+//         uint16_t sub_reg = READ_U16();
+//         uint16_t super_reg = READ_U16();
+//         Value& sub_val = REGISTER(sub_reg);
+//         Value& super_val = REGISTER(super_reg);
+//         if (!sub_val.is_class() || !super_val.is_class()) {
+//             throw_vm_error("INHERIT: Toán hạng phải là class.");
+//         }
+//         class_t sub = sub_val.as_class();
+//         class_t super = super_val.as_class();
+        
+//         sub->set_super(super);
+//         goto next_instruction;
+//     }
+//     op_GET_SUPER: {
+//         uint16_t dst = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         string_t name = CONSTANT(name_idx).as_string();
+        
+//         Value& receiver_val = REGISTER(0);
+//         if (!receiver_val.is_instance()) {
+//             throw_vm_error("GET_SUPER: 'super' phải được dùng bên trong một method.");
+//         }
+//         instance_t receiver = receiver_val.as_instance();
+        
+//         class_t klass = receiver->get_class();
+//         class_t super = klass->get_super();
+        
+//         if (super == nullptr) {
+//             throw_vm_error("GET_SUPER: Class không có superclass.");
+//         }
+        
+//         class_t k = super;
+//         Value method_val;
+//         bool found = false;
+//         while (k) {
+//             if (k->has_method(name)) {
+//                 method_val = k->get_method(name);
+//                 found = true;
+//                 break;
+//             }
+//             k = k->get_super();
+//         }
+        
+//         if (!found) {
+//              throw_vm_error("GET_SUPER: Superclass không có method tên là '" + std::string(name->c_str()) + "'.");
+//         }
+//         if (!method_val.is_function()) {
+//             throw_vm_error("GET_SUPER: Thành viên của superclass không phải là function.");
+//         }
+
+//         REGISTER(dst) = Value(heap_->new_bound_method(receiver, method_val.as_function()));
+//         goto next_instruction;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- Try/Catch Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_THROW: {
+//         uint16_t reg = READ_U16();
+//         Value& val = REGISTER(reg);
+//         // THROW luôn được handle bởi khối try-catch bên ngoài
+//         throw_vm_error("Explicit throw"); 
+//         goto next_instruction;
+//     }
+//     op_SETUP_TRY: {
+//         uint16_t target = READ_ADDRESS();
+//         size_t catch_ip = target;
+//         size_t frame_depth = context_->call_stack_.size() - 1;
+//         size_t stack_depth = context_->registers_.size(); 
+//         context_->exception_handlers_.emplace_back(catch_ip, frame_depth, stack_depth);
+//         goto next_instruction;
+//     }
+//     op_POP_TRY: {
+//         if (!context_->exception_handlers_.empty()) {
+//             context_->exception_handlers_.pop_back();
+//         }
+//         goto next_instruction;
+//     }
+
+//     // ------------------------------------------------------------------------
+//     // --- Module Opcodes ---
+//     // ------------------------------------------------------------------------
+//     op_IMPORT_MODULE: {
+//         uint16_t dst = READ_U16();
+//         uint16_t path_idx = READ_U16();
+//         // **LƯU Ý:** Logic load module phức tạp cần tương tác với file system
+//         throw_vm_error("Opcode IMPORT_MODULE not yet fully implemented in run()");
+//         goto next_instruction;
+//     }
+//     op_EXPORT: {
+//         uint16_t name_idx = READ_U16();
+//         uint16_t src_reg = READ_U16();
+//         string_t name = CONSTANT(name_idx).as_string();
+//         context_->current_frame_->module_->set_export(name, REGISTER(src_reg));
+//         goto next_instruction;
+//     }
+//     op_GET_EXPORT: {
+//         uint16_t dst = READ_U16();
+//         uint16_t mod_reg = READ_U16();
+//         uint16_t name_idx = READ_U16();
+//         Value& mod_val = REGISTER(mod_reg);
+//         string_t name = CONSTANT(name_idx).as_string();
+//         if (!mod_val.is_module()) throw_vm_error("GET_EXPORT: operand is not a module.");
+//         module_t mod = mod_val.as_module();
+//         if (!mod->has_export(name)) throw_vm_error("Module does not export name.");
+//         REGISTER(dst) = mod->get_export(name);
+//         goto next_instruction;
+//     }
+//     op_IMPORT_ALL: {
+//         // **LƯU Ý:** Logic này yêu cầu sao chép tất cả export vào globals của module hiện tại
+//         throw_vm_error("Opcode IMPORT_ALL not yet implemented in run()");
+//         goto next_instruction;
+//     }
+    
+//     // ------------------------------------------------------------------------
+//     // --- Điều phối tiếp theo & Kết thúc Chunk ---
+//     // ------------------------------------------------------------------------
+
+//     // Nhãn chung để nhảy đến lệnh tiếp theo
+//     next_instruction:
+//         // Cập nhật ip trong Call Frame hiện tại
+//         context_->current_frame_->ip_ = ip_;
+//         // Kiểm tra kết thúc chunk
+//         if (ip_ >= code_end) {
+//             goto end_of_chunk;
+//         }
+
+//         instruction = READ_BYTE();
+//         DISPATCH();
+
+//     end_of_chunk:
+//         // **Implicit RETURN:** Xử lý khi IP vượt quá cuối chunk
+//         printl("End of chunk reached, performing implicit return.");
+//         // **Modularization:** Sử dụng hàm helper cho logic RETURN phức tạp (giá trị trả về mặc định là null)
+//         if (handle_return_op(0xFFFF, true)) { // 0xFFFF là chỉ số giả cho null
+//             goto op_HALT; // Call stack rỗng, dừng VM
+//         } else {
+//             // Cập nhật lại code_end cho frame mới
+//             code_end = CURRENT_CHUNK().get_code() + CURRENT_CHUNK().get_code_size();
+//             goto next_instruction; // Tiếp tục thực thi frame cũ (từ ip mới)
+//         }
+
+//     } catch (const VMError& e) {
+//         // **Modularization:** Gọi hàm helper cho việc xử lý exception
+//         if (handle_exception_unwind(e.what())) {
+//             goto dispatch_start; // Tiếp tục vòng lặp tại vị trí nhảy đến Catch block
+//         }
+//         // Nếu handle_exception_unwind throw, nó sẽ thoát khỏi VM
+//     } catch (const std::exception& e) {
+//         // Lỗi C++ không mong muốn
+//         std::cerr << "[fatal] An unexpected C++ error occurred: " << e.what() << "\n";
+//         return;
+//     }
+// }
