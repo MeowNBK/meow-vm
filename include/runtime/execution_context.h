@@ -27,7 +27,7 @@ namespace meow::runtime {
         std::vector<CallFrame> call_stack_;
         std::vector<meow::core::Value> registers_;
         std::vector<meow::core::upvalue_t> open_upvalues_;
-        std::vector<ExceptionHandler> execption_handlers_;
+        std::vector<ExceptionHandler> exception_handlers_;
 
         size_t current_base_ = 0;
         CallFrame* current_frame_ = nullptr;
@@ -36,7 +36,7 @@ namespace meow::runtime {
             call_stack_.clear();
             registers_.clear();
             open_upvalues_.clear();
-            execption_handlers_.clear();
+            exception_handlers_.clear();
         }
 
         inline void trace(meow::memory::GCVisitor& visitor) const noexcept {
