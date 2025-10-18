@@ -8,11 +8,12 @@
 namespace meow::runtime {
     struct CallFrame {
         meow::core::function_t function_;
+        meow::core::module_t module_;
         size_t start_reg_;
         size_t ret_reg_;
         const uint8_t* ip_;
-        CallFrame(meow::core::function_t function, size_t start_reg, size_t ret_reg, const uint8_t* ip)
-            : function_(function), start_reg_(start_reg), ret_reg_(ret_reg), ip_(ip) {}
+        CallFrame(meow::core::function_t function, meow::core::module_t module,size_t start_reg, size_t ret_reg, const uint8_t* ip)
+            : function_(function), module_(module), start_reg_(start_reg), ret_reg_(ret_reg), ip_(ip) {}
     };
 
     struct ExceptionHandler {
