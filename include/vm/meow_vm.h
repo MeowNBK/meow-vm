@@ -49,6 +49,6 @@ namespace meow::vm {
         void run();
 
         // --- Error helpers ---
-        [[noreturn]] inline void throwVMError(const std::string& message) { throw VMError(message); }
+        [[noreturn]] inline void throw_vm_error(const std::string& message) { throw VMError(message); }
     };
 }
