@@ -6,7 +6,7 @@ using namespace meow::memory;
 MemoryManager::MemoryManager(std::unique_ptr<GarbageCollector> gc) 
     : gc_(std::move(gc)), gc_threshold_(1024), object_allocated_(0) {}
 
-MemoryManager::~MemoryManager() = default;
+MemoryManager::~MemoryManager() noexcept = default;
 
 meow::core::string_t MemoryManager::new_string(const std::string& string) {
     auto it = string_pool_.find(string);

@@ -22,13 +22,13 @@ namespace meow::memory {
                 gc_threshold_ *= 2;
             }
             T* newObj = new T(std::forward<Args>(args)...);
-            gc->register_object(static_cast<meow::core::MeowObject*>(newObj));
+            gc_->register_object(static_cast<meow::core::MeowObject*>(newObj));
             ++object_allocated_;
             return newObj;
         }
     public:
         explicit MemoryManager(std::unique_ptr<meow::memory::GarbageCollector> gc);
-
+        ~MemoryManager() noexcept;
         meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {});
         meow::core::string_t new_string(const std::string& string);
         meow::core::string_t new_string(const char* chars, size_t length);

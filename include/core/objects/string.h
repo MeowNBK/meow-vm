@@ -56,6 +56,6 @@ namespace meow::core::objects {
         inline const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
         inline const_reverse_iterator rend() const noexcept { return data_.rend(); }
 
-        inline void trace(visitor_t& visitor) const noexcept override {}
+        inline void trace(visitor_t&) const noexcept override {}
     };
 }

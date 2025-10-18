@@ -57,7 +57,7 @@ namespace meow::core::objects {
         chunk_t chunk_;
         std::vector<UpvalueDesc> upvalue_descs_;
     public:
-        explicit ObjFunctionProto(size_t registers = 0, size_t upvalues = 0, string_t name = nullptr, chunk_t&& chunk) noexcept
+        explicit ObjFunctionProto(size_t registers, size_t upvalues, string_t name, chunk_t&& chunk) noexcept
             : num_registers_(registers), num_upvalues_(upvalues), name_(name), chunk_(std::move(chunk)) {}
 
         /// @brief Unchecked upvalue desc access. For performance-critical code
@@ -94,7 +94,7 @@ namespace meow::core::objects {
             return upvalues_[index];
         }
         /// @brief Unchecked upvalue modification. For performance-critical code
-        [[nodiscard]] inline void set_upvalue(size_t index, upvalue_t upvalue) noexcept {
+        inline void set_upvalue(size_t index, upvalue_t upvalue) noexcept {
             upvalues_[index] = upvalue;
         }
         /// @brief Checked upvalue access. Throws if index is OOB

@@ -69,13 +69,6 @@ namespace meow::core {
                 return nullptr;
             });
         }
-        [[nodiscard]] inline meow::core::MeowObject* as_object() const {
-            return data_.visit([](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_pointer_v<T>) return static_cast<MeowObject*>(arg);
-                return nullptr;
-            });
-        }
 
         inline const bool* as_if_bool() const noexcept { return data_.get_if<bool_t>(); }
         inline const int64_t* as_if_int() const noexcept { return data_.get_if<int_t>(); }

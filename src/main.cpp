@@ -1,4 +1,4 @@
---- Old codes ---
+// --- Old codes ---
 
 #include "vm/meow_vm.h"
 #include <iostream>

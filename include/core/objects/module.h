@@ -39,12 +39,12 @@ namespace meow::core::objects {
 
         // --- Globals ---
         [[nodiscard]] inline meow::core::return_t get_global(string_t name) noexcept { return globals_[name]; }
-        [[nodiscard]] inline void set_global(string_t name, meow::core::param_t value) noexcept { globals_[name] = value; } 
+        inline void set_global(string_t name, meow::core::param_t value) noexcept { globals_[name] = value; } 
         [[nodiscard]] inline bool has_global(string_t name) { return globals_.find(name) != globals_.end(); }
 
         // --- Exports ---
         [[nodiscard]] inline meow::core::return_t get_export(string_t name) noexcept { return exports_[name]; }
-        [[nodiscard]] inline void set_export(string_t name, meow::core::param_t value) noexcept { exports_[name] = value; }
+        inline void set_export(string_t name, meow::core::param_t value) noexcept { exports_[name] = value; }
         [[nodiscard]] inline bool has_export(string_t name) { return exports_.find(name) != exports_.end(); }
 
         // --- File info ---

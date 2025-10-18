@@ -61,7 +61,7 @@ namespace meow::core::objects {
 
         // --- Fields ---
         [[nodiscard]] inline meow::core::return_t get_field(string_t name) noexcept { return fields_[name];}
-        [[nodiscard]] inline void set_field(string_t name, meow::core::param_t value) noexcept { fields_[name] = value; }
+        inline void set_field(string_t name, meow::core::param_t value) noexcept { fields_[name] = value; }
         [[nodiscard]] inline bool has_field(string_t name) const { return fields_.find(name) != fields_.end(); }
 
         void trace(visitor_t& visitor) const noexcept override;

@@ -7,17 +7,17 @@ namespace meow::core {
     struct MeowObject;
 
     namespace objects {
-        struct ObjString;
-        struct ObjArray;
-        struct ObjHashTable;
-        struct ObjClass;
-        struct ObjInstance;
-        struct ObjBoundMethod;
-        struct ObjUpvalue;
-        struct ObjFunctionProto;
-        struct ObjNativeFunction;
-        struct ObjClosure;
-        struct ObjModule;
+        class ObjString;
+        class ObjArray;
+        class ObjHashTable;
+        class ObjClass;
+        class ObjInstance;
+        class ObjBoundMethod;
+        class ObjUpvalue;
+        class ObjFunctionProto;
+        class ObjNativeFunction;
+        class ObjClosure;
+        class ObjModule;
     }
     
     using array_t = objects::ObjArray*;

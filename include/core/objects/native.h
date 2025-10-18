@@ -47,6 +47,6 @@ namespace meow::core::objects {
             return meow::core::value_t();
         }
 
-        void trace(visitor_t& visitor) const noexcept override {}
+        void trace(visitor_t&) const noexcept override {}
     };
 }
