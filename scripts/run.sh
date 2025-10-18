@@ -6,14 +6,4 @@ if [[ ! -x "$VM" ]]; then
     exit 1
 fi
 
-for f in "$TEST_DIR"/*; do
-    filename=$(basename "$f")
-    
-    if [[ "$filename" != *.meowb ]]; then
-        f="$f.meowb"
-    fi
-
-    if [[ -f "$f" ]]; then
-        "$VM" "$f"
-    fi
-done
+"$VM"

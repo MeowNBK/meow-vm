@@ -405,74 +405,123 @@ void MeowVM::run() {
             }
 
             // --- CALL / RETURN ---
-            case OpCode::CALL: {
-                uint16_t dst = READ_U16();
-                uint16_t fnReg = READ_U16();
-                uint16_t argStart = READ_U16();
-                uint16_t argc = READ_U16();
-                
-                Value& callee = REGISTER(fnReg);
-                
-                if (!callee.is_function()) {
-                     // (TODO: Xử lý native function, class constructor, bound method ở đây)
-                    throw_vm_error("CALL: Callee is not a function.");
-                }
-                
-                function_t closure = callee.as_function();
-                proto_t proto = closure->get_proto();
-                
-                size_t new_base = context_->registers_.size();
-                size_t ret_reg = (dst == 0xFFFF) ? static_cast<size_t>(-1) : static_cast<size_t>(dst);
-
-                context_->registers_.resize(new_base + proto->get_num_registers());
-                
-                for (size_t i = 0; i < argc; ++i) {
-                    if (i < proto->get_num_registers()) {
-                        context_->registers_[new_base + i] = REGISTER(argStart + i);
-                    }
-                }
-                
-                context_->current_frame_->ip_ = ip;
-                
-                // CẬP NHẬT: Truyền module từ frame hiện tại
-                module_t current_module = context_->current_frame_->module_;
-                context_->call_stack_.emplace_back(closure, current_module, new_base, ret_reg, proto->get_chunk().get_code());
-                
-                context_->current_frame_ = &context_->call_stack_.back();
-                ip = context_->current_frame_->ip_;
-                context_->current_base_ = context_->current_frame_->start_reg_;
-                
-                break;
-            }
+            case OpCode::CALL:
             case OpCode::CALL_VOID: {
-                uint16_t fnReg = READ_U16();
-                uint16_t argStart = READ_U16();
-                uint16_t argc = READ_U16();
+                // 1. Đọc các toán hạng (arguments)
+                uint16_t dst, fnReg, argStart, argc;
+                size_t ret_reg;
+
+                if (static_cast<OpCode>(instruction) == OpCode::CALL) {
+                    dst = READ_U16();
+                    fnReg = READ_U16();
+                    argStart = READ_U16();
+                    argc = READ_U16();
+                    ret_reg = (dst == 0xFFFF) ? static_cast<size_t>(-1) : static_cast<size_t>(dst);
+                } else { // OpCode::CALL_VOID
+                    fnReg = READ_U16();
+                    argStart = READ_U16();
+                    argc = READ_U16();
+                    ret_reg = static_cast<size_t>(-1); // Luôn là void
+                }
                 
                 Value& callee = REGISTER(fnReg);
-                if (!callee.is_function()) throw_vm_error("CALL_VOID: Callee is not a function.");
-                
-                function_t closure = callee.as_function();
-                proto_t proto = closure->get_proto();
-                size_t new_base = context_->registers_.size();
-                size_t ret_reg = static_cast<size_t>(-1); 
 
+                // --- TRƯỜNG HỢP 1: Native Function (Gọi nhanh) ---
+                if (callee.is_native_fn()) {
+                    native_fn_t native = callee.as_native_fn();
+                    
+                    // Chuẩn bị đối số cho hàm C++
+                    std::vector<Value> args(argc);
+                    for (size_t i = 0; i < argc; ++i) {
+                        args[i] = REGISTER(argStart + i);
+                    }
+                    
+                    // (Lưu ý: 'this' ở đây là MeowVM, kế thừa từ MeowEngine)
+                    Value result = native->call(this, args); 
+                    
+                    // Ghi kết quả trả về nếu không phải void
+                    if (ret_reg != static_cast<size_t>(-1)) {
+                        REGISTER(dst) = result;
+                    }
+                    break; // Không cần push CallFrame, thực thi ngay lập tức
+                }
+
+                instance_t self = nullptr;
+                function_t closure_to_call = nullptr;
+                bool is_constructor_call = false;
+
+                // --- TRƯỜNG HỢP 2: Xác định hàm (closure) và 'self' (this) ---
+                if (callee.is_function()) {
+                    // Gọi hàm thông thường
+                    closure_to_call = callee.as_function();
+                } else if (callee.is_bound_method()) {
+                    // Gọi hàm đã bind (ví dụ: instance.method())
+                    bound_method_t bound = callee.as_bound_method();
+                    self = bound->get_instance(); // 'self' là instance
+                    closure_to_call = bound->get_function();
+                } else if (callee.is_class()) {
+                    // --- TRƯỜNG HỢP 3: Gọi hàm khởi tạo (Class Constructor) ---
+                    class_t k = callee.as_class();
+                    self = heap_->new_instance(k); // Tạo instance mới
+                    is_constructor_call = true;
+                    
+                    // Đặt instance vào thanh ghi trả về *TRƯỚC KHI* gọi 'init'
+                    // (Vì 'init' là void, nhưng constructor trả về instance)
+                    if (ret_reg != static_cast<size_t>(-1)) {
+                        REGISTER(dst) = Value(self);
+                    }
+                    
+                    // Tìm hàm 'init'
+                    Value init_val = k->get_method(heap_->new_string("init"));
+                    if (init_val.is_function()) {
+                        closure_to_call = init_val.as_function();
+                    } else {
+                        // Không có 'init', chỉ tạo instance. Hoàn tất.
+                        break; 
+                    }
+                } else {
+                    throw_vm_error("CALL: Giá trị không thể gọi được (không phải function, class, hay native).");
+                }
+
+                // --- TRƯỜNG HỢP 4: Setup Call Frame (cho Function, Bound Method, Init) ---
+                proto_t proto = closure_to_call->get_proto();
+                size_t new_base = context_->registers_.size(); // Vị trí bắt đầu frame mới
+                
+                // Cấp phát thanh ghi cho frame mới
                 context_->registers_.resize(new_base + proto->get_num_registers());
-                for (size_t i = 0; i < argc; ++i) {
-                    if (i < proto->get_num_registers()) {
-                        context_->registers_[new_base + i] = REGISTER(argStart + i);
+                
+                size_t arg_offset = 0;
+                // Nếu 'self' (this) tồn tại, đặt nó vào R0 của frame mới
+                if (self != nullptr) {
+                    if (proto->get_num_registers() > 0) {
+                        context_->registers_[new_base + 0] = Value(self);
+                        arg_offset = 1; // Các đối số thông thường bắt đầu từ R1
                     }
                 }
-                context_->current_frame_->ip_ = ip;
                 
-                // CẬP NHẬT: Truyền module từ frame hiện tại
+                // Copy các đối số từ frame cũ sang frame mới
+                for (size_t i = 0; i < argc; ++i) {
+                    if ((arg_offset + i) < proto->get_num_registers()) {
+                        context_->registers_[new_base + arg_offset + i] = REGISTER(argStart + i);
+                    }
+                }
+                
+                context_->current_frame_->ip_ = ip; // Lưu IP của frame cũ
+                
                 module_t current_module = context_->current_frame_->module_;
-                context_->call_stack_.emplace_back(closure, current_module, new_base, ret_reg, proto->get_chunk().get_code());
                 
+                // Nếu là constructor, frame 'init' không trả về gì
+                size_t frame_ret_reg = is_constructor_call ? static_cast<size_t>(-1) : ret_reg;
+
+                // Push frame mới vào call stack
+                context_->call_stack_.emplace_back(closure_to_call, current_module, new_base, frame_ret_reg, proto->get_chunk().get_code());
+                
+                // Cập nhật trạng thái VM để chạy frame mới
                 context_->current_frame_ = &context_->call_stack_.back();
                 ip = context_->current_frame_->ip_;
                 context_->current_base_ = context_->current_frame_->start_reg_;
-                break;
+                
+                break; // Thoát switch, vòng lặp run() sẽ thực thi frame mới
             }
 
             case OpCode::RETURN: {
@@ -607,12 +656,31 @@ void MeowVM::run() {
                 uint16_t srcReg = READ_U16();
                 Value& src = REGISTER(srcReg);
                 auto keys_array = heap_->new_array();
+
                 if (src.is_hash_table()) {
                     hash_table_t hash = src.as_hash_table();
+                    keys_array->reserve(hash->size());
                     for (auto it = hash->begin(); it != hash->end(); ++it) {
                         keys_array->push(Value(it->first));
                     }
-                } // (TODO: Thêm logic cho Instance, Array, String)
+                } 
+                // --- PHẦN MỚI ---
+                else if (src.is_array()) {
+                    array_t arr = src.as_array();
+                    keys_array->reserve(arr->size());
+                    for (size_t i = 0; i < arr->size(); ++i) {
+                        keys_array->push(Value(static_cast<int64_t>(i)));
+                    }
+                }
+                else if (src.is_string()) {
+                    string_t str = src.as_string();
+                    keys_array->reserve(str->size());
+                    for (size_t i = 0; i < str->size(); ++i) {
+                        keys_array->push(Value(static_cast<int64_t>(i)));
+                    }
+                }
+                // (Không thể implement cho Instance nếu 'fields_' là private)
+                
                 REGISTER(dst) = Value(keys_array);
                 break;
             }
@@ -621,12 +689,32 @@ void MeowVM::run() {
                 uint16_t srcReg = READ_U16();
                 Value& src = REGISTER(srcReg);
                 auto vals_array = heap_->new_array();
+
                 if (src.is_hash_table()) {
                     hash_table_t hash = src.as_hash_table();
+                    vals_array->reserve(hash->size());
                     for (auto it = hash->begin(); it != hash->end(); ++it) {
                         vals_array->push(it->second);
                     }
-                } // (TODO: Thêm logic cho Instance, Array, String)
+                } 
+                // --- PHẦN MỚI ---
+                else if (src.is_array()) {
+                    array_t arr = src.as_array();
+                    vals_array->reserve(arr->size());
+                    for (size_t i = 0; i < arr->size(); ++i) {
+                        vals_array->push(arr->get(i)); // Dùng get() an toàn
+                    }
+                }
+                else if (src.is_string()) {
+                    string_t str = src.as_string();
+                    vals_array->reserve(str->size());
+                    for (size_t i = 0; i < str->size(); ++i) {
+                        // Trả về mảng các chuỗi 1 ký tự
+                        vals_array->push(Value(heap_->new_string(std::string(1, str->get(i)))));
+                    }
+                }
+                // (Không thể implement cho Instance nếu 'fields_' là private)
+                
                 REGISTER(dst) = Value(vals_array);
                 break;
             }
@@ -661,19 +749,32 @@ void MeowVM::run() {
                         REGISTER(dst) = inst->get_field(name);
                         break;
                     }
-                    // 2. Tìm trong methods (và bind)
+                    // 2. Tìm trong methods (và bind) - duyệt cả superclass
                     class_t k = inst->get_class();
                     while (k) {
                         if (k->has_method(name)) {
                             REGISTER(dst) = Value(heap_->new_bound_method(inst, k->get_method(name).as_function()));
-                            break;
+                            break; 
                         }
                         k = k->get_super();
                     }
                     if (k) break; // Đã tìm thấy method
                 }
-                // (TODO: Thêm logic cho module và magic methods)
-                REGISTER(dst) = Value(null_t{}); // Không tìm thấy
+                
+                // --- PHẦN MỚI ---
+                // 3. Cho phép truy cập export của module (ví dụ: import OS; OS.print())
+                if (obj.is_module()) {
+                    module_t mod = obj.as_module();
+                    if (mod->has_export(name)) {
+                        REGISTER(dst) = mod->get_export(name);
+                        break;
+                    }
+                }
+
+                // (TODO: Thêm logic tra cứu builtin methods/getters từ builtins_)
+                
+                // 4. Không tìm thấy
+                REGISTER(dst) = Value(null_t{}); 
                 break;
             }
             case OpCode::SET_PROP: {
@@ -708,18 +809,61 @@ void MeowVM::run() {
                 uint16_t superReg = READ_U16();
                 Value& subVal = REGISTER(subReg);
                 Value& superVal = REGISTER(superReg);
-                if (!subVal.is_class() || !superVal.is_class()) throw_vm_error("INHERIT: operands must be classes.");
+                if (!subVal.is_class() || !superVal.is_class()) {
+                    throw_vm_error("INHERIT: Toán hạng phải là class.");
+                }
                 class_t sub = subVal.as_class();
                 class_t super = superVal.as_class();
+                
+                // Chỉ cần set superclass. Logic GET_PROP sẽ xử lý việc tra cứu.
                 sub->set_super(super);
-                // (TODO: Thêm logic sao chép methods từ superclass)
+                
+                // Lưu ý: Nếu bạn *muốn* sao chép method (như VM cũ), 
+                // bạn cần sửa file 'oop.h' để cung cấp
+                // accessor public cho 'methods_'.
                 break;
             }
-            case OpCode::GET_SUPER:
-                // (Logic này phức tạp, yêu cầu truy cập 'this' và superclass)
-                throw_vm_error("Opcode GET_SUPER not yet implemented in run()");
+            case OpCode::GET_SUPER: {
+                uint16_t dst = READ_U16();
+                uint16_t name_idx = READ_U16();
+                string_t name = CONSTANT(name_idx).as_string();
+                
+                // 1. Giả định 'this' (receiver) luôn ở thanh ghi 0 (R0) của frame hiện tại
+                Value& receiverVal = REGISTER(0);
+                if (!receiverVal.is_instance()) {
+                    throw_vm_error("GET_SUPER: 'super' phải được dùng bên trong một method.");
+                }
+                instance_t receiver = receiverVal.as_instance();
+                
+                // 2. Lấy superclass
+                class_t klass = receiver->get_class();
+                class_t super = klass->get_super();
+                
+                if (super == nullptr) {
+                    throw_vm_error("GET_SUPER: Class '" + std::string(klass->get_name()->c_str()) + "' không có superclass.");
+                }
+                
+                // 3. Tìm method trong cây kế thừa của superclass
+                class_t k = super;
+                while (k) {
+                    if (k->has_method(name)) {
+                        Value method_val = k->get_method(name);
+                        if (!method_val.is_function()) {
+                             throw_vm_error("GET_SUPER: Thành viên của superclass không phải là function.");
+                        }
+                        
+                        // 4. Bind method của cha với 'this' hiện tại
+                        REGISTER(dst) = Value(heap_->new_bound_method(receiver, method_val.as_function()));
+                        break; 
+                    }
+                    k = k->get_super(); // Tiếp tục tìm lên trên
+                }
+                
+                if (k == nullptr) { // Không tìm thấy
+                     throw_vm_error("GET_SUPER: Superclass không có method tên là '" + std::string(name->c_str()) + "'.");
+                }
                 break;
-
+            }
             // --- TRY/CATCH (ĐÃ HOÀN THIỆN) ---
             case OpCode::THROW: {
                 uint16_t reg = READ_U16();
