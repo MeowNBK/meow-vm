@@ -96,10 +96,10 @@ namespace meow::core {
 
 
             template <typename Visitor>
-            decltype(auto) visit(Visitor&& vis) { return data_.visit(vis) }
+            decltype(auto) visit(Visitor&& vis) { return data_.visit(vis); }
 
             template <typename Visitor>
-            decltype(auto) visit(Visitor&& vis) const { return data_.visit(vis) }
+            decltype(auto) visit(Visitor&& vis) const { return data_.visit(vis); }
 
             template <typename... Fs>
             decltype(auto) visit(Fs&&... fs) {
