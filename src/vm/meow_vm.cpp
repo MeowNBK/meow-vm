@@ -74,7 +74,7 @@ void MeowVM::run() {
     auto main_proto = heap_->new_proto(1, 0, heap_->new_string("main"), std::move(test_chunk));
     auto main_func = heap_->new_function(main_proto);
 
-    context_->registers_.resize(1);
+    context_->registers_.resize(2);
     context_->call_stack_.emplace_back(main_func, 0, 0, main_func->get_proto()->get_chunk().get_code());
     context_->current_frame_ = &context_->call_stack_.back();
 
@@ -112,6 +112,7 @@ void MeowVM::run() {
 
                 REGISTER(dst) = value;
                 // printl("load_const r{}", dst);
+                break;
             }
 
             // load_null dst
@@ -120,6 +121,7 @@ void MeowVM::run() {
 
                 REGISTER(dst) = Value();
                 printl("load_null r{}", dst);
+                break;
             }
 
             // load_true dst
@@ -128,6 +130,7 @@ void MeowVM::run() {
 
                 REGISTER(dst) = Value(true);
                 printl("load_true r{}", dst);
+                break;
             }
 
             // load_false dst
@@ -136,6 +139,7 @@ void MeowVM::run() {
 
                 REGISTER(dst) = Value(false);
                 printl("load_true r{}", dst);
+                break;
             }
 
             case OpCode::MOVE: {
@@ -143,6 +147,7 @@ void MeowVM::run() {
                 uint16_t src = READ_U16();
 
                 REGISTER(dst) = REGISTER(src);
+                break;
             }
 
             // load_int dst, value
@@ -162,6 +167,7 @@ void MeowVM::run() {
 
                 REGISTER(dst) = Value(value);
                 printl("load_float r{}, {}", dst, value);
+                break;
             }
 
             // halt
