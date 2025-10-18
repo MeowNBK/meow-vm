@@ -1,0 +1,2649 @@
+--- Old codes ---
+--- Read-only document ---
+
+#pragma once
+
+#include "core/value.h"
+
+class Value;
+class MemoryManager;
+
+class MeowEngine {
+public:
+    virtual ~MeowEngine() = default;
+
+    virtual Value call(const Value& callee, Arguments args) = 0;
+    virtual MemoryManager* get_heap() noexcept = 0;
+    virtual void register_method(const std::string& type_name, const std::string& method_name, const Value& method) = 0;
+    virtual void register_getter(const std::string& type_name, const std::string& property_name, const Value& getter) = 0;
+    virtual const std::vector<std::string>& get_arguments() const noexcept = 0;
+};
+
+#pragma once
+#include "core/objects.h"
+#include "bytecode_parser.h"
+#include "operator_dispatcher.h"
+#include "memory_manager.h"
+#include "meow_engine.h"
+#include "common/pch.h"
+
+class VMError : public std::runtime_error {
+public:
+    VMError(const Str& m) : std::runtime_error(m) {}
+};
+
+class GCScopeGuard {
+private:
+    MemoryManager* mm;
+public:
+    GCScopeGuard(MemoryManager* mem) : mm(mem) { if(mm) mm->disableGC(); }
+    ~GCScopeGuard() { if(mm) mm->enableGC(); }
+};
+
+class GCVisitor;
+
+class MeowVM: public MeowEngine {
+public:
+    MeowVM(const Str& entryPointDir);
+    MeowVM(const Str& entryPointDir, int argc, char* argv[]);
+    void interpret(const Str& entryPath, Bool isBinary);
+    std::vector<Value*> findRoots();
+    void traceRoots(GCVisitor&);
+
+private:
+    std::vector<CallFrame> callStack;
+    std::vector<Value> stackSlots;
+    std::vector<Upvalue> openUpvalues;
+    std::vector<Str> commandLineArgs;
+    std::unordered_map<Str, Module> moduleCache;
+    std::unordered_map<Module, std::unordered_map<Str, Value>> moduleGlobals;
+    std::unordered_map<Str, std::unordered_map<Str, Value>> builtinMethods;
+    std::unordered_map<Str, std::unordered_map<Str, Value>> builtinGetters;
+    
+    std::vector<ExceptionHandler> exceptionHandlers;
+    BytecodeParser textParser;
+    OperatorDispatcher opDispatcher;
+    std::unique_ptr<MemoryManager> memoryManager;
+    Str entryPointDir;
+
+    using OpCodeHandler = void (MeowVM::*)();
+    std::vector<OpCodeHandler> jumpTable;
+
+    CallFrame* currentFrame = nullptr;
+    const Instruction* currentInst = nullptr;
+    Int currentBase = 0;
+
+    void defineNativeFunctions();
+    Module _getOrLoadModule(const Str& modulePath, const Str& importerPath, Bool isBinary);
+    void run();
+    void initializeJumpTable();
+    void _handleRuntimeException(const VMError& e);
+    void closeUpvalues(Int slotIndex);
+    Upvalue captureUpvalue(Int slotIndex);
+    void _executeCall(const Value& callee, Int dst, Int argStart, Int argc, Int base);
+
+    MemoryManager* get_heap() noexcept override { return this->memoryManager.get(); }
+    Value call(const Value& callee, Arguments args) override;
+    void register_method(const Str& type_name, const Str& method_name, const Value& method) noexcept override;
+    void register_getter(const Str& type_name, const Str& property_name, const Value& getter) noexcept override;
+    const std::vector<Str>& get_arguments() const noexcept override { return commandLineArgs; }
+
+    Function wrapClosure(const Value& maybeCallable);
+    std::optional<Value> getMagicMethod(const Value& obj, const Str& name);
+    
+    void opMove();
+    void opLoadConst();
+    void opLoadInt();
+    void opLoadNull();
+    void opLoadTrue();
+    void opLoadFalse();
+    void opBinary();
+    void opUnary();
+    void opGetGlobal();
+    void opSetGlobal();
+    void opGetUpvalue();
+    void opSetUpvalue();
+    void opClosure();
+    void opCloseUpvalues();
+    void opJump();
+    void opJumpIfFalse();
+    void opJumpIfTrue();
+    void opCall();
+    void opReturn();
+    void opHalt();
+    void opNewArray();
+    void opNewHash();
+    void opGetIndex();
+    void opSetIndex();
+    void opGetKeys();
+    void opGetValues();
+    void opNewClass();
+    void opNewInstance();
+    void opGetProp();
+    void opSetProp();
+    void opSetMethod();
+    void opInherit();
+    void opGetSuper();
+    void opImportModule();
+    void opExport();
+    void opGetExport();
+    void opGetModuleExport();
+    void opImportAll();
+    void opSetupTry();
+    void opPopTry();
+    void opThrow();
+    void opUnsupported();
+
+    Str _toString(const Value& v);
+    Int _toInt(const Value& v) const;
+    Real _toDouble(const Value& v) const;
+    Bool _isTruthy(const Value& v) const;
+    Bool _areValuesEqual(const Value& a, const Value& b) const;
+    
+    Str opToString(OpCode op) const;
+
+    [[noreturn]] void throwVMError(const Str& msg);
+};
+
+
+===== FILE: ./define_natives.cpp =====
+#include "meow_vm.h"
+#include "common/pch.h"
+
+template<class... Ts> 
+struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+
+template<class... Ts> 
+overloaded(Ts...) -> overloaded<Ts...>;
+
+void MeowVM::defineNativeFunctions() {
+    auto nativePrint = [this](Arguments args) -> Value {
+        Str outputString;
+        for (size_t i = 0; i < args.size(); ++i) {
+            if (i > 0) outputString += " ";
+            outputString += _toString(args[i]);
+        }
+
+        std::cout << outputString << std::endl;
+        return Value(Null{});
+    };
+
+    // auto typeOf = [this](Arguments args) {
+    //     return Value(visit([](auto&& arg) -> std::string {
+    //         using T = std::decay_t<decltype(arg)>;
+    //         if constexpr (std::is_same_v<T, Null>) return "null";
+    //         if constexpr (std::is_same_v<T, Int>) return "int";
+    //         if constexpr (std::is_same_v<T, Real>) {
+    //             Real r = arg;
+    //             if (std::isinf(r)) return "real";
+    //             if (std::isnan(r)) return "real";
+    //             return "real";
+    //         }
+    //         if constexpr (std::is_same_v<T, Bool>) return "bool";
+    //         if constexpr (std::is_same_v<T, Str>) return "string";
+    //         if constexpr (std::is_same_v<T, Array>) return "array";
+    //         if constexpr (std::is_same_v<T, Object>) return "object";
+    //         if constexpr (std::is_same_v<T, Function>) return "function";
+    //         if constexpr (std::is_same_v<T, NativeFn>) return "native";
+    //         if constexpr (std::is_same_v<T, Upvalue>) return "upvalue";
+    //         if constexpr (std::is_same_v<T, Module>) return "module";
+    //         if constexpr (std::is_same_v<T, Proto>) return "proto";
+            
+        
+    //         if constexpr (std::is_same_v<T, Class>) return "class";
+    //         if constexpr (std::is_same_v<T, Instance>) return "instance";
+    //         if constexpr (std::is_same_v<T, BoundMethod>) return "bound_method";
+    //         return "unknown";
+    //     }, args[0]));
+    // };
+
+    auto toInt = [this](Arguments args) {
+        return Value(this->_toInt(args[0]));
+    };
+
+    auto toReal = [this](Arguments args) {
+        return Value(this->_toDouble(args[0]));
+    };
+
+    auto toBool = [this](Arguments args) {
+        return Value(this->_isTruthy(args[0]));
+    };
+
+    auto toStr = [this](Arguments args) {
+        return Value(this->_toString(args[0]));
+    };
+
+    // auto nativeLen = [this](Arguments args) {
+    //     const auto& value = args[0];
+    //     return visit(overloaded{
+    //         [](const Str& s) { return Value((Int)s.length()); },
+    //         [](const Array& a)  { return Value((Int)a->elements.size()); },
+    //         [](const Object& o) { return Value((Int)o->fields.size()); },
+    //         [](const auto&) -> Value { 
+    //             return Int(-1);
+    //         }
+    //     }, value);
+    // };
+
+
+    // auto nativeAssert = [this](Arguments args) {
+    //     if (!this->_isTruthy(args[0])) {
+    //         Str message = "Assertion failed.";
+    //         if (args.size() > 1 && (args[1]).is_string()) {
+    //             message = args[1].get<Str>();
+    //         }
+    //         throwVMError(message);
+    //     }
+    //     return Value(Null{});
+    // };
+
+
+    // auto nativeOrd = [this](Arguments args) {
+    //     const auto& str = args[0].get<Str>();
+    //     if (str.length() != 1) {
+    //         throwVMError("Hàm ord() chỉ chấp nhận chuỗi có đúng 1 ký tự.");
+    //     }
+    //     return Value((Int)static_cast<unsigned char>(str[0]));
+    // };
+
+
+    // auto nativeChar = [this](Arguments args) {
+    //     Int code = args[0].get<Int>();
+    //     if (code < 0 || code > 255) {
+    //         throwVMError("Mã ASCII của hàm chr() phải nằm trong khoảng [0, 255].");
+
+    //     }
+    //     return Value(Str(1, static_cast<char>(code)));
+    // };
+
+    // auto nativeRange = [this](Arguments args) {
+    //     Int start = 0;
+    //     Int stop = 0;
+    //     Int step = 1;
+    //     size_t argCount = args.size();
+
+    //     if (argCount == 1) {
+    //         stop = args[0].get<Int>();
+    //     } else if (argCount == 2) {
+    //         start = args[0].get<Int>();
+    //         stop = args[1].get<Int>();
+    //     } else {
+    //         start = args[0].get<Int>();
+    //         stop = args[1].get<Int>();
+    //         step = args[2].get<Int>();
+    //     }
+
+    //     if (step == 0) {
+    //         throwVMError("Tham số 'step' của hàm range() không thể bằng 0.");
+    //     }
+
+    //     auto resultArrayData = this->memoryManager->newObject<ObjArray>();
+        
+    //     if (step > 0) {
+    //         for (Int i = start; i < stop; i += step) {
+    //             resultArrayData->elements.push_back(Value(i));
+    //         }
+    //     } else {
+    //         for (Int i = start; i > stop; i += step) {
+    //             resultArrayData->elements.push_back(Value(i));
+    //         }
+    //     }
+
+    //     return Value(Array(resultArrayData));
+    // };
+
+
+    Value printFunc = nativePrint;
+    std::unordered_map<Str, Value> natives;
+    natives["print"]  = Value(nativePrint);
+    // natives["typeof"] = Value(typeOf);
+    // natives["len"]    = Value(nativeLen);
+    // natives["assert"] = Value(nativeAssert);
+    natives["int"]  = Value(toInt);
+    natives["real"] = Value(toReal);
+    natives["bool"] = Value(toBool);
+    natives["str"]  = Value(toStr);
+    // natives["ord"]    = Value(nativeOrd);
+    // natives["char"]   = Value(nativeChar);
+    // natives["range"]  = Value(nativeRange);
+
+
+    auto nativeModule = memoryManager->newObject<ObjModule>("native", "native");
+    nativeModule->globals = natives;
+    moduleCache["native"] = nativeModule;
+
+    // std::vector<Str> list = {"array", "object", "string"};
+
+    // for (const auto& moduleName : list) {
+    //     try {
+    //         _getOrLoadModule(moduleName, "native", true); 
+    //     } catch (const VMError& e) {
+    //         // std::cerr << "Warning: Could not preload standard module '" 
+    //                 //   << moduleName << "'. " << e.what() << std::endl;
+    //     }
+    // }
+}
+
+
+
+===== FILE: ./handle_call.cpp =====
+#include "meow_vm.h"
+
+Upvalue MeowVM::captureUpvalue(Int slotIndex) {
+    if (slotIndex < 0 || slotIndex >= static_cast<Int>(stackSlots.size()))
+        throwVMError("captureUpvalue: slotIndex OOB: " + std::to_string(slotIndex) + " stackSize=" + std::to_string(stackSlots.size()));
+
+    for (auto it = openUpvalues.rbegin(); it != openUpvalues.rend(); ++it) {
+        if ((*it)->slotIndex == slotIndex) {
+            return *it;
+        }
+
+        if ((*it)->slotIndex < slotIndex) {
+            break; 
+        }
+    }
+
+    auto newUv = memoryManager->newObject<ObjUpvalue>(slotIndex);
+
+    auto it = openUpvalues.begin();
+    while (it != openUpvalues.end() && (*it)->slotIndex < slotIndex) {
+        ++it;
+    }
+    openUpvalues.insert(it, newUv);
+    
+    return newUv;
+}
+
+void MeowVM::closeUpvalues(Int slotIndex) {
+    while (!openUpvalues.empty() && openUpvalues.back()->slotIndex >= slotIndex) {
+        auto up = openUpvalues.back();
+        up->close(stackSlots[up->slotIndex]);
+        openUpvalues.pop_back();
+    }
+}
+
+void MeowVM::_executeCall(const Value& callee, Int dst, Int argStart, Int argc, Int base) {
+
+    std::vector<Value> args;
+    args.reserve(argc);
+    for (Int i = 0; i < argc; ++i) {
+        args.push_back(stackSlots[base + argStart + i]);
+    }
+
+    if (callee.is_function()) {
+        auto closure = callee.get<Function>();
+        Int newStart = static_cast<Int>(stackSlots.size());
+        Int needed = newStart + closure->proto->numRegisters;
+        stackSlots.resize(needed, Value(Null{}));
+
+        if (static_cast<Int>(stackSlots.size()) < needed) {
+            throwVMError("stackSlots quá nhỏ khi resize trong _executeCall. "
+                        "cần=" + std::to_string(needed) +
+                        " đã có=" + std::to_string(stackSlots.size()));
+        }
+
+        CallFrame newFrame(closure, newStart, callStack.back().module, 0, dst);
+        callStack.push_back(newFrame);
+
+        for (Int i = 0; i < std::min(argc, static_cast<Int>(closure->proto->numRegisters)); ++i) {
+            stackSlots[newStart + i] = args[i];
+        }
+    } else if (callee.is_bound_method()) {
+        auto boundMethod = callee.get<BoundMethod>();
+        if (!Value(boundMethod->callable).is_function()) throwVMError("Bound method không chứa một closure có thể gọi được.");
+        auto methodClosure = boundMethod->callable;
+        Int newStart = static_cast<Int>(stackSlots.size());
+        stackSlots.resize(newStart + methodClosure->proto->numRegisters);
+        CallFrame newFrame(methodClosure, newStart, callStack.back().module, 0, dst);
+        callStack.push_back(newFrame);
+        stackSlots[newStart + 0] = Value(boundMethod->receiver);
+        for (Int i = 0; i < std::min(argc, static_cast<Int>(methodClosure->proto->numRegisters - 1)); ++i) {
+            stackSlots[newStart + 1 + i] = args[i];
+        }
+    } else if (callee.is_class()) {
+        auto klass = callee.get<Class>();
+        auto instance = memoryManager->newObject<ObjInstance>(klass);
+        if (dst != -1) stackSlots[base + dst] = Value(instance);
+        auto it = klass->methods.find("init");
+        if (it != klass->methods.end() && (it->second).is_function()) {
+            auto boundInit = memoryManager->newObject<ObjBoundMethod>(instance, it->second.get<Function>());
+            _executeCall(Value(boundInit), -1, argStart, argc, base);
+        }
+    } else if (callee.is_native_fn()) {
+        auto func = callee.get<NativeFn>();
+        Value result = std::visit(
+            [&](auto&& func) -> Value {
+                using T = std::decay_t<decltype(func)>;
+                if constexpr (std::is_same_v<T, NativeFnSimple>) {
+                    return func(args);
+                } else if constexpr (std::is_same_v<T, NativeFnAdvanced>) {
+                    return func(this, args);
+                }
+                return Value(Null{});
+            },
+            func
+        );
+        if (dst != -1) stackSlots[base + dst] = result;
+    } else {
+        std::ostringstream os;
+        os << "Giá trị kiểu '" << _toString(callee) << "' không thể gọi được: '" + _toString(callee) + "' ";
+        os << "với các tham số là: ";
+        for (const auto& arg : args) {
+            os << _toString(arg) << " ";
+        }
+        os << "\n";
+        throwVMError(os.str());
+    }
+}
+
+Value MeowVM::call(const Value& callee, Arguments args) {
+    size_t startCallDepth = callStack.size();
+
+    Int argStartAbs = static_cast<Int>(stackSlots.size());
+    stackSlots.resize(argStartAbs + static_cast<Int>(args.size()));
+    for (size_t i = 0; i < args.size(); ++i) {
+        stackSlots[argStartAbs + static_cast<Int>(i)] = args[i];
+    }
+
+    Int dstAbs = static_cast<Int>(stackSlots.size());
+    stackSlots.resize(dstAbs + 1);
+
+    Int argStartRel = argStartAbs - currentBase;
+    Int dstRel      = dstAbs - currentBase;
+    if (argStartRel < 0 || dstRel < -1) {
+        throwVMError("Internal error: invalid relative arg/dst in VM::call");
+    }
+
+    _executeCall(callee, dstRel, argStartRel, static_cast<Int>(args.size()), currentBase);
+
+    while (callStack.size() > startCallDepth) {
+
+        currentFrame = &callStack.back();
+        auto proto = currentFrame->closure->proto;
+        currentBase = currentFrame->slotStart;
+
+        if (currentFrame->ip >= static_cast<Int>(proto->code.size())) {
+
+            if (currentFrame->retReg != -1 && callStack.size() > 1) {
+                CallFrame& parent = callStack[callStack.size() - 2];
+                size_t idx = static_cast<size_t>(parent.slotStart + currentFrame->retReg);
+                if (idx < stackSlots.size()) stackSlots[idx] = Value(Null{});
+            }
+            callStack.pop_back();
+            continue;
+        }
+
+        try {
+            currentInst = &proto->code[currentFrame->ip++];
+            (this->*jumpTable[static_cast<Int32>(currentInst->op)])();
+        } catch (const VMError& e) {
+            _handleRuntimeException(e);
+        } catch (const std::exception& e) {
+            std::cerr << "🤯 Lỗi C++ không lường trước trong VM::call loop: " << e.what() << std::endl;
+            callStack.clear();
+        }
+    }
+
+    Value result = stackSlots[dstAbs];
+
+    stackSlots.resize(argStartAbs);
+    return result;
+}
+
+
+===== FILE: ./handle_method.cpp =====
+#include "vm/meow_vm.h"
+
+// Helper: tạo wrapper cho native function, push receiver vào đầu args
+static NativeFnAdvanced make_native_wrapper(NativeFn orig, Value receiver) {
+    return [orig, receiver](MeowEngine* engine, Arguments args) -> Value {
+        std::vector<Value> newArgs;
+        newArgs.reserve(1 + args.size());
+        newArgs.push_back(receiver);
+        newArgs.insert(newArgs.end(), args.begin(), args.end());
+        return std::visit([&](auto&& fn) -> Value {
+            using T = std::decay_t<decltype(fn)>;
+            if constexpr (std::is_same_v<T, NativeFnSimple>) {
+                return fn(newArgs);
+            } else {
+                return fn(engine, newArgs);
+            }
+        }, orig);
+    };
+}
+
+// Helper: nếu receiver là Instance thì bind function/bound_method -> ObjBoundMethod;
+// nếu là native_fn -> bọc native với receiver; nếu không thì trả về as-is
+std::optional<Value> wrapValueForInstance(Instance inst, const Value& v, MemoryManager* memoryManager) {
+    if (!inst) return std::nullopt;
+
+    if (v.is_function()) {
+        Function f = v.get<Function>();
+        auto bm = memoryManager->newObject<ObjBoundMethod>(inst, f);
+        return Value(bm);
+    }
+
+    if (v.is_bound_method()) {
+        BoundMethod inbm = v.get<BoundMethod>();
+        if (inbm && inbm->callable) {
+            auto bm = memoryManager->newObject<ObjBoundMethod>(inst, inbm->callable);
+            return Value(bm);
+        }
+    }
+
+    if (v.is_native_fn()) {
+        NativeFn orig = v.get<NativeFn>();
+        NativeFnAdvanced wrapper = make_native_wrapper(orig, Value(inst));
+        return Value(wrapper);
+    }
+
+    return Value(v);
+}
+
+// Helper: cho các receiver không phải Instance (Object/Array/String/Int/Real/Bool)
+// - nếu value là native_fn -> bọc native với receiver Value
+// - ngược lại trả Value as-is
+std::optional<Value> wrapValueWithReceiverValue(const Value& receiver, const Value& v) {
+    if (v.is_native_fn()) {
+        NativeFn orig = v.get<NativeFn>();
+        NativeFnAdvanced wrapper = make_native_wrapper(orig, receiver);
+        return Value(wrapper);
+    }
+    return Value(v);
+}
+
+std::optional<Value> MeowVM::getMagicMethod(const Value& obj, const Str& name) {
+
+    // --- INSTANCE case (fields -> class methods -> super) ---
+    if (obj.is_instance()) {
+        Instance inst = obj.get<Instance>();
+        if (!inst) return std::nullopt;
+
+        // 1) instance fields
+        auto fit = inst->fields.find(name);
+        if (fit != inst->fields.end()) {
+            if (auto r = wrapValueForInstance(inst, fit->second, memoryManager.get())) return *r;
+        }
+
+        // 2) class methods (including walking superclass)
+        Class cur = inst->klass;
+        while (cur) {
+            auto mit = cur->methods.find(name);
+            if (mit != cur->methods.end()) {
+                if (auto r = wrapValueForInstance(inst, mit->second, memoryManager.get())) return *r;
+            }
+            if (cur->superclass) cur = *cur->superclass;
+            else break;
+        }
+
+        return std::nullopt;
+    }
+
+    // --- OBJECT (hash) ---
+    if (obj.is_hash()) {
+        Object objPtr = obj.get<Object>();
+        if (!objPtr) return std::nullopt;
+
+        auto fit = objPtr->fields.find(name);
+        if (fit != objPtr->fields.end()) {
+            if (auto r = wrapValueWithReceiverValue(Value(objPtr), fit->second)) return *r;
+        }
+
+        auto pgit = builtinGetters.find("Object");
+        if (pgit != builtinGetters.end()) {
+            auto it = pgit->second.find(name);
+            if (it != pgit->second.end()) return this->call(it->second, { obj });
+        }
+        auto pit = builtinMethods.find("Object");
+        if (pit != builtinMethods.end()) {
+            auto it = pit->second.find(name);
+            if (it != pit->second.end()) {
+                if (auto r = wrapValueWithReceiverValue(Value(objPtr), it->second)) return *r;
+            }
+        }
+        return std::nullopt;
+    }
+
+    // --- ARRAY ---
+    if (obj.is_array()) {
+        Array arr = obj.get<Array>();
+        if (!arr) return std::nullopt;
+
+        auto pgit = builtinGetters.find("Array");
+        if (pgit != builtinGetters.end()) {
+            auto it = pgit->second.find(name);
+            if (it != pgit->second.end()) return this->call(it->second, { obj });
+        }
+        auto pit = builtinMethods.find("Array");
+        if (pit != builtinMethods.end()) {
+            auto it = pit->second.find(name);
+            if (it != pit->second.end()) {
+                if (auto r = wrapValueWithReceiverValue(Value(arr), it->second)) return *r;
+            }
+        }
+        return std::nullopt;
+    }
+
+    // --- STRING ---
+    if (obj.is_string()) {
+        auto pgit = builtinGetters.find("String");
+        if (pgit != builtinGetters.end()) {
+            auto it = pgit->second.find(name);
+            if (it != pgit->second.end()) return this->call(it->second, { obj });
+        }
+        auto pit = builtinMethods.find("String");
+        if (pit != builtinMethods.end()) {
+            auto it = pit->second.find(name);
+            if (it != pit->second.end()) {
+                if (auto r = wrapValueWithReceiverValue(obj, it->second)) return *r;
+            }
+        }
+        return std::nullopt;
+    }
+
+    // --- PRIMITIVES: Int / Real / Bool ---
+    if (obj.is_int() || obj.is_real() || obj.is_bool()) {
+        Str typeName;
+        if (obj.is_int()) typeName = "Int";
+        else if (obj.is_real()) typeName = "Real";
+        else typeName = "Bool";
+
+        auto pgit = builtinGetters.find(typeName);
+        if (pgit != builtinGetters.end()) {
+            auto it = pgit->second.find(name);
+            if (it != pgit->second.end()) return this->call(it->second, { obj });
+        }
+
+        auto pit = builtinMethods.find(typeName);
+        if (pit != builtinMethods.end()) {
+            auto it = pit->second.find(name);
+            if (it != pit->second.end()) {
+                if (auto r = wrapValueWithReceiverValue(obj, it->second)) return *r;
+            }
+        }
+        return std::nullopt;
+    }
+
+    // --- CLASS (static methods) ---
+    if (obj.is_class()) {
+        Class klass = obj.get<Class>();
+        if (!klass) return std::nullopt;
+        auto mit = klass->methods.find(name);
+        if (mit != klass->methods.end()) {
+            return Value(mit->second);
+        }
+    }
+
+    return std::nullopt;
+}
+
+void MeowVM::register_method(const Str& type_name, const Str& method_name, const Value& method) noexcept {
+    builtinMethods[type_name][method_name] = method;
+}
+
+void MeowVM::register_getter(const Str& type_name, const Str& property_name, const Value& getter) noexcept {
+    builtinGetters[type_name][property_name] = getter;
+}
+
+
+===== FILE: ./helper_functions.cpp =====
+#include "meow_vm.h"
+#include "common/pch.h"
+
+static Str trimTrailingZeros(const Str& s) {
+    auto pos = s.find('.');
+    if (pos == Str::npos) return s;
+    size_t end = s.size();
+    while (end > pos + 1 && s[end - 1] == '0') --end;
+    if (end == pos + 1) --pos;
+    return s.substr(0, end);
+}
+
+Str MeowVM::_toString(const Value& v) {
+    if (v.is_null()) return "null";
+    if (v.is_bool()) return v.get<Bool>() ? "true" : "false";
+    if (v.is_int()) return std::to_string(v.get<Int>());
+    if (v.is_real()) {
+        Real val = v.get<Real>();
+        if (std::isnan(val)) return "NaN";
+        if (std::isinf(val)) return (val > 0) ? "Infinity" : "-Infinity";
+
+        if (val == 0.0 && std::signbit(val)) return "-0";
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(15) << val;
+        return trimTrailingZeros(ss.str());
+    }
+    if (v.is_string()) return v.get<Str>();
+    if (v.is_instance()) {
+        const auto& inst = v.get<Instance>();
+        auto it = inst->fields.find("__str__");
+        if (it != inst->fields.end()) {
+
+            try {
+                Function func = it->second.get<Function>();
+                BoundMethod bound = memoryManager->newObject<ObjBoundMethod>(inst, func);
+                Value str = this->call(Value(bound), {});
+                if (str.is_string()) return str.get<Str>();
+
+            } catch (...) {
+
+            }
+        } else {
+
+            auto currentClass = inst->klass;
+            while (currentClass) {
+                auto mIt = currentClass->methods.find("__str__");
+                if (mIt != currentClass->methods.end()) {
+
+                    try {
+                        Function func = mIt->second.get<Function>();
+                        BoundMethod bound = memoryManager->newObject<ObjBoundMethod>(inst, func);
+                        Value str = this->call(Value(bound), {});
+                        if (str.is_string()) return str.get<Str>();
+                    } catch (...) {
+
+                    }
+                    break;
+                }
+                if (currentClass->superclass) {
+                    currentClass = *currentClass->superclass;
+                } else {
+                    break;
+                }
+            }
+        }
+        return "<" + inst->klass->name + " object>";
+    }
+    if (v.is_class()) return "<class '" + v.get<Class>()->name + "'>";
+    if (v.is_function()) return "<fn '" + v.get<Function>()->proto->sourceName + "'>";
+    if (v.is_bound_method()) return "<bound method>";
+    if (v.is_array()) {
+        const auto& vec = v.get<Array>();
+        Str out = "[";
+        for (size_t i = 0; i < vec->size(); ++i) {
+            if (i > 0) out += ", ";
+            out += _toString((*vec)[i]);
+        }
+        out += "]";
+        return out;
+    }
+    if (v.is_hash()) {
+        const auto& m = v.get<Object>()->fields;
+        Str out = "{";
+        Bool first = true;
+        for (const auto& pair : m) {
+            if (!first) out += ", ";
+            out += pair.first + ": " + _toString(pair.second);
+            first = false;
+        }
+        out += "}";
+        return out;
+    }
+    if (v.is_module()) return "<module '" + v.get<Module>()->name + "'>";
+    if (v.is_native_fn()) return "<native fn>";
+        if (v.is_proto()) {
+        Proto proto = v.get<Proto>();
+        if (!proto) return "<null proto>";
+        std::ostringstream os;
+
+        os << "<function proto '" << proto->sourceName << "'>\n";
+        os << "  - code size: " << proto->code.size() << "\n";
+
+        if (!proto->code.empty()) {
+            // compute op name width for alignment (similar to throwVMError)
+            int maxOpLen = 0;
+            for (size_t i = 0; i < proto->code.size(); ++i) {
+                int len = static_cast<int>(opToString(proto->code[i].op).size());
+                if (len > maxOpLen) maxOpLen = len;
+            }
+            int opField = std::max(10, maxOpLen + 2);
+
+            os << "  - Bytecode:\n";
+            std::ios::fmtflags savedFlags = os.flags();
+            for (size_t i = 0; i < proto->code.size(); ++i) {
+                const Instruction& inst = proto->code[i];
+                os << "     " << std::right << std::setw(4) << static_cast<Int>(i) << ": ";
+                os << std::left << std::setw(opField) << opToString(inst.op);
+                if (!inst.args.empty()) {
+                    os << "  args=[";
+                    for (size_t a = 0; a < inst.args.size(); ++a) {
+                        if (a) os << ", ";
+                        os << inst.args[a];
+                    }
+                    os << "]";
+                } else {
+                    os << "  args=[]";
+                }
+                os << "\n";
+                os.flags(savedFlags);
+            }
+        } else {
+            os << "  - (Bytecode rỗng)\n";
+        }
+
+        // valueToString safe (giống throwVMError): không đệ quy in proto/closure/instance...
+        auto valueToString = [&](const Value& val) -> Str {
+            if (val.is_null()) return "<null>";
+            if (val.is_int()) return std::to_string(val.get<Int>());
+            if (val.is_real()) {
+                std::ostringstream t;
+                Real r = val.get<Real>();
+                if (std::isnan(r)) return "NaN";
+                if (std::isinf(r)) return (r > 0) ? "Infinity" : "-Infinity";
+                t << r;
+                return t.str();
+            }
+            if (val.is_bool()) return val.get<Bool>() ? "true" : "false";
+            if (val.is_string()) return Str("\"") + val.get<Str>() + Str("\"");
+            if (val.is_proto()) return "<function proto>";
+            if (val.is_function()) return "<closure>";
+            if (val.is_instance()) return "<instance>";
+            if (val.is_class()) return "<class>";
+            if (val.is_array()) return "<array>";
+            if (val.is_hash()) return "<object>";
+            if (val.is_upvalue()) return "<upvalue>";
+            if (val.is_module()) return "<module>";
+            if (val.is_bound_method()) return "<bound method>";
+            if (val.is_native_fn()) return "<native fn>";
+            return "<unknown value>";
+        };
+
+        if (!proto->constantPool.empty()) {
+            os << "\n  - Constant pool (preview up to 10):\n";
+            size_t maxShow = std::min<size_t>(proto->constantPool.size(), 10);
+            for (size_t ci = 0; ci < maxShow; ++ci) {
+                os << "     [" << ci << "]: " << valueToString(proto->constantPool[ci]) << "\n";
+            }
+        }
+
+        return os.str();
+    }
+    if (v.is_upvalue()) return "upvalue";
+    return "<unknown_type>";
+}
+
+Int MeowVM::_toInt(const Value& v) const {
+    if (v.is_int()) return v.get<Int>();
+    if (v.is_real()) {
+        Real r = v.get<Real>();
+        if (std::isinf(r)) return (r > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+        if (std::isnan(r)) return 0;
+        return static_cast<Int>(r);
+    }
+    if (v.is_bool()) return v.get<Bool>() ? 1 : 0;
+    if (v.is_string()) {
+        const Str sfull = v.get<Str>();
+
+        size_t left = 0;
+        while (left < sfull.size() && std::isspace(static_cast<unsigned char>(sfull[left]))) ++left;
+        size_t right = sfull.size();
+        while (right > left && std::isspace(static_cast<unsigned char>(sfull[right - 1]))) --right;
+        if (left >= right) return 0;
+
+
+        Str token = sfull.substr(left, right - left);
+
+        bool neg = false;
+        size_t pos = 0;
+        if (token[pos] == '+' || token[pos] == '-') {
+            neg = (token[pos] == '-');
+            ++pos;
+            if (pos >= token.size()) return 0;
+        }
+
+
+        if (token.size() - pos >= 2 && token[pos] == '0' && (token[pos+1] == 'b' || token[pos+1] == 'B')) {
+
+            unsigned long long acc = 0;
+            const unsigned long long limit = static_cast<unsigned long long>(std::numeric_limits<Int>::max());
+            for (size_t i = pos + 2; i < token.size(); ++i) {
+                char c = token[i];
+                if (c == '0' || c == '1') {
+                    int d = c - '0';
+                    if (acc > (limit - d) / 2) {
+                        return neg ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+                    }
+                    acc = (acc << 1) | static_cast<unsigned long long>(d);
+                } else break;
+            }
+            Int result = static_cast<Int>(acc);
+            return neg ? -result : result;
+        }
+
+
+        int base = 10;
+        if (token.size() - pos >= 2 && token[pos] == '0' && (token[pos+1] == 'x' || token[pos+1] == 'X')) {
+            base = 16;
+        } else if (token.size() - pos >= 2 && token[pos] == '0' && (token[pos+1] == 'o' || token[pos+1] == 'O')) {
+            base = 8;
+        } else if (token.size() - pos >= 2 && token[pos] == '0' && std::isdigit(static_cast<unsigned char>(token[pos+1]))) {
+
+            base = 8;
+        }
+
+
+        errno = 0;
+        char* endptr = nullptr;
+        const std::string tokstd(token.begin(), token.end());
+        long long val = std::strtoll(tokstd.c_str(), &endptr, base);
+        if (endptr == tokstd.c_str()) return 0;
+        if (errno == ERANGE) {
+            return (val > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+        }
+
+        if (val > static_cast<long long>(std::numeric_limits<Int>::max())) return std::numeric_limits<Int>::max();
+        if (val < static_cast<long long>(std::numeric_limits<Int>::min())) return std::numeric_limits<Int>::min();
+        return static_cast<Int>(val);
+    }
+    return 0;
+}
+
+
+Real MeowVM::_toDouble(const Value& v) const {
+    if (v.is_real()) return v.get<Real>();
+    if (v.is_int()) return static_cast<Real>(v.get<Int>());
+    if (v.is_bool()) return v.get<Bool>() ? 1.0 : 0.0;
+    if (v.is_string()) {
+        Str s = v.get<Str>();
+
+        for (auto &c : s) c = static_cast<char>(std::tolower((unsigned char)c));
+        if (s == "nan") return std::numeric_limits<Real>::quiet_NaN();
+        if (s == "infinity" || s == "+infinity" || s == "inf" || s == "+inf") return std::numeric_limits<Real>::infinity();
+        if (s == "-infinity" || s == "-inf") return -std::numeric_limits<Real>::infinity();
+        const char* cs = v.get<Str>().c_str();
+        errno = 0;
+        char* endptr = nullptr;
+        double val = std::strtod(cs, &endptr);
+        if (cs == endptr) return 0.0;
+        if (errno == ERANGE) {
+            return (val > 0) ? std::numeric_limits<Real>::infinity() : -std::numeric_limits<Real>::infinity();
+        }
+        return static_cast<Real>(val);
+    }
+    return 0.0;
+}
+
+Bool MeowVM::_isTruthy(const Value& v) const {
+    if (v.is_null()) return false;
+    if (v.is_bool()) return v.get<Bool>();
+    if (v.is_int()) return v.get<Int>() != 0;
+    if (v.is_real()) {
+        Real r = v.get<Real>();
+        return r != 0.0 && !std::isnan(r);
+    }
+    if (v.is_string()) return !v.get<Str>().empty();
+    if (v.is_array()) return !v.get<Array>()->empty();
+    if (v.is_hash()) return !v.get<Object>()->fields.empty();
+    return true;
+}
+
+Str MeowVM::opToString(OpCode op) const {
+    switch (op) {
+        case OpCode::LOAD_CONST: return "LOAD_CONST";
+        case OpCode::LOAD_NULL: return "LOAD_NULL";
+        case OpCode::LOAD_TRUE: return "LOAD_TRUE";
+        case OpCode::LOAD_FALSE: return "LOAD_FALSE";
+        case OpCode::LOAD_INT: return "LOAD_INT";
+        case OpCode::MOVE: return "MOVE";
+        case OpCode::ADD: return "ADD";
+        case OpCode::SUB: return "SUB";
+        case OpCode::MUL: return "MUL";
+        case OpCode::DIV: return "DIV";
+        case OpCode::MOD: return "MOD";
+        case OpCode::POW: return "POW";
+        case OpCode::EQ: return "EQ";
+        case OpCode::NEQ: return "NEQ";
+        case OpCode::GT: return "GT";
+        case OpCode::GE: return "GE";
+        case OpCode::LT: return "LT";
+        case OpCode::LE: return "LE";
+        case OpCode::NEG: return "NEG";
+        case OpCode::NOT: return "NOT";
+        case OpCode::GET_GLOBAL: return "GET_GLOBAL";
+        case OpCode::SET_GLOBAL: return "SET_GLOBAL";
+        case OpCode::GET_UPVALUE: return "GET_UPVALUE";
+        case OpCode::SET_UPVALUE: return "SET_UPVALUE";
+        case OpCode::CLOSURE: return "CLOSURE";
+        case OpCode::CLOSE_UPVALUES: return "CLOSE_UPVALUES";
+        case OpCode::JUMP: return "JUMP";
+        case OpCode::JUMP_IF_FALSE: return "JUMP_IF_FALSE";
+        case OpCode::JUMP_IF_TRUE: return "JUMP_IF_TRUE";
+        case OpCode::CALL: return "CALL";
+        case OpCode::RETURN: return "RETURN";
+        case OpCode::HALT: return "HALT";
+        case OpCode::NEW_ARRAY: return "NEW_ARRAY";
+        case OpCode::NEW_HASH: return "NEW_HASH";
+        case OpCode::GET_INDEX: return "GET_INDEX";
+        case OpCode::SET_INDEX: return "SET_INDEX";
+        case OpCode::GET_KEYS: return "GET_KEYS";
+        case OpCode::GET_VALUES: return "GET_VALUES";
+        case OpCode::NEW_CLASS: return "NEW_CLASS";
+        case OpCode::NEW_INSTANCE: return "NEW_INSTANCE";
+        case OpCode::GET_PROP: return "GET_PROP";
+        case OpCode::SET_PROP: return "SET_PROP";
+        case OpCode::SET_METHOD: return "SET_METHOD";
+        case OpCode::INHERIT: return "INHERIT";
+        case OpCode::GET_SUPER: return "GET_SUPER";
+        case OpCode::BIT_AND: return "BIT_AND";
+        case OpCode::BIT_OR: return "BIT_OR";
+        case OpCode::BIT_XOR: return "BIT_XOR";
+        case OpCode::BIT_NOT: return "BIT_NOT";
+        case OpCode::LSHIFT: return "LSHIFT";
+        case OpCode::RSHIFT: return "RSHIFT";
+        case OpCode::THROW: return "THROW";
+        case OpCode::SETUP_TRY: return "SETUP_TRY";
+        case OpCode::POP_TRY: return "POP_TRY";
+        case OpCode::IMPORT_MODULE: return "IMPORT_MODULE";
+        case OpCode::EXPORT: return "EXPORT";
+        case OpCode::GET_EXPORT: return "GET_EXPORT";
+        case OpCode::GET_MODULE_EXPORT: return "GET_MODULE_EXPORT";
+        case OpCode::IMPORT_ALL: return "IMPORT_ALL";
+        case OpCode::TOTAL_OPCODES: return "TOTAL_OPCODES";
+        default: return "UNKNOWN_OPCODE";
+    }
+}
+
+void MeowVM::throwVMError(const Str& msg) {
+    std::ostringstream os;
+
+
+    auto valueToString = [&](const Value& v) -> Str {
+        if (v.is_null()) return "<null>";
+        if (v.is_int()) return std::to_string(v.get<Int>());
+        if (v.is_real()) {
+            std::ostringstream t;
+            Real r = v.get<Real>();
+            if (std::isnan(r)) return "NaN";
+            if (std::isinf(r)) return (r > 0) ? "Infinity" : "-Infinity";
+            t << r;
+            return t.str();
+        }
+        if (v.is_bool()) return v.get<Bool>() ? "true" : "false";
+        if (v.is_string()) return Str("\"") + v.get<Str>() + Str("\"");
+        if (v.is_proto()) return "<function proto>";
+        if (v.is_function()) return "<closure>";
+        if (v.is_instance()) return "<instance>";
+        if (v.is_class()) return "<class>";
+        if (v.is_array()) return "<array>";
+        if (v.is_hash()) return "<object>";
+        if (v.is_upvalue()) return "<upvalue>";
+        if (v.is_module()) return "<module>";
+        if (v.is_bound_method()) return "<bound method>";
+        if (v.is_native_fn()) return "<native fn>";
+        return "<unknown value>";
+    };
+
+
+    os << "!!! 🐛 LỖI NGHIÊM TRỌNG: `" << msg << "` 🐛 !!!\n";
+    os << "  - VM Base: " << currentBase << "\n";
+
+
+    ObjFunctionProto* proto = nullptr;
+    if (currentFrame && currentFrame->closure) proto = currentFrame->closure->proto;
+    if (proto) {
+        Int rawIp = currentFrame->ip;
+        Int errorIndex = (rawIp > 0) ? (rawIp - 1) : 0;
+        const Int codeSize = static_cast<Int>(proto->code.size());
+
+        os << "  - Source: " << proto->sourceName << "\n";
+        os << "  - Bytecode index (in-func): " << errorIndex << "\n";
+        os << "  - Opcode at error: "
+           << ((errorIndex >= 0 && errorIndex < codeSize) ? opToString(proto->code[static_cast<size_t>(errorIndex)].op) : Str("<out-of-range>"))
+           << "\n\n";
+
+
+        const Int range = 5;
+        if (codeSize > 0) {
+            const Int start = std::max<Int>(0, errorIndex - range);
+            const Int end = std::min<Int>(codeSize - 1, errorIndex + range);
+
+
+            int maxOpLen = 0;
+            for (Int i = start; i <= end; ++i) {
+                int len = static_cast<int>(opToString(proto->code[static_cast<size_t>(i)].op).size());
+                if (len > maxOpLen) maxOpLen = len;
+            }
+            int opField = std::max(10, maxOpLen + 2);
+
+            os << "  - Vùng bytecode (±" << range << "):\n";
+
+            std::ios::fmtflags savedFlags = os.flags();
+            for (Int i = start; i <= end; ++i) {
+                const Instruction& inst = proto->code[static_cast<size_t>(i)];
+
+                const char* prefix = (i == errorIndex) ? "  >> " : "     ";
+                os << prefix;
+
+
+                os << std::right << std::setw(4) << i << ": ";
+
+
+                os << std::left << std::setw(opField) << opToString(inst.op);
+
+
+                if (!inst.args.empty()) {
+                    os << "  args=[";
+                    for (size_t a = 0; a < inst.args.size(); ++a) {
+                        if (a) os << ", ";
+                        Int arg = inst.args[a];
+                        os << arg;
+                        // if (!proto->constantPool.empty() && arg >= 0 && static_cast<size_t>(arg) < proto->constantPool.size()) {
+                        //     os << " -> " << valueToString(proto->constantPool[static_cast<size_t>(arg)]);
+                        // }
+                    }
+                    os << "]";
+                } else {
+                    os << "  args=[]";
+                }
+
+                if (i == errorIndex) os << "    <-- lỗi\n"; else os << "\n";
+
+
+                os.flags(savedFlags);
+            }
+        } else {
+            os << "  - (Bytecode rỗng)\n";
+        }
+
+        if (!proto->constantPool.empty()) {
+            os << "\n  - Constant pool (preview up to 10):\n";
+            size_t maxShow = std::min<size_t>(proto->constantPool.size(), 10);
+            for (size_t ci = 0; ci < maxShow; ++ci) {
+                os << "     [" << ci << "]: " << valueToString(proto->constantPool[ci]) << "\n";
+            }
+        }
+    } else {
+        os << "  (Không có proto/closure để in chi tiết bytecode.)\n";
+    }
+    os << "\n";
+    os << "  - Call stack (most recent first):\n";
+    if (callStack.empty()) {
+        os << "     <empty call stack>\n";
+    } else {
+        for (int i = static_cast<int>(callStack.size()) - 1, depth = 0; i >= 0; --i, ++depth) {
+            const CallFrame& f = callStack[static_cast<size_t>(i)];
+            Str src = "<native>";
+            Int ip = f.ip;
+            if (f.closure && f.closure->proto) {
+                src = f.closure->proto->sourceName;
+            }
+            os << "     #" << depth << " " << src << "  ip=" << ip << "  slotStart=" << f.slotStart << "  retReg=" << f.retReg << "\n";
+        }
+    }
+
+    os << "\n";
+
+
+    os << "  - Stack snapshot (stackSlots size = " << stackSlots.size() << "):\n";
+    if (stackSlots.empty()) {
+        os << "     <empty stack>\n";
+    } else {
+        const size_t maxAround = 8;
+        Int base = currentBase;
+        size_t start = static_cast<size_t>(std::max<Int>(0, base));
+        size_t end = std::min(stackSlots.size(), start + maxAround);
+
+        std::ios::fmtflags savedFlags = os.flags();
+        for (size_t i = start; i < end; ++i) {
+            os << ((static_cast<Int>(i) == currentBase) ? "  >> " : "     ");
+            os << std::right << std::setw(4) << i << ": " << valueToString(stackSlots[i]) << "\n";
+            os.flags(savedFlags);
+        }
+        if (end < stackSlots.size()) {
+            os << "     ...\n";
+            size_t topCount = std::min<size_t>(3, stackSlots.size());
+            for (size_t i = stackSlots.size() - topCount; i < stackSlots.size(); ++i) {
+                os << "     (top) " << std::right << std::setw(4) << i << ": " << valueToString(stackSlots[i]) << "\n";
+                os.flags(savedFlags);
+            }
+        }
+    }
+
+    os << "\n";
+
+
+    os << "  - Open upvalues (" << openUpvalues.size() << "):\n";
+    if (openUpvalues.empty()) {
+        os << "     <none>\n";
+    } else {
+        for (size_t i = 0; i < openUpvalues.size(); ++i) {
+            const Upvalue uv = openUpvalues[i];
+            if (!uv) {
+                os << "     [" << i << "]: <null upvalue>\n";
+            } else {
+                os << "     [" << i << "]: slotIndex=" << uv->slotIndex << " state="
+                   << (uv->state == ObjUpvalue::State::OPEN ? "OPEN" : "CLOSED")
+                   << " value=" << (uv->state == ObjUpvalue::State::CLOSED ? valueToString(uv->closed) : "<live slot>") << "\n";
+            }
+        }
+    }
+
+    os << "\n";
+
+    os << "  - Exception handlers (" << exceptionHandlers.size() << "):\n";
+    if (exceptionHandlers.empty()) {
+        os << "     <none>\n";
+    } else {
+        for (size_t i = 0; i < exceptionHandlers.size(); ++i) {
+            const auto& h = exceptionHandlers[i];
+            os << "     [" << i << "] catchIp=" << h.catchIp << " frameDepth=" << h.frameDepth << " stackDepth=" << h.stackDepth << "\n";
+        }
+    }
+    throw VMError(os.str());
+}
+
+
+===== FILE: ./load_module.cpp =====
+#include "meow_vm.h"
+#include "common/pch.h"
+
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#include <limits.h>
+#endif
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
+// --- helper: lấy thư mục chứa executable (cross-platform) ---
+static std::filesystem::path getExecutableDir() {
+#if defined(_WIN32)
+    char buf[MAX_PATH];
+    DWORD len = GetModuleFileNameA(NULL, buf, MAX_PATH);
+    if (len == 0) throw std::runtime_error("GetModuleFileNameA failed");
+    return std::filesystem::path(std::string(buf, static_cast<size_t>(len))).parent_path();
+#elif defined(__linux__)
+    char buf[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+    if (len == -1) throw std::runtime_error("readlink(/proc/self/exe) failed");
+    buf[len] = '\0';
+    return std::filesystem::path(std::string(buf)).parent_path();
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size); // will set size
+    std::vector<char> buf(size);
+    if (_NSGetExecutablePath(buf.data(), &size) != 0) {
+        throw std::runtime_error("_NSGetExecutablePath failed");
+    }
+    std::filesystem::path p(buf.data());
+    return std::filesystem::absolute(p).parent_path();
+#else
+    return std::filesystem::current_path();
+#endif
+}
+
+// --- helper: expand token $ORIGIN in a path string to exeDir ---
+static std::string expandOriginToken(const std::string& raw, const std::filesystem::path& exeDir) {
+    std::string out;
+    const std::string token = "$ORIGIN";
+    size_t pos = 0;
+    while (true) {
+        size_t p = raw.find(token, pos);
+        if (p == std::string::npos) {
+            out.append(raw.substr(pos));
+            break;
+        }
+        out.append(raw.substr(pos, p - pos));
+        out.append(exeDir.string());
+        pos = p + token.size();
+    }
+    return out;
+}
+
+// --- detect stdlib root: đọc file meow-root cạnh binary (1 lần, cached) ---
+static std::filesystem::path detectStdlibRoot_cached() {
+    static std::optional<std::filesystem::path> cached;
+    if (cached.has_value()) return *cached;
+
+    std::filesystem::path result;
+    try {
+        std::filesystem::path exeDir = getExecutableDir(); // thư mục chứa binary
+        std::filesystem::path configFile = exeDir / "meow-root";
+
+        // 1) nếu có file meow-root, đọc và expand $ORIGIN
+        if (std::filesystem::exists(configFile)) {
+            std::ifstream in(configFile);
+            if (in) {
+                std::string line;
+                std::getline(in, line);
+                // trim (simple)
+                while (!line.empty() && (line.back() == '\n' || line.back() == '\r' || line.back() == ' ' || line.back() == '\t')) line.pop_back();
+                size_t i = 0;
+                while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
+                if (i > 0) line = line.substr(i);
+
+                if (!line.empty()) {
+                    std::string expanded = expandOriginToken(line, exeDir);
+                    result = std::filesystem::absolute(std::filesystem::path(expanded));
+                    cached = result;
+                    return result;
+                }
+            }
+        }
+
+        // 2) fallback nhanh: nếu exeDir là "bin", dùng parent; ngược lại dùng exeDir
+        if (exeDir.filename() == "bin") {
+            result = exeDir.parent_path();
+        } else {
+            result = exeDir;
+        }
+
+        // 3) nếu không tìm thấy stdlib trực tiếp ở root, có thể thử root/lib
+        cached = std::filesystem::absolute(result);
+        return *cached;
+    } catch (...) {
+        // fallback to current path nếu có gì sai
+        cached = std::filesystem::current_path();
+        return *cached;
+    }
+}
+
+
+static std::string platformLastError() {
+#if defined(_WIN32)
+    DWORD err = GetLastError();
+    if (!err) return "";
+    LPSTR msgBuf = nullptr;
+    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                   nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                   (LPSTR)&msgBuf, 0, nullptr);
+    std::string msg = msgBuf ? msgBuf : "";
+    if (msgBuf) LocalFree(msgBuf);
+    return msg;
+#else
+    const char* e = dlerror();
+    return e ? std::string(e) : std::string();
+#endif
+}
+
+Module MeowVM::_getOrLoadModule(const Str& modulePath, const Str& importerPath, Bool isBinary) {
+    if (auto it = moduleCache.find(modulePath); it != moduleCache.end()) {
+        return it->second;
+    }
+
+#if defined(_WIN32)
+    Str libExtension = ".dll";
+#elif defined(__APPLE__)
+    Str libExtension = ".dylib";
+#else
+    Str libExtension = ".so";
+#endif
+
+    auto resolveLibraryPath = [&](const Str& modPath, const Str& importer) -> Str {
+        try {
+            std::filesystem::path candidate(modPath);
+            std::string ext = candidate.extension().string();
+
+            if (!ext.empty()) {
+                std::string extLower = ext;
+                for (char &c : extLower) c = (char)std::tolower((unsigned char)c);
+                if (extLower == ".meow" || extLower == ".meowb") {
+                    return "";
+                }
+            }
+
+            if (candidate.extension().empty()) {
+                candidate.replace_extension(libExtension);
+            }
+
+            if (candidate.is_absolute() && std::filesystem::exists(candidate)) {
+                return std::filesystem::absolute(candidate).lexically_normal().string();
+            }
+
+            std::filesystem::path stdlibRoot = detectStdlibRoot_cached();
+            std::filesystem::path stdlibPath = stdlibRoot / candidate;
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+            // thử dưới stdlibRoot/lib/candidate
+            stdlibPath = stdlibRoot / "lib" / candidate;
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+            // thử dưới stdlibRoot/stdlib/candidate
+            stdlibPath = stdlibRoot / "stdlib" / candidate;
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+            // --- bổ sung: nhiều dự án đặt stdlib trong bin/stdlib hoặc stdlib trong bin ---
+            stdlibPath = stdlibRoot / "bin" / "stdlib" / candidate;
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+            stdlibPath = stdlibRoot / "bin" / candidate;
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+            // optional: nếu meow-root thực sự trỏ lên một level, vẫn thử parent/bin/stdlib
+            stdlibPath = std::filesystem::absolute(stdlibRoot / ".." / "bin" / "stdlib" / candidate);
+            if (std::filesystem::exists(stdlibPath)) {
+                return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+            }
+
+
+
+            std::filesystem::path baseDir = (importer == entryPointDir)
+                ? std::filesystem::path(entryPointDir)
+                : std::filesystem::path(importer).parent_path();
+
+            std::filesystem::path relativePath = std::filesystem::absolute(baseDir / candidate);
+            if (std::filesystem::exists(relativePath)) {
+                return relativePath.lexically_normal().string();
+            }
+
+            return "";
+        } catch (const std::exception& ex) {
+            return "";
+        }
+    };
+
+    Str libPath = resolveLibraryPath(modulePath, importerPath);
+
+    if (!libPath.empty()) {
+        void* handle = nullptr;
+#if defined(_WIN32)
+        handle = (void*)LoadLibraryA(libPath.c_str());
+#else
+        dlerror();
+        handle = dlopen(libPath.c_str(), RTLD_LAZY);
+#endif
+        if (!handle) {
+            std::string detail = platformLastError();
+            throw VMError("Không thể tải thư viện native: " + libPath + (detail.empty() ? "" : (" - " + detail)));
+        }
+
+        using NativeFunction = Module(*)(MeowEngine*);
+        NativeFunction factory = nullptr;
+#if defined(_WIN32)
+
+        auto procAddress = GetProcAddress((HMODULE)handle, "CreateMeowModule");
+
+        if (procAddress == nullptr) {
+            std::string detail = platformLastError();
+            throw VMError("Không tìm thấy cổng giao tiếp 'CreateMeowModule' trong " + libPath + (detail.empty() ? "" : (" - " + detail)));
+        }
+
+        factory = reinterpret_cast<NativeFunction>(procAddress);
+
+#else
+        dlerror();
+        factory = (NativeFunction)dlsym(handle, "CreateMeowModule");
+#endif
+
+        Module nativeModule = factory(this);
+
+        moduleCache[modulePath] = nativeModule;
+        moduleCache[libPath] = nativeModule;
+
+        return nativeModule;
+    }
+
+    std::filesystem::path baseDir = (importerPath == entryPointDir)
+        ? std::filesystem::path(entryPointDir)
+        : std::filesystem::path(importerPath).parent_path();
+    std::filesystem::path resolvedPath = std::filesystem::absolute(baseDir / modulePath);
+    Str absolutePath = resolvedPath.lexically_normal().string();
+
+    if (auto it = moduleCache.find(absolutePath); it != moduleCache.end()) {
+        return it->second;
+    }
+
+    std::unordered_map<Str, Proto> protos;
+    if (isBinary) {
+        // if (!binaryParser.parseFile(absolutePath, *memoryManager))
+        //     throw VMError("Binary parsing failed for file: " + absolutePath);
+        // protos = binaryParser.protos;
+    } else {
+        if (!textParser.parseFile(absolutePath, *memoryManager))
+            throw VMError("Text parsing failed for file: " + absolutePath);
+        protos = textParser.protos;
+    }
+
+    const Str mainName = "@main";
+    auto pit = protos.find(mainName);
+    if (pit == protos.end())
+        throw VMError("Module '" + absolutePath + "' phải có một hàm chính tên là '" + mainName + "'.");
+
+    auto newModule = memoryManager->newObject<ObjModule>(modulePath, absolutePath, isBinary);
+    newModule->mainProto = pit->second;
+    newModule->hasMain = true;
+
+    if (newModule->name != "native") {
+        auto itNative = moduleCache.find("native");
+        if (itNative != moduleCache.end()) {
+            for (const auto& [name, func] : itNative->second->globals) {
+                newModule->globals[name] = func;
+            }
+        }
+    }
+
+    moduleCache[absolutePath] = newModule;
+    return newModule;
+}
+
+
+
+===== FILE: ./meow_vm.cpp =====
+#include "meow_vm.h"
+#include "mark_sweep_gc.h"
+#include "core/meow_object.h"
+// #include "gc_visitor.h"
+
+MeowVM::MeowVM(const Str& entryPointDir_) : entryPointDir(entryPointDir_) {
+    memoryManager = std::make_unique<MemoryManager>(std::make_unique<MarkSweepGC>());
+    memoryManager->setVM(this);
+    defineNativeFunctions();
+    initializeJumpTable();
+}
+
+MeowVM::MeowVM(const Str& entryPointDir_, int argc, char* argv[]) : entryPointDir(entryPointDir_) {
+    memoryManager = std::make_unique<MemoryManager>(std::make_unique<MarkSweepGC>());
+    memoryManager->setVM(this);
+    defineNativeFunctions();
+    initializeJumpTable();
+
+    commandLineArgs.reserve(argc);
+    for (int i = 0; i < argc; ++i) {
+        this->commandLineArgs.push_back(argv[i]);
+    }
+}
+
+void MeowVM::interpret(const Str& entryPath, Bool isBinary) {
+    callStack.clear();
+    stackSlots.clear();
+    openUpvalues.clear();
+    moduleCache.clear();
+    exceptionHandlers.clear();
+    defineNativeFunctions();
+
+    try {
+        auto entryMod = _getOrLoadModule(entryPath, entryPointDir, isBinary);
+
+        if (!entryMod->isExecuted) {
+            if (!entryMod->hasMain) throw VMError("Entry module thiếu @main.");
+            entryMod->isExecuting = true;
+
+            auto closure = memoryManager->newObject<ObjClosure>(entryMod->mainProto);
+            Int base = static_cast<Int>(stackSlots.size());
+            stackSlots.resize(base + entryMod->mainProto->numRegisters, Value(Null{}));
+            CallFrame frame(closure, base, entryMod, 0, -1);
+            callStack.push_back(frame);
+        }
+        run();
+        entryMod->isExecuted = true;
+
+    } catch (const VMError& e) {
+        std::cerr << "💥 Lỗi nghiêm trọng trong MeowScript VM: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "🤯 Lỗi C++ không lường trước: " << e.what() << std::endl;
+    }
+}
+
+void MeowVM::traceRoots(GCVisitor& visitor) {
+    for (Value& val : stackSlots) {
+        visitor.visit_value(val);
+    }
+
+    for (auto& pair : moduleCache) {
+        visitor.visit_object(pair.second);
+    }
+
+    for (ObjUpvalue* upvalue : openUpvalues) {
+        visitor.visit_object(upvalue);
+    }
+
+    for (CallFrame& frame : callStack) {
+        visitor.visit_object(frame.closure);
+        visitor.visit_object(frame.module);
+    }
+
+    for (auto& type_pair : builtinMethods) {
+        for (auto& method_pair : type_pair.second) {
+            visitor.visit_value(method_pair.second);
+        }
+    }
+    for (auto& type_pair : builtinGetters) {
+        for (auto& getter_pair : type_pair.second) {
+            visitor.visit_value(getter_pair.second);
+        }
+    }
+}
+
+std::vector<Value*> MeowVM::findRoots() {
+    std::vector<Value*> roots;
+
+    for (Value& val : stackSlots) {
+        roots.push_back(&val);
+    }
+
+    for (auto& pair : moduleCache) {
+        ObjModule* module = pair.second;
+        for (auto& global_pair : module->globals) {
+            roots.push_back(&global_pair.second);
+        }
+        for (auto& export_pair : module->exports) {
+            roots.push_back(&export_pair.second);
+        }
+    }
+
+    for (ObjUpvalue* upvalue : openUpvalues) {
+        if (upvalue->state == ObjUpvalue::State::CLOSED) {
+            roots.push_back(&upvalue->closed);
+        }
+    }
+
+    return roots;
+}
+
+void MeowVM::run() {
+    while (!callStack.empty()) {
+        currentFrame = &callStack.back();
+        auto proto = currentFrame->closure->proto;
+        currentBase = currentFrame->slotStart;
+
+        if (currentFrame->ip >= static_cast<Int>(proto->code.size())) {
+            if (currentFrame->retReg != -1) {
+                if (callStack.size() > 1) { 
+                    CallFrame& parentFrame = callStack[callStack.size() - 2];
+                    stackSlots[parentFrame.slotStart + currentFrame->retReg] = Value(Null{});
+                }
+            }
+            callStack.pop_back();
+            continue;
+        }
+        try {
+            currentInst = &proto->code[currentFrame->ip++];
+            Int32 opcode = static_cast<Int32>(currentInst->op);
+
+            if (opcode < 0 || opcode >= static_cast<Int32>(OpCode::TOTAL_OPCODES)) {
+                std::ostringstream os;
+                os << "Opcode không hợp lệ với giá trị opcode là: " << opcode << std::endl;
+
+                throwVMError(os.str());
+                callStack.clear();
+                return;
+            }
+            {
+                GCScopeGuard gcGuard(memoryManager.get());
+                (this->*jumpTable[opcode])();
+            }
+
+        } catch (const VMError& e) {
+            _handleRuntimeException(e);
+        } catch (const std::exception& e) {
+            std::cerr << "🤯 Lỗi C++ không lường trước trong VM.run: " << e.what() << std::endl;
+            callStack.clear();
+        }
+    }
+}
+
+void MeowVM::_handleRuntimeException(const VMError& e) {
+    if (exceptionHandlers.empty()) {
+        throw e;
+    }
+    ExceptionHandler handler = exceptionHandlers.back();
+    exceptionHandlers.pop_back();
+
+    while (static_cast<Int>(callStack.size() - 1) > handler.frameDepth) {
+        CallFrame currentFrame = callStack.back();
+        callStack.pop_back();
+        closeUpvalues(currentFrame.slotStart);
+    }
+    stackSlots.resize(handler.stackDepth);
+    CallFrame& currentFrame = callStack.back();
+    currentFrame.ip = handler.catchIp;
+    if (currentFrame.closure->proto->numRegisters > 0) {
+        stackSlots[currentFrame.slotStart] = Value(Str(e.what()));
+    }
+}
+
+void MeowVM::initializeJumpTable() {
+    jumpTable.assign(static_cast<size_t>(OpCode::TOTAL_OPCODES), &MeowVM::opUnsupported);
+
+
+    jumpTable[static_cast<Int32>(OpCode::MOVE)] = &MeowVM::opMove;
+    jumpTable[static_cast<Int32>(OpCode::LOAD_CONST)] = &MeowVM::opLoadConst;
+    jumpTable[static_cast<Int32>(OpCode::LOAD_INT)] = &MeowVM::opLoadInt;
+    jumpTable[static_cast<Int32>(OpCode::LOAD_NULL)] = &MeowVM::opLoadNull;
+    jumpTable[static_cast<Int32>(OpCode::LOAD_TRUE)] = &MeowVM::opLoadTrue;
+    jumpTable[static_cast<Int32>(OpCode::LOAD_FALSE)] = &MeowVM::opLoadFalse;
+
+
+    jumpTable[static_cast<Int32>(OpCode::ADD)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::SUB)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::MUL)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::DIV)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::MOD)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::POW)] = &MeowVM::opBinary;
+
+
+    jumpTable[static_cast<Int32>(OpCode::EQ)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::NEQ)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::GT)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::GE)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::LT)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::LE)] = &MeowVM::opBinary;
+
+
+    jumpTable[static_cast<Int32>(OpCode::BIT_AND)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::BIT_OR)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::BIT_XOR)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::LSHIFT)] = &MeowVM::opBinary;
+    jumpTable[static_cast<Int32>(OpCode::RSHIFT)] = &MeowVM::opBinary;
+
+
+    jumpTable[static_cast<Int32>(OpCode::NEG)] = &MeowVM::opUnary;
+    jumpTable[static_cast<Int32>(OpCode::NOT)] = &MeowVM::opUnary;
+    jumpTable[static_cast<Int32>(OpCode::BIT_NOT)] = &MeowVM::opUnary;
+
+
+    jumpTable[static_cast<Int32>(OpCode::GET_GLOBAL)] = &MeowVM::opGetGlobal;
+    jumpTable[static_cast<Int32>(OpCode::SET_GLOBAL)] = &MeowVM::opSetGlobal;
+    jumpTable[static_cast<Int32>(OpCode::GET_UPVALUE)] = &MeowVM::opGetUpvalue;
+    jumpTable[static_cast<Int32>(OpCode::SET_UPVALUE)] = &MeowVM::opSetUpvalue;
+
+
+    jumpTable[static_cast<Int32>(OpCode::CLOSURE)] = &MeowVM::opClosure;
+    jumpTable[static_cast<Int32>(OpCode::CLOSE_UPVALUES)] = &MeowVM::opCloseUpvalues;
+
+
+    jumpTable[static_cast<Int32>(OpCode::JUMP)] = &MeowVM::opJump;
+    jumpTable[static_cast<Int32>(OpCode::JUMP_IF_FALSE)] = &MeowVM::opJumpIfFalse;
+    jumpTable[static_cast<Int32>(OpCode::JUMP_IF_TRUE)] = &MeowVM::opJumpIfTrue;
+    jumpTable[static_cast<Int32>(OpCode::CALL)] = &MeowVM::opCall;
+    jumpTable[static_cast<Int32>(OpCode::RETURN)] = &MeowVM::opReturn;
+    jumpTable[static_cast<Int32>(OpCode::HALT)] = &MeowVM::opHalt;
+
+
+    jumpTable[static_cast<Int32>(OpCode::NEW_ARRAY)] = &MeowVM::opNewArray;
+    jumpTable[static_cast<Int32>(OpCode::NEW_HASH)] = &MeowVM::opNewHash;
+    jumpTable[static_cast<Int32>(OpCode::GET_INDEX)] = &MeowVM::opGetIndex;
+    jumpTable[static_cast<Int32>(OpCode::SET_INDEX)] = &MeowVM::opSetIndex;
+    jumpTable[static_cast<Int32>(OpCode::GET_KEYS)] = &MeowVM::opGetKeys;
+    jumpTable[static_cast<Int32>(OpCode::GET_VALUES)] = &MeowVM::opGetValues;
+
+
+    jumpTable[static_cast<Int32>(OpCode::NEW_CLASS)] = &MeowVM::opNewClass;
+    jumpTable[static_cast<Int32>(OpCode::NEW_INSTANCE)] = &MeowVM::opNewInstance;
+    jumpTable[static_cast<Int32>(OpCode::GET_PROP)] = &MeowVM::opGetProp;
+    jumpTable[static_cast<Int32>(OpCode::SET_PROP)] = &MeowVM::opSetProp;
+    jumpTable[static_cast<Int32>(OpCode::SET_METHOD)] = &MeowVM::opSetMethod;
+    jumpTable[static_cast<Int32>(OpCode::INHERIT)] = &MeowVM::opInherit;
+    jumpTable[static_cast<Int32>(OpCode::GET_SUPER)] = &MeowVM::opGetSuper;
+
+
+    jumpTable[static_cast<Int32>(OpCode::IMPORT_MODULE)] = &MeowVM::opImportModule;
+    jumpTable[static_cast<Int32>(OpCode::EXPORT)] = &MeowVM::opExport;
+    jumpTable[static_cast<Int32>(OpCode::GET_EXPORT)] = &MeowVM::opGetExport;
+    jumpTable[static_cast<Int32>(OpCode::GET_MODULE_EXPORT)] = &MeowVM::opGetModuleExport;
+    jumpTable[static_cast<Int32>(OpCode::IMPORT_ALL)] = &MeowVM::opImportAll;
+
+
+    jumpTable[static_cast<Int32>(OpCode::SETUP_TRY)] = &MeowVM::opSetupTry;
+    jumpTable[static_cast<Int32>(OpCode::POP_TRY)] = &MeowVM::opPopTry;
+    jumpTable[static_cast<Int32>(OpCode::THROW)] = &MeowVM::opThrow;
+}
+
+
+===== FILE: ./op-functions/control_flow.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opClosure() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0], 
+        protoIdx = currentInst->args[1];
+    if (protoIdx < 0 || protoIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[protoIdx]).is_proto()) {
+        throwVMError("CLOSURE constant must be a FunctionProto.");
+    }
+    auto childProto = proto->constantPool[protoIdx].get<Proto>();
+    auto closure = memoryManager->newObject<ObjClosure>(childProto);
+
+    closure->upvalues.resize(childProto->upvalueDescs.size(), nullptr);
+
+    for (size_t i = 0; i < childProto->upvalueDescs.size(); ++i) {
+        auto& desc = childProto->upvalueDescs[i];
+        if (desc.isLocal) {
+            closure->upvalues[i] = captureUpvalue(currentBase + desc.index);
+        } else {
+            if (desc.index < 0 || desc.index >= static_cast<Int>(currentFrame->closure->upvalues.size())) {
+                throwVMError("CLOSURE: parent upvalue index OOB");
+            }
+            closure->upvalues[i] = currentFrame->closure->upvalues[desc.index];
+        }
+    }
+    stackSlots[currentBase + dst] = Value(closure);
+}
+
+void MeowVM::opCloseUpvalues() {
+    closeUpvalues(currentBase + currentInst->args[0]);
+}
+
+void MeowVM::opJump() {
+    Int target = currentInst->args[0];
+    auto proto = currentFrame->closure->proto;
+    if (target < 0 || target >= static_cast<Int>(proto->code.size())) 
+        throwVMError("JUMP target OOB");
+    currentFrame->ip = target;
+}
+
+void MeowVM::opJumpIfFalse() {
+    Int reg = currentInst->args[0], target = currentInst->args[1];
+    if (!_isTruthy(stackSlots[currentBase + reg])) {
+        auto proto = currentFrame->closure->proto;
+        if (target < 0 || target >= static_cast<Int>(proto->code.size())) 
+            throwVMError("JUMP_IF_FALSE target OOB");
+        currentFrame->ip = target;
+    }
+}
+
+void MeowVM::opJumpIfTrue() {
+    Int reg = currentInst->args[0];
+    Int target = currentInst->args[1];
+
+    if (_isTruthy(stackSlots[currentBase + reg])) {
+        auto proto = currentFrame->closure->proto;
+        if (target < 0 || target >= static_cast<Int>(proto->code.size())) {
+            throwVMError("JUMP_IF_TRUE target OOB");
+        }
+        currentFrame->ip = target;
+    }
+}
+
+void MeowVM::opCall() {
+    Int dst = currentInst->args[0], fnReg = currentInst->args[1], argStart = currentInst->args[2], argc = currentInst->args[3];
+    auto& callee = stackSlots[currentBase + fnReg];
+    _executeCall(callee, dst, argStart, argc, currentBase);
+}
+
+void MeowVM::opReturn() {
+    Value retVal = (currentInst->args.empty() || currentInst->args[0] < 0) ? Value(Null{}) : stackSlots[currentBase + currentInst->args[0]];
+    closeUpvalues(currentBase);
+
+    CallFrame poppedFrame = *currentFrame;
+    callStack.pop_back();
+
+    if (callStack.empty()) {
+        stackSlots.clear();
+        currentFrame = nullptr;
+        currentInst = nullptr;
+        return;
+    }
+
+    CallFrame& caller = callStack.back();
+    Int callerBase = caller.slotStart;
+
+    Int callerRegs = 0;
+    if (caller.closure && caller.closure->proto) {
+        callerRegs = caller.closure->proto->numRegisters;
+    } 
+    Int minSize = callerBase + std::max<Int>(callerRegs, 1);
+    if (static_cast<Int>(stackSlots.size()) < minSize) {
+        stackSlots.resize(minSize, Value(Null{}));
+    } else {
+        stackSlots.resize(minSize);
+    }
+
+    Int destReg = poppedFrame.retReg;
+    if (destReg != -1) {
+        Int need = callerBase + destReg + 1;
+        if (static_cast<Int>(stackSlots.size()) < need) {
+            stackSlots.resize(need, Value(Null{}));
+        }
+        stackSlots[callerBase + destReg] = retVal;
+    }
+
+    currentFrame = &callStack.back();
+    currentBase = currentFrame->slotStart;
+
+}
+
+void MeowVM::opHalt() {
+    callStack.clear();
+}
+
+
+===== FILE: ./op-functions/data_struct.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opNewArray() {
+    size_t dst = currentInst->args[0],
+           start_idx = currentInst->args[1],
+           count = currentInst->args[2];
+    if (count < 0 || start_idx < 0) {
+        throwVMError("NEW_ARRAY: invalid range");
+    }
+    if (currentBase + start_idx + count > stackSlots.size()) {
+        throwVMError("NEW_ARRAY: register range OOB");
+    }
+
+    Array array = memoryManager->newObject<ObjArray>();
+    array->reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        array->push(stackSlots[currentBase + start_idx + 1]);
+    }
+    stackSlots[currentBase + dst] = Value(array);
+}
+
+void MeowVM::opNewHash() {
+    Int dst = currentInst->args[0], startIdx = currentInst->args[1], count = currentInst->args[2];
+    if (count < 0 || startIdx < 0) throwVMError("NEW_HASH: invalid range");
+    if (currentBase + startIdx + count*2 > static_cast<Int>(stackSlots.size()))
+        throwVMError("NEW_HASH: register range OOB");
+
+    Object hm = memoryManager->newObject<ObjObject>();
+    for (Int i = 0; i < count; ++i) {
+        Value& key = stackSlots[currentBase + startIdx + i * 2];
+        Value& val = stackSlots[currentBase + startIdx + i * 2 + 1];
+        hm->fields[_toString(key)] = val;
+    }
+    stackSlots[currentBase + dst] = Value(hm);
+}
+
+void MeowVM::opGetIndex() {
+    Int dst = currentInst->args[0];
+    Int srcReg = currentInst->args[1];
+    Int keyReg = currentInst->args[2];
+
+    if (currentBase + srcReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + keyReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + dst >= static_cast<Int>(stackSlots.size()))
+        throwVMError("GET_INDEX register OOB");
+
+    Value& src = stackSlots[currentBase + srcReg];
+    Value& key = stackSlots[currentBase + keyReg];
+
+
+    // if (auto mm = getMagicMethod(src, "__getindex__")) {
+    //     Value res = call(*mm, { key });
+    //     stackSlots[currentBase + dst] = res;
+    //     return;
+    // }
+
+
+    if (key.is_int()) {
+        size_t idx = _toInt(key);
+        if (src.is_array()) {
+            Array arr = src.get<Array>(); if (!arr) throwVMError("Array null in GET_INDEX");
+            if (idx < 0 || idx >= arr->size()) {
+                std::ostringstream os;
+                os << "  -  Chỉ số vượt quá phạm vi: '" << idx << "'. ";
+                os << "  -  Được truy cập trên mảng: `\n" << _toString(arr) << "\n`";
+                throwVMError(os.str());
+            }
+            stackSlots[currentBase + dst] = (*arr)[idx];
+            return;
+        }
+        if (src.is_string()) {
+            Str s = src.get<Str>();
+            if (idx < 0 || idx >= static_cast<Int>(s.size())) {
+                std::ostringstream os;
+                os << "  -  Chỉ số vượt quá phạm vi: '" << idx << "'. ";
+                os << "  -  Được truy cập trên string: `\n" << _toString(s) << "\n`\n";
+                throwVMError(os.str());
+
+            }
+            stackSlots[currentBase + dst] = Value(Str(1, s[idx]));
+            return;
+        }
+        if (src.is_hash()) {
+            Object m = src.get<Object>();
+            Str k = _toString(key);
+            auto it = m->fields.find(k);
+            stackSlots[currentBase + dst] = (it != m->fields.end()) ? it->second : Value(Null{});
+            return;
+        }
+        throwVMError("Numeric index not supported on type '" + _toString(src) + "'");
+    }
+
+
+    Str keyName = key.is_string() ? key.get<Str>() : _toString(key);
+
+    if (auto mm = getMagicMethod(src, "__getprop__")) {
+        Value res = call(*mm, { Value(keyName) });
+        stackSlots[currentBase + dst] = res;
+        return;
+    }
+
+
+    if (auto mm2 = getMagicMethod(src, keyName)) {
+        stackSlots[currentBase + dst] = *mm2;
+        return;
+    }
+
+
+    stackSlots[currentBase + dst] = Value(Null{});
+}
+
+
+void MeowVM::opSetIndex() {
+    Int srcReg = currentInst->args[0];
+    Int keyReg = currentInst->args[1];
+    Int valReg = currentInst->args[2];
+
+    if (currentBase + srcReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + keyReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + valReg >= static_cast<Int>(stackSlots.size()))
+        throwVMError("SET_INDEX register OOB");
+
+    Value& src = stackSlots[currentBase + srcReg];
+    Value& key = stackSlots[currentBase + keyReg];
+    Value& val = stackSlots[currentBase + valReg];
+
+
+    if (auto mm = getMagicMethod(src, "__setindex__")) {
+        (void) call(*mm, { key, val });
+        return;
+    }
+
+
+    if (key.is_array()) {
+        Int idx = _toInt(key);
+        if (src.is_array()) {
+            Array arr = src.get<Array>();
+            if (idx < 0) throwVMError("Invalid index");
+            if (idx >= static_cast<Int>(arr->size())) {
+                if (idx > 10000000) throwVMError("Index too large");
+                arr->resize(static_cast<size_t>(idx + 1));
+            }
+            (*arr)[static_cast<size_t>(idx)] = val;
+            return;
+        }
+        if (src.is_string()) {
+            if (!val.is_string() || val.get<Str>().empty()) throwVMError("String assign must be non-empty string");
+            Str &s = src.get<Str>();
+            if (idx < 0 || idx >= static_cast<Int>(s.size())) {
+                std::ostringstream os;
+                os << "Chỉ số vượt quá phạm vi: '" << idx << "'. ";
+                os << "Được truy cập trên string: `\n" << _toString(s) << "\n`";
+                throwVMError(os.str());
+
+            }
+            s[static_cast<size_t>(idx)] = val.get<Str>()[0];
+            return;
+        }
+        if (src.is_hash()) {
+            Object m = src.get<Object>();
+            Str k = _toString(key);
+            m->fields[k] = val;
+            return;
+        }
+        throwVMError("Numeric index not supported on type '" + _toString(src) + "'");
+    }
+
+
+    Str keyName = key.is_string() ? key.get<Str>() : _toString(key);
+    if (auto mm = getMagicMethod(src, "__setprop__")) {
+        (void) call(*mm, { Value(keyName), val });
+        return;
+    }
+
+
+    if (src.is_instance()) {
+        Instance inst = src.get<Instance>();
+        inst->fields[keyName] = val;
+        return;
+    }
+    if (src.is_hash()) {
+        Object m = src.get<Object>();
+        m->fields[keyName] = val;
+        return;
+    }
+    if (src.is_class()) {
+        Class cls = src.get<Class>();
+        if (!val.is_function() && !val.is_bound_method()) throwVMError("Method must be closure");
+        cls->methods[keyName] = val;
+        return;
+    }
+
+    throwVMError("SET_INDEX not supported on type '" + _toString(src) + "'");
+}
+
+void MeowVM::opGetKeys() {
+    Int dst = currentInst->args[0];
+    Int srcReg = currentInst->args[1];
+
+    if (currentBase + srcReg >= static_cast<Int>(stackSlots.size())) {
+        throwVMError("GET_KEYS register OOB");
+    }
+    Value& src = stackSlots[currentBase + srcReg];
+
+
+    Array keysArr = memoryManager->newObject<ObjArray>();
+
+    if (src.is_instance()) {
+        Instance inst = src.get<Instance>();
+        keysArr->reserve(inst->fields.size());
+        for (const auto& pair : inst->fields) {
+            keysArr->push(Value(pair.first));
+        }
+    } else if (src.is_hash()) {
+        Object obj = src.get<Object>();
+        keysArr->reserve(obj->fields.size());
+        for (const auto& pair : obj->fields) {
+            keysArr->push(Value(pair.first));
+        }
+    } else if (src.is_array()) {
+
+        Array arr = src.get<Array>();
+        size_t size = arr->size();
+        keysArr->reserve(size);
+        for (Int i = 0; i < size; ++i) {
+            keysArr->push(Value(i));
+        }
+    } else if (src.is_string()) {
+        Str s = src.get<Str>();
+        Int size = static_cast<Int>(s.length());
+        keysArr->reserve(size);
+        for (Int i = 0; i < size; ++i) {
+            keysArr->push(Value(i));
+        }
+    }
+
+
+    stackSlots[currentBase + dst] = Value(keysArr);
+}
+
+void MeowVM::opGetValues() {
+    Int dst = currentInst->args[0];
+    Int srcReg = currentInst->args[1];
+
+    if (currentBase + srcReg >= static_cast<Int>(stackSlots.size())) {
+        throwVMError("GET_VALUES register OOB");
+    }
+    Value& src = stackSlots[currentBase + srcReg];
+
+
+    Array valueArr = memoryManager->newObject<ObjArray>();
+
+    if (src.is_instance()) {
+
+        Instance inst = src.get<Instance>();
+        valueArr->reserve(inst->fields.size());
+        for (const auto& pair : inst->fields) {
+            valueArr->push(pair.second);
+        }
+    } else if (src.is_hash()) {
+
+        Object obj = src.get<Object>();
+        valueArr->reserve(obj->fields.size());
+        for (const auto& pair : obj->fields) {
+            valueArr->push(pair.second);
+        }
+    } else if (src.is_array()) {
+
+        Array arr = src.get<Array>();
+        Int size = static_cast<Int>(arr->size());
+        valueArr->reserve(size);
+        for (const auto& element : (*arr)) {
+            valueArr->push(element);
+        }
+    } else if (src.is_string()) {
+
+        Str s = src.get<Str>();
+        Int size = static_cast<Int>(s.length());
+        valueArr->reserve(size);
+        for (const auto& c : s) {
+            valueArr->push(Value(Str(1, c)));
+        }
+    }
+    stackSlots[currentBase + dst] = Value(valueArr);
+}
+
+
+===== FILE: ./op-functions/exception.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opSetupTry() {
+    Int target = currentInst->args[0];
+    ExceptionHandler h(target, static_cast<Int>(callStack.size() - 1), static_cast<Int>(stackSlots.size()));
+    exceptionHandlers.push_back(h);
+}
+
+void MeowVM::opPopTry() {
+    if (!exceptionHandlers.empty()) {
+        exceptionHandlers.pop_back();
+    }
+}
+
+void MeowVM::opThrow() {
+    Int reg = currentInst->args[0];
+    throw VMError(_toString(stackSlots[currentBase + reg]));
+}
+
+
+===== FILE: ./op-functions/expression.cpp =====
+#include "meow_vm.h"
+#include "operator_dispatcher.h"
+#include "common/pch.h"
+
+void MeowVM::opBinary() {
+    auto proto = currentFrame->closure->proto;
+    auto currentInst = &proto->code[(currentFrame->ip) - 1];
+
+    Int dst = currentInst->args[0],
+        r1 = currentInst->args[1],
+        r2 = currentInst->args[2];
+
+    auto& left = stackSlots[currentBase + r1];
+    auto& right = stackSlots[currentBase + r2];
+
+    Value result;
+    if (auto func = opDispatcher.find(currentInst->op, left, right)) {
+        result = (*func)(left, right);
+    } else {
+        throwVMError("Unsupported binary operator");
+    }
+
+    stackSlots[currentBase + dst] = result;
+}
+
+void MeowVM::opUnary() {
+    auto proto = currentFrame->closure->proto;
+    auto inst = &proto->code[(currentFrame->ip) - 1];
+
+    Int dst = currentInst->args[0], src = currentInst->args[1];
+    auto& val = stackSlots[currentBase + src];
+
+    Value result;
+    if (auto func = opDispatcher.find(inst->op, val)) {
+        result = (*func)(val);
+    } else {
+        std::ostringstream os;
+        throwVMError("Unsupported unary operator");
+    }
+
+    stackSlots[currentBase + dst] = result;
+}
+
+
+===== FILE: ./op-functions/load_store.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opMove() {
+    Int dst = currentInst->args[0], src = currentInst->args[1];
+    stackSlots[currentBase + dst] = stackSlots[currentBase + src];
+}
+
+void MeowVM::opLoadConst() {
+    Int dst = currentInst->args[0], cidx = currentInst->args[1];
+    auto proto = currentFrame->closure->proto;
+    if (cidx < 0 || cidx >= static_cast<Int>(proto->constantPool.size())) {
+        throwVMError("LOAD_CONST index OOB");
+    }
+    stackSlots[currentBase + dst] = proto->constantPool[cidx];
+}
+
+void MeowVM::opLoadInt() {
+    Int dst = currentInst->args[0], val = currentInst->args[1];
+    stackSlots[currentBase + dst] = Value(val);
+}
+
+void MeowVM::opLoadNull() {
+    stackSlots[currentBase + currentInst->args[0]] = Value(Null{});
+}
+
+void MeowVM::opLoadTrue() {
+    stackSlots[currentBase + currentInst->args[0]] = Value(true);
+}
+
+void MeowVM::opLoadFalse() {
+    stackSlots[currentBase + currentInst->args[0]] = Value(false);
+}
+
+void MeowVM::opGetGlobal() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0], constIdx = currentInst->args[1];
+    if (constIdx < 0 || constIdx >= static_cast<Int>(proto->constantPool.size()))
+        throwVMError("GET_GLOBAL index OOB");
+    if (!proto->constantPool[constIdx].is_string())
+        throwVMError("GET_GLOBAL name must be a string");
+    auto name = proto->constantPool[constIdx].get<Str>();
+    auto it = currentFrame->module->globals.find(name);
+    if (it != currentFrame->module->globals.end()) {
+        stackSlots[currentBase + dst] = it->second;
+    } else {
+        stackSlots[currentBase + dst] = Value(Null{});
+    }
+}
+
+void MeowVM::opSetGlobal() {
+    auto proto = currentFrame->closure->proto;
+    Int constIdx = currentInst->args[0], src = currentInst->args[1];
+    if (constIdx < 0 || constIdx >= static_cast<Int>(proto->constantPool.size())) 
+        throwVMError("SET_GLOBAL index OOB với constIdx là: " + _toString(constIdx) + " vuợt quá giới hạn min = 0 và max = " + _toString(static_cast<Int>(proto->constantPool.size() - 1)));
+    if (!proto->constantPool[constIdx].is_string()) {
+        throwVMError("Global variable name must be a string");
+    }
+    auto name = proto->constantPool[constIdx].get<Str>();
+    currentFrame->module->globals[name] = stackSlots[currentBase + src];
+}
+
+void MeowVM::opGetUpvalue() {
+    Int dst = currentInst->args[0], uvIndex = currentInst->args[1];
+
+    if (uvIndex < 0 || uvIndex >= static_cast<Int>(currentFrame->closure->upvalues.size()))
+        throwVMError("GET_UPVALUE index OOB với uvIndex là: " + _toString(uvIndex) + " vuợt quá giới hạn min = 0 và max = " + _toString(static_cast<Int>(currentFrame->closure->upvalues.size() - 1)));
+
+    auto uv = currentFrame->closure->upvalues[uvIndex];
+    if (uv->state == ObjUpvalue::State::CLOSED) {
+        stackSlots[currentBase + dst] = uv->closed;
+    } else {
+        stackSlots[currentBase + dst] = stackSlots[uv->slotIndex];
+    }
+}
+
+void MeowVM::opSetUpvalue() {
+    Int uvIndex = currentInst->args[0], src = currentInst->args[1];
+
+    if (uvIndex < 0 || uvIndex >= static_cast<Int>(currentFrame->closure->upvalues.size()))
+        throwVMError("SET_UPVALUE index OOB");
+
+    auto uv = currentFrame->closure->upvalues[uvIndex];
+    if (uv->state == ObjUpvalue::State::OPEN) {
+        stackSlots[uv->slotIndex] = stackSlots[currentBase + src];
+    } else {
+        uv->closed = stackSlots[currentBase + src];
+    }
+}
+
+
+
+===== FILE: ./op-functions/module.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opImportModule() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0];
+    Int pathIdx = currentInst->args[1];
+
+    if (pathIdx < 0 || pathIdx >= static_cast<Int>(proto->constantPool.size()))
+        throwVMError("IMPORT_MODULE index OOB");
+    if (!(proto->constantPool[pathIdx]).is_string())
+        throwVMError("IMPORT_MODULE path must be a string");
+
+    Str importPath = proto->constantPool[pathIdx].get<Str>();
+    Bool importerBinary = currentFrame->module->isBinary;
+
+    auto mod = _getOrLoadModule(importPath, currentFrame->module->path, importerBinary);
+
+    stackSlots[currentBase + dst] = Value(mod);
+
+    if (mod->hasMain && !mod->isExecuted) {
+        if (!mod->isExecuting) {
+            mod->isExecuting = true;
+
+            auto moduleClosure = memoryManager->newObject<ObjClosure>(mod->mainProto);
+            Int newStart = static_cast<Int>(stackSlots.size());
+            stackSlots.resize(newStart + mod->mainProto->numRegisters, Value(Null{}));
+
+            CallFrame newFrame(moduleClosure, newStart, mod, 0, -1);
+            callStack.push_back(newFrame);
+
+            mod->isExecuted = true; 
+        }
+    }
+}
+
+
+void MeowVM::opExport() {
+    auto proto = currentFrame->closure->proto;
+    Int nameIdx = currentInst->args[0], srcReg = currentInst->args[1];
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size())) 
+        throwVMError("EXPORT index OOB");
+    if (!(proto->constantPool[nameIdx]).is_string()) 
+        throwVMError("EXPORT name must be a string");
+    Str exportName = proto->constantPool[nameIdx].get<Str>();
+    currentFrame->module->exports[exportName] = stackSlots[currentBase + srcReg];
+}
+
+void MeowVM::opGetExport() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0],
+        moduleReg = currentInst->args[1], 
+        nameIdx = currentInst->args[2];
+    if (currentBase + moduleReg >= static_cast<Int>(stackSlots.size())) 
+        throwVMError("GET_EXPORT module register OOB");
+    Value& moduleVal = stackSlots[currentBase + moduleReg];
+    if (!moduleVal.is_module()) 
+        throwVMError("Chỉ có thể lấy export từ một đối tượng module: " + _toString(moduleVal));
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size())) 
+        throwVMError("GET_EXPORT index OOB");
+    if (!(proto->constantPool[nameIdx]).is_string()) 
+        throwVMError("Export name must be a string");
+    Str exportName = proto->constantPool[nameIdx].get<Str>();
+    auto mod = moduleVal.get<Module>();
+    auto it = mod->exports.find(exportName);
+    if (it == mod->exports.end()) 
+        throwVMError("Module '" + mod->name + "' không có export nào tên là '" + exportName + "'.");
+    stackSlots[currentBase + dst] = it->second;
+}
+
+void MeowVM::opGetModuleExport() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0];
+    Int moduleReg = currentInst->args[1];
+    Int nameIdx = currentInst->args[2];
+
+    if (currentBase + moduleReg >= static_cast<Int>(stackSlots.size()))
+        throwVMError("GET_MODULE_EXPORT module register OOB");
+
+    Value& moduleVal = stackSlots[currentBase + moduleReg];
+    if (!moduleVal.is_module())
+        throwVMError("GET_MODULE_EXPORT chỉ dùng với module.");
+
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string())
+        throwVMError("Export name phải là string hợp lệ");
+
+    Str exportName = proto->constantPool[nameIdx].get<Str>();
+    auto mod = moduleVal.get<Module>();
+
+    auto it = mod->exports.find(exportName);
+    if (it == mod->exports.end())
+        throwVMError("Module '" + mod->name + "' không có export '" + exportName + "'.");
+
+    stackSlots[currentBase + dst] = it->second;
+}
+
+void MeowVM::opImportAll() {
+    Int moduleReg = currentInst->args[0]; 
+
+    if (currentBase + moduleReg >= static_cast<Int>(stackSlots.size())) {
+        throwVMError("IMPORT_ALL register OOB");
+    }
+
+    Value& moduleVal = stackSlots[currentBase + moduleReg];
+    if (!moduleVal.is_module()) {
+        throwVMError("IMPORT_ALL chỉ có thể dùng với một đối tượng module.");
+    }
+
+    auto importedModule = moduleVal.get<Module>();
+    auto currentModule = currentFrame->module;
+
+    for (const auto& pair : importedModule->exports) {
+        currentModule->globals[pair.first] = pair.second;
+    }
+}
+
+
+===== FILE: ./op-functions/oop.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opNewClass() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0], nameIdx = currentInst->args[1];
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string()) {
+        throwVMError("NEW_CLASS name must be a string");
+    }
+    Str name = proto->constantPool[nameIdx].get<Str>();
+    auto klass = memoryManager->newObject<ObjClass>(name);
+    stackSlots[currentBase + dst] = Value(klass);
+}
+
+void MeowVM::opNewInstance() {
+    Int dst = currentInst->args[0], classReg = currentInst->args[1];
+    Value& clsVal = stackSlots[currentBase + classReg];
+    if (!clsVal.is_class()) throwVMError("NEW_INSTANCE trên giá trị không phải class");
+    auto klass = clsVal.get<Class>();
+    auto instObj = memoryManager->newObject<ObjInstance>(klass);
+    stackSlots[currentBase + dst] = Value(instObj);
+}
+
+void MeowVM::opGetProp() {
+    auto proto = currentFrame->closure->proto;
+    Int dst = currentInst->args[0], objReg = currentInst->args[1], nameIdx = currentInst->args[2];
+
+    if (currentBase + objReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + dst >= static_cast<Int>(stackSlots.size()))
+        throwVMError("GET_PROP register OOB");
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string())
+        throwVMError("Property name must be a string");
+
+    Str name = proto->constantPool[nameIdx].get<Str>();
+    Value& obj = stackSlots[currentBase + objReg];
+
+    if (obj.is_instance()) {
+        Instance inst = obj.get<Instance>();
+        auto it = inst->fields.find(name);
+        if (it != inst->fields.end()) {
+            stackSlots[currentBase + dst] = it->second;
+            return;
+        }
+    }
+
+    if (auto prop = getMagicMethod(obj, name)) {
+        stackSlots[currentBase + dst] = *prop;
+        return;
+    }
+
+    stackSlots[currentBase + dst] = Value(Null{});
+}
+
+
+void MeowVM::opSetProp() {
+    auto proto = currentFrame->closure->proto;
+    Int objReg = currentInst->args[0], nameIdx = currentInst->args[1], valReg = currentInst->args[2];
+
+    if (currentBase + objReg >= static_cast<Int>(stackSlots.size()) ||
+        currentBase + valReg >= static_cast<Int>(stackSlots.size()))
+        throwVMError("SET_PROP register OOB");
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string())
+        throwVMError("Property name must be a string");
+
+    Str name = proto->constantPool[nameIdx].get<Str>();
+    Value& obj = stackSlots[currentBase + objReg];
+    Value& val = stackSlots[currentBase + valReg];
+
+
+    // if (auto mm = getMagicMethod(obj, "__setprop__")) {
+    //     (void) call(*mm, { Value(name), val });
+    //     return;
+    // }
+
+    if (obj.is_instance()) {
+        Instance inst = obj.get<Instance>();
+        inst->fields[name] = val;
+        return;
+    }
+    if (obj.is_hash()) {
+        Object m = obj.get<Object>();
+        m->fields[name] = val;
+        return;
+    }
+    if (obj.is_class()) {
+        Class cls = obj.get<Class>();
+        if (!val.is_function() && !val.is_bound_method()) throwVMError("Method must be closure");
+        cls->methods[name] = val;
+        return;
+    }
+
+    throwVMError("SET_PROP not supported on type '" + _toString(obj) + "'");
+}
+
+
+void MeowVM::opSetMethod() {
+    auto proto = currentFrame->closure->proto;
+    Int classReg = currentInst->args[0], 
+        nameIdx = currentInst->args[1], 
+        methodReg = currentInst->args[2];
+    Value& klassVal = stackSlots[currentBase + classReg];
+    if(!klassVal.is_class()) throwVMError("SET_METHOD chỉ cho class");
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string()) {
+        throwVMError("Method name must be a string");
+    }
+    Str name = proto->constantPool[nameIdx].get<Str>();
+    if(!stackSlots[currentBase + methodReg].is_class()) 
+        throwVMError("Method value must be a closure");
+    klassVal.get<Class>()->methods[name] = stackSlots[currentBase + methodReg];
+}
+
+void MeowVM::opInherit() {
+    Int subClassReg = currentInst->args[0], superClassReg = currentInst->args[1];
+    Value& subClassVal = stackSlots[currentBase + subClassReg];
+    Value& superClassVal = stackSlots[currentBase + superClassReg];
+    if(!subClassVal.is_class() || !superClassVal.is_class()) throwVMError("Cả hai toán hạng cho kế thừa phải là class.");
+    subClassVal.get<Class>()->superclass = superClassVal.get<Class>();
+    auto& subMethods = subClassVal.get<Class>()->methods;
+    auto& superMethods = superClassVal.get<Class>()->methods;
+    for(const auto& pair : superMethods) {
+        if(subMethods.find(pair.first) == subMethods.end()) {
+            subMethods[pair.first] = pair.second;
+        }
+    }
+}
+
+void MeowVM::opGetSuper() {
+    Int dst = currentInst->args[0];
+    Int nameIdx = currentInst->args[1];
+
+    auto proto = currentFrame->closure->proto;
+    if (nameIdx < 0 || nameIdx >= static_cast<Int>(proto->constantPool.size()) || !(proto->constantPool[nameIdx]).is_string()) {
+        throwVMError("GET_SUPER name must be a string");
+    }
+    Str methodName = proto->constantPool[nameIdx].get<Str>();
+
+    Value& receiverVal = stackSlots[currentBase + 0];
+    if (!receiverVal.is_instance()) {
+        throwVMError("`super` can only be used inside a method.");
+    }
+    Instance receiver = receiverVal.get<Instance>();
+
+    if (!receiver->klass->superclass) {
+        throwVMError("Class '" + receiver->klass->name + "' has no superclass.");
+    }
+    Class superclass = *receiver->klass->superclass;
+
+    auto it = superclass->methods.find(methodName);
+    if (it == superclass->methods.end()) {
+        throwVMError("Superclass '" + superclass->name + "' has no method named '" + methodName + "'.");
+    }
+    Value& method = it->second;
+    if (!method.is_function()) {
+        throwVMError("Superclass method is not a callable closure.");
+    }
+    
+    auto bound = memoryManager->newObject<ObjBoundMethod>(receiver, method.get<Function>());
+    stackSlots[currentBase + dst] = Value(bound);
+}
+
+
+
+===== FILE: ./op-functions/others.cpp =====
+#include "meow_vm.h"
+
+void MeowVM::opUnsupported() {
+    throwVMError("Unsupported OpCode!");
+}
+

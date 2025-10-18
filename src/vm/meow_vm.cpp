@@ -69,7 +69,7 @@ void MeowVM::run() {
     meow::runtime::Chunk test_chunk;
 
     test_chunk.write_byte(static_cast<uint8_t>(OpCode::LOAD_INT));
-    test_chunk.write_byte(0);
+    test_chunk.write_u16(0);
     test_chunk.write_u64(123ULL);
     
     test_chunk.write_byte(static_cast<uint8_t>(OpCode::HALT));
