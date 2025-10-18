@@ -1,6 +1,5 @@
-// --- Old codes ---
-
 #include "vm/meow_vm.h"
+#include "common/pch.h"
 #include "runtime/execution_context.h"
 #include "runtime/builtin_registry.h"
 #include "memory/memory_manager.h"
@@ -8,14 +7,6 @@
 #include "module/module_manager.h"
 #include "runtime/operator_dispatcher.h"
 #include "core/op_codes.h"
-
-#include <iostream>
-#include <bit>
-#include <format>
-#include <utility>
-
-using namespace meow::vm;
-using namespace meow::core;
 
 template <typename... Args>
 inline void print(const std::format_string<Args...> fmt, Args&&... args) {
@@ -26,6 +17,9 @@ template <typename... Args>
 inline void printl(const std::format_string<Args...> fmt, Args&&... args) {
     std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...) << '\n';
 }
+
+using namespace meow::vm;
+using namespace meow::core;
 
 MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
@@ -71,6 +65,9 @@ void MeowVM::run() {
     test_chunk.write_byte(static_cast<uint8_t>(OpCode::LOAD_INT));
     test_chunk.write_u16(0);
     test_chunk.write_u64(123ULL);
+
+    test_chunk.write_byte(static_cast<uint8_t>(OpCode::LOAD_TRUE));
+    test_chunk.write_u16(1);
     
     test_chunk.write_byte(static_cast<uint8_t>(OpCode::HALT));
     
@@ -98,6 +95,7 @@ void MeowVM::run() {
     )
 
     #define READ_I64() (std::bit_cast<int64_t>(READ_U64()))
+    #define READ_F64() (std::bit_cast<double>(READ_U64()))
     #define READ_CONSTANT() (context_->current_frame_->function_->get_proto()->get_chunk().get_constant(READ_U16()))
 
     #define REGISTER(idx) (context_->registers_[idx])
@@ -107,6 +105,46 @@ void MeowVM::run() {
         uint8_t instruction = READ_BYTE();
         switch (static_cast<OpCode>(instruction)) {
             
+            // load_const dst, cidx
+            case OpCode::LOAD_CONST: {
+                uint16_t dst = READ_U16();
+                Value value = READ_CONSTANT();
+
+                REGISTER(dst) = value;
+                // printl("load_const r{}", dst);
+            }
+
+            // load_null dst
+            case OpCode::LOAD_NULL: {
+                uint16_t dst = READ_U16();
+
+                REGISTER(dst) = Value();
+                printl("load_null r{}", dst);
+            }
+
+            // load_true dst
+            case OpCode::LOAD_TRUE: {
+                uint16_t dst = READ_U16();
+
+                REGISTER(dst) = Value(true);
+                printl("load_true r{}", dst);
+            }
+
+            // load_false dst
+            case OpCode::LOAD_FALSE: {
+                uint16_t dst = READ_U16();
+
+                REGISTER(dst) = Value(false);
+                printl("load_true r{}", dst);
+            }
+
+            case OpCode::MOVE: {
+                uint16_t dst = READ_U16();
+                uint16_t src = READ_U16();
+
+                REGISTER(dst) = REGISTER(src);
+            }
+
             // load_int dst, value
             case OpCode::LOAD_INT: {
                 uint16_t dst = READ_U16();
@@ -116,11 +154,22 @@ void MeowVM::run() {
                 printl("load_int r{}, {}", dst, value);
                 break;
             }
+
+            // load_float dst, value
+            case OpCode::LOAD_FLOAT: {
+                uint16_t dst = READ_U16();
+                double value = READ_F64();
+
+                REGISTER(dst) = Value(value);
+                printl("load_float r{}, {}", dst, value);
+            }
+
+            // halt
             case OpCode::HALT: {
-                printl("Execution finished (HALT)");
+                printl("halt");
                 if (!context_->registers_.empty()) {
                    if (REGISTER(0).is_int()) {
-                       printl("Final value in r0: {}", REGISTER(0).as_int());
+                       printl("Final value in R0: {}", REGISTER(0).as_int());
                    }
                 }
                 return;

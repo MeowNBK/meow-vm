@@ -24,6 +24,8 @@
 #include <cctype>
 #include <limits>
 #include <cmath>
+#include <bit>
+#include <format>
 
 // IO & Filesystem
 #include <iostream>

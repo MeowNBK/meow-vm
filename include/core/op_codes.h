@@ -11,7 +11,7 @@
 namespace meow::core {
     enum class OpCode : unsigned char {
         // --- Load/store ---
-        LOAD_CONST, LOAD_NULL, LOAD_TRUE, LOAD_FALSE, LOAD_INT, MOVE,
+        LOAD_CONST, LOAD_NULL, LOAD_TRUE, LOAD_FALSE, LOAD_INT, LOAD_FLOAT, MOVE,
         // --- Binary ---
         ADD, SUB, MUL, DIV, MOD, POW, EQ, NEQ, GT, GE, LT, LE,
         // --- Unary ---
