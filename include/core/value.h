@@ -93,5 +93,22 @@ namespace meow::core {
             }
             return nullptr;
         }
+
+
+            template <typename Visitor>
+            decltype(auto) visit(Visitor&& vis) { return data_.visit(vis) }
+
+            template <typename Visitor>
+            decltype(auto) visit(Visitor&& vis) const { return data_.visit(vis) }
+
+            template <typename... Fs>
+            decltype(auto) visit(Fs&&... fs) {
+                return data_.visit(std::forward<Fs>(fs)...);
+            }
+
+            template <typename... Fs>
+            decltype(auto) visit(Fs&&... fs) const {
+                return data_.visit(std::forward<Fs>(fs)...);
+            }
     };
 }
