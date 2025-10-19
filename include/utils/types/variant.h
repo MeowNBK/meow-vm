@@ -2,20 +2,22 @@
 
 // ======================== I. STANDARD C++ HEADERS ========================
 #include <cstddef>      // std::size_t, static_cast
-#include <cstdint>      // uint8_t, uint64_t, uintptr_t, int64_t
-#include <type_traits>  // std::integral_constant, std::decay_t, std::is_pointer, std::is_integral, std::is_floating_point, std::is_same_v, std::conditional_t, std::enable_if_t, ...
-#include <utility>      // std::forward, std::move, std::declval, std::swap, std::in_place_type_t, std::in_place_index_t
-#include <functional>   // std::invoke, std::invoke_result_t
-#include <array>        // std::array
-#include <tuple>        // std::tuple, std::tuple_element_t
-#include <cstring>      // std::memcpy, std::memcmp, std::memset
-#include <algorithm>    // std::min
-#include <stdexcept>    // std::bad_variant_access
-#include <new>          // Placement new
-#include <cmath>        // std::isnan
-#include <limits>       // std::numeric_limits
-#include <variant>      // std::monostate
-#include <bit>          // std::bit_cast (C++20 - RẤT QUAN TRỌNG CHO NaN-BOXING!)
+#include <cstdint>
+#include <type_traits>
+#include <utility>
+#include <functional>
+#include <array>
+#include <tuple>
+#include <cstring>
+#include <algorithm>
+#include <stdexcept>    // std::bad_variant_access (kept for compatibility header wise)
+#include <new>
+#include <cmath>
+#include <limits>
+#include <variant>
+#include <bit>
+#include <cassert>      // assert
+#include <exception>    // std::terminate
 
 #include "variant/variant_utils.h"
 #include "variant/variant_fallback.h"
@@ -39,32 +41,33 @@ namespace meow {
 // Bring a few helpers into scope for nicer code below
 using utils::overload; // convenience for non-member visit wrappers
 
-// We will refer to flatten/metadata via utils::detail and to backend helpers via utils::...
-// (variant_utils.h defines meow::utils::detail::flattened_unique_t etc.)
-// nanbox header defines utils::all_nanboxable_impl
-// fallback header defines utils::FallbackVariant
+// ---------------- Backend selection based on flattened types ----------------
+// Flatten nested meow::variant parameters into a type_list and use that to
+// decide backend. This ensures backend receives the actual flattened list.
+namespace detail_backend {
+    template <typename FlattenedList> struct select_backend_impl;
+
+    template <typename... Ts>
+    struct select_backend_impl<utils::detail::type_list<Ts...>> {
+        static constexpr bool can_nanbox = MEOW_CAN_USE_NAN_BOXING != 0;
+        static constexpr bool small_enough = (sizeof...(Ts) <= 8);
+        static constexpr bool all_nanboxable = utils::all_nanboxable_impl<utils::detail::type_list<Ts...>>::value;
+        static constexpr bool use_nanbox = can_nanbox && small_enough && all_nanboxable;
+        using type = std::conditional_t<use_nanbox, utils::NaNBoxedVariant<Ts...>, utils::FallbackVariant<Ts...>>;
+    };
+} // namespace detail_backend
 
 template <typename... Args>
 class variant {
 private:
-    // --- Metadata / choose backend ---
-    // flattened_unique_t is in meow::utils::detail
-    static constexpr bool can_nanbox_by_platform = MEOW_CAN_USE_NAN_BOXING != 0;
-    static constexpr bool small_enough_for_nanbox = (sizeof...(Args) <= 8);
-
-    static constexpr bool should_use_nan_box =
-        can_nanbox_by_platform &&
-        small_enough_for_nanbox &&
-        // all_nanboxable_impl lives in meow::utils (defined by variant_nanbox.h)
-        utils::all_nanboxable_impl<utils::detail::flattened_unique_t<Args...>>::value;
-
-    using implementation_t = std::conditional_t<
-        should_use_nan_box,
-        utils::NaNBoxedVariant<Args...>,
-        utils::FallbackVariant<Args...>
-    >;
+    // Use flattened unique typelist for backend decision and for internal checks
+    using flattened_list_t = typename utils::detail::flattened_unique_t<Args...>;
+    using implementation_t = typename detail_backend::select_backend_impl<flattened_list_t>::type;
 
     implementation_t storage_;
+
+    // helper alias: for a meow::variant<Ts...>, variant_inner_list_t yields type_list<Ts...>
+    template <typename V> using variant_inner_list_t = typename utils::detail::variant_inner_list<std::decay_t<V>>::type;
 
 public:
     // --- Constructors / assignment ---
@@ -72,8 +75,13 @@ public:
     variant(const variant&) = default;
     variant(variant&&) = default;
 
+    // Template ctor for non-meow::variant types (unchanged logic; excluded when T is meow::variant)
     template <typename T,
-              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant>>>
+              typename = std::enable_if_t<
+                  !std::is_same_v<std::decay_t<T>, variant> &&
+                  !utils::detail::is_meow_variant<std::decay_t<T>>::value &&
+                  std::is_constructible_v<implementation_t, T>
+              >>
     variant(T&& value) noexcept(noexcept(implementation_t(std::forward<T>(value))))
         : storage_(std::forward<T>(value))
     {}
@@ -81,10 +89,102 @@ public:
     variant& operator=(const variant&) = default;
     variant& operator=(variant&&) = default;
 
+    // Template operator= for non-meow::variant types
     template <typename T,
-              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant>>>
+              typename = std::enable_if_t<
+                  !std::is_same_v<std::decay_t<T>, variant> &&
+                  !utils::detail::is_meow_variant<std::decay_t<T>>::value &&
+                  std::is_assignable_v<implementation_t&, T>
+              >>
     variant& operator=(T&& value) noexcept(noexcept(std::declval<implementation_t&>() = std::forward<T>(value))) {
         storage_ = std::forward<T>(value);
+        return *this;
+    }
+
+    // --- Special handling for nested meow::variant construction/assignment ---
+    // These do NOT throw: they assert in debug and call std::terminate() on mismatch
+    // (to avoid exception unwinding in hot VM loops)
+
+    // Construct from another meow::variant (const lvalue)
+    template <typename... U>
+    variant(const meow::variant<U...>& other) noexcept {
+        if (other.valueless()) {
+            storage_ = implementation_t{};
+            return;
+        }
+        bool assigned = false;
+        other.visit([&](auto const& v) noexcept {
+            using VType = std::decay_t<decltype(v)>;
+            if constexpr (utils::detail::type_list_contains<VType, flattened_list_t>::value) {
+                storage_ = v;
+                assigned = true;
+            }
+        });
+        if (!assigned) {
+            // Programming error: nested variant contains a type not present in this variant's flattened list.
+            assert(false && "Constructing variant from nested variant with incompatible inner type");
+            std::terminate();
+        }
+    }
+
+    // Construct from another meow::variant (rvalue)
+    template <typename... U>
+    variant(meow::variant<U...>&& other) noexcept {
+        if (other.valueless()) {
+            storage_ = implementation_t{};
+            return;
+        }
+        bool assigned = false;
+        other.visit([&](auto && v) noexcept {
+            using VType = std::decay_t<decltype(v)>;
+            if constexpr (utils::detail::type_list_contains<VType, flattened_list_t>::value) {
+                storage_ = std::forward<decltype(v)>(v);
+                assigned = true;
+            }
+        });
+        if (!assigned) {
+            assert(false && "Move-constructing variant from nested variant with incompatible inner type");
+            std::terminate();
+        }
+    }
+
+    // Assign from another meow::variant (const lvalue)
+    template <typename... U>
+    variant& operator=(const meow::variant<U...>& other) noexcept {
+        if (reinterpret_cast<const void*>(&other) == reinterpret_cast<const void*>(this)) return *this;
+        if (other.valueless()) { storage_ = implementation_t{}; return *this; }
+        bool assigned = false;
+        other.visit([&](auto const& v) noexcept {
+            using VType = std::decay_t<decltype(v)>;
+            if constexpr (utils::detail::type_list_contains<VType, flattened_list_t>::value) {
+                storage_ = v;
+                assigned = true;
+            }
+        });
+        if (!assigned) {
+            assert(false && "Assigning variant from nested variant with incompatible inner type");
+            std::terminate();
+        }
+        return *this;
+    }
+
+    // Assign from another meow::variant (rvalue)
+    template <typename... U>
+    variant& operator=(meow::variant<U...>&& other) noexcept {
+        if (reinterpret_cast<void*>(&other) == reinterpret_cast<void*>(this)) return *this;
+        if (other.valueless()) { storage_ = implementation_t{}; return *this; }
+        bool assigned = false;
+        other.visit([&](auto && v) noexcept {
+            using VType = std::decay_t<decltype(v)>;
+            if constexpr (utils::detail::type_list_contains<VType, flattened_list_t>::value) {
+                storage_ = std::forward<decltype(v)>(v);
+                assigned = true;
+            }
+        });
+        if (!assigned) {
+            assert(false && "Move-assigning variant from nested variant with incompatible inner type");
+            std::terminate();
+        }
         return *this;
     }
 
@@ -99,12 +199,73 @@ public:
     [[nodiscard]] bool is() const noexcept { return holds<T>(); }
 
     // --- Accessors ---
+    // Non-variant get: delegate to backend (keeps noexcept semantics as original)
     template <typename T>
-    [[nodiscard]] decltype(auto) get() { return storage_.template get<T>(); }
+    [[nodiscard]] decltype(auto) get() noexcept { return storage_.template get<T>(); }
+
+    // template <typename T>
+    // [[nodiscard]] decltype(auto) get() const noexcept { return storage_.template get<T>(); }
+
+    // If T is a meow::variant<...>, construct that variant from the current held inner.
+    // IMPORTANT: this function is noexcept (no exceptions). On mismatch we assert and terminate.
+    template <typename T>
+    [[nodiscard]] std::decay_t<T> get() noexcept {
+        if constexpr (utils::detail::is_meow_variant<std::decay_t<T>>::value) {
+            using TargetVariant = std::decay_t<T>;
+            // If valueless -> terminate (consistent with not throwing)
+            if (valueless()) {
+                assert(false && "get<variant> called on valueless variant");
+                std::terminate();
+            }
+            bool constructed = false;
+            std::decay_t<T> result{}; // default-initialize; we'll overwrite when match found
+            visit([&](auto && v) noexcept {
+                using VType = std::decay_t<decltype(v)>;
+                using inner_list = typename utils::detail::variant_inner_list<TargetVariant>::type;
+                if constexpr (utils::detail::type_list_contains<VType, inner_list>::value) {
+                    result = TargetVariant{ std::forward<decltype(v)>(v) };
+                    constructed = true;
+                }
+            });
+            if (!constructed) {
+                assert(false && "get<target-variant> called but current held type is not in target variant");
+                std::terminate();
+            }
+            return result;
+        } else {
+            return storage_.template get<T>();
+        }
+    }
 
     template <typename T>
-    [[nodiscard]] decltype(auto) get() const { return storage_.template get<T>(); }
+    [[nodiscard]] std::decay_t<T> get() const noexcept {
+        if constexpr (utils::detail::is_meow_variant<std::decay_t<T>>::value) {
+            using TargetVariant = std::decay_t<T>;
+            if (valueless()) {
+                assert(false && "get<variant> const called on valueless variant");
+                std::terminate();
+            }
+            bool constructed = false;
+            std::decay_t<T> result{};
+            visit([&](auto const& v) noexcept {
+                using VType = std::decay_t<decltype(v)>;
+                using inner_list = typename utils::detail::variant_inner_list<TargetVariant>::type;
+                if constexpr (utils::detail::type_list_contains<VType, inner_list>::value) {
+                    result = TargetVariant{ v };
+                    constructed = true;
+                }
+            });
+            if (!constructed) {
+                assert(false && "get<target-variant> const called but current held type is not in target variant");
+                std::terminate();
+            }
+            return result;
+        } else {
+            return storage_.template get<T>();
+        }
+    }
 
+    // safe_get delegates to backend
     template <typename T>
     [[nodiscard]] decltype(auto) safe_get() { return storage_.template safe_get<T>(); }
 
@@ -142,7 +303,6 @@ public:
         return storage_.visit(overload{ std::forward<Fs>(fs)... });
     }
 
-    // Overload cho const variant
     template <typename... Fs>
     decltype(auto) visit(Fs&&... fs) const {
         return storage_.visit(overload{ std::forward<Fs>(fs)... });

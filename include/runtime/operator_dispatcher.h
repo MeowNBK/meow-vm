@@ -28,8 +28,8 @@ namespace meow::runtime {
 
     class OperatorDispatcher {
     private:
-        using BinaryOpFunction = core::Value(*)(meow::core::param_t, meow::core::param_t);
-        using UnaryOpFunction = core::Value(*)(meow::core::param_t);
+        using BinaryOpFunction = core::return_t(*)(meow::core::param_t, meow::core::param_t);
+        using UnaryOpFunction = core::return_t(*)(meow::core::param_t);
 
         memory::MemoryManager* heap_;
         BinaryOpFunction binary_dispatch_table_[NUM_OPCODES][NUM_VALUE_TYPES][NUM_VALUE_TYPES];

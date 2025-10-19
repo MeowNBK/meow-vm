@@ -2,7 +2,7 @@
 
 #include "common/pch.h"
 #include "memory/garbage_collector.h"
-#include "core/objects/native.h"
+#include "core/objects.h"
 #include "core/type.h"
 
 namespace meow::memory {
@@ -21,10 +21,10 @@ namespace meow::memory {
                 collect();
                 gc_threshold_ *= 2;
             }
-            T* newObj = new T(std::forward<Args>(args)...);
-            gc_->register_object(static_cast<meow::core::MeowObject*>(newObj));
+            T* new_object = new T(std::forward<Args>(args)...);
+            gc_->register_object(static_cast<meow::core::MeowObject*>(new_object));
             ++object_allocated_;
-            return newObj;
+            return new_object;
         }
     public:
         explicit MemoryManager(std::unique_ptr<meow::memory::GarbageCollector> gc);

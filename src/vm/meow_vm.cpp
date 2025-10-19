@@ -115,10 +115,11 @@ void MeowVM::prepare() noexcept {
         { 
             LOAD_INT, u16(0), u64(1802),
             LOAD_TRUE, u16(1),
+            NEW_ARRAY, u16(2), u16(0), u16(2),
             HALT
         }
     );
-    size_t num_register = 2;
+    size_t num_register = 3;
     
     auto main_proto = heap_->new_proto(num_register, 0, heap_->new_string("main"), std::move(test_chunk));
     auto main_func = heap_->new_function(main_proto);
@@ -602,7 +603,10 @@ void MeowVM::run() {
                 for (size_t i = 0; i < count; ++i) {
                     array->push(REGISTER(start_idx + i));
                 }
-                REGISTER(dst) = Value(array);
+                REGISTER(dst) = Value(object_t(array));
+
+                printl("new_array r{}, r{}, {}", dst, start_idx, count);
+                printl("is_array(): {}", REGISTER(dst).is_array());
                 break;
             }
             case OpCode::NEW_HASH: {
@@ -858,8 +862,7 @@ void MeowVM::run() {
                 break;
             }
             case OpCode::GET_SUPER: {
-                uint16_t dst = READ_U16();
-                uint16_t name_idx = READ_U16();
+                uint16_t dst = READ_U16(), name_idx = READ_U16();
                 string_t name = CONSTANT(name_idx).as_string();
                 
                 // 1. Giả định 'this' (receiver) luôn ở thanh ghi 0 (R0) của frame hiện tại

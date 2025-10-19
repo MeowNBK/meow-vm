@@ -26,6 +26,7 @@
 #include <cmath>
 #include <bit>
 #include <format>
+#include <concepts>
 
 // IO & Filesystem
 #include <iostream>

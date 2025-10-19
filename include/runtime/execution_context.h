@@ -2,6 +2,7 @@
 
 #include "common/pch.h"
 #include "core/value.h"
+#include "core/objects.h"
 #include "core/objects/function.h"
 #include "memory/gc_visitor.h"
 
