@@ -20,7 +20,6 @@ namespace meow::vm { class MeowEngine; }
 namespace meow::core::objects {
     class ObjNativeFunction : public meow::core::MeowObject {
     private:
-        using value_t = meow::core::Value;
         using engine_t = meow::vm::MeowEngine;
         using visitor_t = meow::memory::GCVisitor;
     public:

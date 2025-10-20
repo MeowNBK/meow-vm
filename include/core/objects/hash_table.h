@@ -19,7 +19,6 @@ namespace meow::core::objects {
     class ObjHashTable : public MeowObject {
     private:
         using key_t = meow::core::string_t;
-        using value_t = meow::core::Value;
         using map_t = std::unordered_map<key_t, value_t>;
         using visitor_t = meow::memory::GCVisitor;
 

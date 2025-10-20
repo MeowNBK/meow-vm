@@ -162,7 +162,7 @@ namespace meow::common {
         );
     }
 
-    inline bool to_bool(meow::core::Value value) noexcept {
+    inline bool to_bool(meow::core::param_t value) noexcept {
         return value.visit(
             [](meow::core::null_t) -> bool { return 0; },
             [](meow::core::int_t i) -> bool { return i != 0; },

@@ -1,84 +1,83 @@
-// --- Old codes ---
+#pragma once
 
-// #pragma once
+#include "common/pch.h"
+#include <string_view>
+#include <vector>
+#include <string> // Thêm để dùng trong Token::to_string
 
-// #include "common/pch.h"
-// #include <string_view>
-// #include <vector>
+namespace meow::loader {
 
-// namespace meow::loader {
+    enum class TokenType {
+        // Directives
+        DIR_FUNC,       // .func
+        DIR_ENDFUNC,    // .endfunc
+        DIR_REGISTERS,  // .registers
+        DIR_UPVALUES,   // .upvalues
+        DIR_UPVALUE,    // .upvalue
+        DIR_CONST,      // .const
 
-//     enum class TokenType {
-//         // Directives
-//         DIR_FUNC,       // .func
-//         DIR_ENDFUNC,    // .endfunc
-//         DIR_REGISTERS,  // .registers
-//         DIR_UPVALUES,   // .upvalues
-//         DIR_UPVALUE,    // .upvalue
-//         DIR_CONST,      // .const
+        // Symbols
+        LABEL_DEF,      // nhan:
+        IDENTIFIER,     // ten_ham, ten_bien, ten_nhan_nhay_toi, @ProtoName
+        OPCODE,         // LOAD_CONST, ADD, JUMP etc.
 
-//         // Symbols
-//         LABEL_DEF,      // nhan:
-//         IDENTIFIER,     // ten_ham, ten_bien, ten_nhan_nhay_toi
-//         OPCODE,         // LOAD_CONST, ADD, JUMP etc.
+        // Literals
+        NUMBER_INT,     // 123, -45, 0xFF, 0b101
+        NUMBER_FLOAT,   // 3.14, -0.5, 1e6
+        STRING,         // "chuoi ky tu"
 
-//         // Literals
-//         NUMBER_INT,     // 123, -45, 0xFF, 0b101
-//         NUMBER_FLOAT,   // 3.14, -0.5, 1e6
-//         STRING,         // "chuoi ky tu"
+        // Other
+        END_OF_FILE,
+        UNKNOWN,        // Lỗi hoặc ký tự không nhận dạng
 
-//         // Other
-//         END_OF_FILE,
-//         UNKNOWN
-//     };
+        TOTAL_TOKENS
+    };
 
-//     struct Token {
-//         std::string_view lexeme;
-//         TokenType type;
-//         size_t line = 0;
-//         size_t col = 0; // Cột bắt đầu của token
+    struct Token {
+        std::string_view lexeme;
+        TokenType type;
+        size_t line = 0;
+        size_t col = 0;
 
-//         [[nodiscard]] std::string to_string() const; // Để debug
-//     };
+        [[nodiscard]] std::string to_string() const; // Để debug
+    };
 
-//     class Lexer {
-//     public:
-//         explicit Lexer(std::string_view source);
+    class Lexer {
+    public:
+        explicit Lexer(std::string_view source);
 
-//         [[nodiscard]] std::vector<Token> tokenize_all();
-//         [[nodiscard]] Token next_token();
+        [[nodiscard]] std::vector<Token> tokenize_all();
+        [[nodiscard]] Token next_token();
 
-//     private:
-//         std::string_view src_;
-//         size_t pos_ = 0;
-//         size_t line_ = 1;
-//         size_t line_start_pos_ = 0; // Vị trí bắt đầu của dòng hiện tại
+    private:
+        std::string_view src_;
+        size_t pos_, line_, col_;
+        size_t line_start_pos_ = 0; // Vị trí bắt đầu của dòng hiện tại
 
-//         size_t token_start_pos_ = 0;
-//         size_t token_start_line_ = 0;
-//         size_t token_start_col_ = 0;
+        unsigned char curr_;
 
-//         [[nodiscard]] char current_char() const noexcept;
-//         [[nodiscard]] char peek_char() const noexcept;
-//         void advance() noexcept;
-//         bool is_at_end() const noexcept;
+        size_t token_start_pos_ = 0;
+        size_t token_start_line_ = 0;
+        size_t token_start_col_ = 0;
 
-//         Token make_token(TokenType type);
-//         Token make_token(TokenType type, size_t length);
-//         Token make_error_token(const std::string& message); // Không dùng trực tiếp, chỉ để debug lexer
+        [[nodiscard]] unsigned char peek() const noexcept;
+        void advance() noexcept;
+        [[nodiscard]] bool is_at_end() const noexcept;
+        [[nodiscard]] bool is_at_end(size_t idx) const noexcept;
 
-//         void skip_whitespace_and_comments();
-//         Token scan_token();
-//         Token scan_identifier_or_keyword();
-//         Token scan_number();
-//         Token scan_string();
-//         Token scan_directive_or_opcode(); // Xử lý cả '.' và tên lệnh/opcode
-//         Token scan_label_def(); // Xử lý nhan:
+        Token make_token(TokenType type) const;
+        Token make_token(TokenType type, size_t length) const;
+        Token make_error_token(const std::string& message) const;
 
-//         [[nodiscard]] static bool is_label_char(char c);
-//         [[nodiscard]] static bool is_identifier_start(char c);
-//         [[nodiscard]] static bool is_identifier_char(char c);
-//         [[nodiscard]] TokenType check_keyword(std::string_view lexeme);
-//     };
+        void skip_whitespace_and_comments();
+        void skip_whitespace() noexcept;
+        void skip_comments() noexcept;
+        Token scan_token();
+        Token scan_identifier(); // Gộp chung
+        Token scan_number();
+        Token scan_string(unsigned char delimiter = '"');
 
-// } // namespace meow::loader
+        [[nodiscard]] static bool is_identifier_start(unsigned char c);
+    };
+
+} // namespace meow::loader

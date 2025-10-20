@@ -1,7 +1,10 @@
 #pragma once
 
 #include "common/pch.h"
+#include "core/definitions.h"
 #include "core/value.h"
+
+namespace meow::loader { class TextParser; }
 
 namespace meow::runtime {
     class Chunk {
@@ -97,20 +100,29 @@ namespace meow::runtime {
         // --- Constant pool ---
         [[nodiscard]] inline size_t get_pool_size() const noexcept { return constant_pool_.size(); }
         [[nodiscard]] inline bool is_pool_empty() const noexcept { return constant_pool_.empty(); }
-        [[nodiscard]] inline size_t add_constant(meow::core::Value value) {
+        [[nodiscard]] inline size_t add_constant(meow::core::param_t value) {
             constant_pool_.push_back(value);
             return constant_pool_.size() - 1;
         }
-        [[nodiscard]] inline meow::core::Value get_constant(size_t index) const noexcept { return constant_pool_[index]; }
+        [[nodiscard]] inline meow::core::return_t get_constant(size_t index) const noexcept {
+            return constant_pool_[index];
+        }
+        [[nodiscard]] inline meow::core::value_t& get_constant_ref(size_t index) noexcept {
+            return constant_pool_[index];
+        }
+        [[nodiscard]] inline const uint8_t* get_code_buffer_ptr() const noexcept {
+            return code_.data();
+        }
 
         inline bool patch_u16(size_t offset, uint16_t value) noexcept {
-            if (offset + 1 >= code_.size()) {
-                return false;
-            }
+            if (offset + 1 >= code_.size()) return false;
+
             code_[offset] = static_cast<uint8_t>(value & 0xFF);
             code_[offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
+
             return true;
         }
+
     private:
         std::vector<uint8_t> code_;
         std::vector<meow::core::Value> constant_pool_;
