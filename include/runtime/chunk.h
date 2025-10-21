@@ -90,7 +90,7 @@ class Chunk {
 
     inline void write_f64(double value) { write_u64(std::bit_cast<uint64_t>(value)); }
     // --- Code buffer ---
-    [[nodiscard]] inline const uint8_t *get_code() const noexcept { return code_.data(); }
+    [[nodiscard]] inline const uint8_t* get_code() const noexcept { return code_.data(); }
     [[nodiscard]] inline size_t get_code_size() const noexcept { return code_.size(); }
     [[nodiscard]] inline bool is_code_empty() const noexcept { return code_.empty(); }
 
@@ -104,10 +104,10 @@ class Chunk {
     [[nodiscard]] inline meow::core::return_t get_constant(size_t index) const noexcept {
         return constant_pool_[index];
     }
-    [[nodiscard]] inline meow::core::value_t &get_constant_ref(size_t index) noexcept {
+    [[nodiscard]] inline meow::core::value_t& get_constant_ref(size_t index) noexcept {
         return constant_pool_[index];
     }
-    [[nodiscard]] inline const uint8_t *get_code_buffer_ptr() const noexcept {
+    [[nodiscard]] inline const uint8_t* get_code_buffer_ptr() const noexcept {
         return code_.data();
     }
 

@@ -67,7 +67,7 @@ class Lexer {
 
     Token make_token(TokenType type) const;
     Token make_token(TokenType type, size_t length) const;
-    Token make_error_token(const std::string &message) const;
+    Token make_error_token(const std::string& message) const;
 
     void skip_whitespace_and_comments();
     void skip_whitespace() noexcept;

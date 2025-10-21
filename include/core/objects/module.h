@@ -76,6 +76,6 @@ class ObjModule : public meow::core::MeowObject {
     [[nodiscard]] inline bool is_executing() const noexcept { return state == State::EXECUTING; }
     [[nodiscard]] inline bool is_executed() const noexcept { return state == State::EXECUTED; }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 }  // namespace meow::core::objects

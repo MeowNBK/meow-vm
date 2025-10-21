@@ -44,7 +44,7 @@ class ObjUpvalue : public meow::core::MeowObject {
     inline meow::core::return_t get_value() const noexcept { return closed_; }
     inline size_t get_index() const noexcept { return index_; }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 
 class ObjFunctionProto : public meow::core::MeowObject {
@@ -61,30 +61,30 @@ class ObjFunctionProto : public meow::core::MeowObject {
 
    public:
     explicit ObjFunctionProto(size_t registers, size_t upvalues, string_t name,
-                              chunk_t &&chunk) noexcept
+                              chunk_t&& chunk) noexcept
         : num_registers_(registers),
           num_upvalues_(upvalues),
           name_(name),
           chunk_(std::move(chunk)) {}
 
     /// @brief Unchecked upvalue desc access. For performance-critical code
-    [[nodiscard]] inline const UpvalueDesc &get_desc(size_t index) const noexcept {
+    [[nodiscard]] inline const UpvalueDesc& get_desc(size_t index) const noexcept {
         return upvalue_descs_[index];
     }
-    [[nodiscard]] inline void set_desc(size_t index, const UpvalueDesc &desc) noexcept {
+    [[nodiscard]] inline void set_desc(size_t index, const UpvalueDesc& desc) noexcept {
         upvalue_descs_[index] = desc;
     }
     /// @brief Checked upvalue desc access. For performence-critical code
-    [[nodiscard]] inline const UpvalueDesc &at_desc(size_t index) const {
+    [[nodiscard]] inline const UpvalueDesc& at_desc(size_t index) const {
         return upvalue_descs_.at(index);
     }
     [[nodiscard]] inline size_t get_num_registers() const noexcept { return num_registers_; }
     [[nodiscard]] inline size_t get_num_upvalues() const noexcept { return num_upvalues_; }
     [[nodiscard]] inline string_t get_name() const noexcept { return name_; }
-    [[nodiscard]] inline const chunk_t &get_chunk() const noexcept { return chunk_; }
+    [[nodiscard]] inline const chunk_t& get_chunk() const noexcept { return chunk_; }
     [[nodiscard]] inline size_t desc_size() const noexcept { return upvalue_descs_.size(); }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 
 class ObjClosure : public meow::core::MeowObject {
@@ -112,6 +112,6 @@ class ObjClosure : public meow::core::MeowObject {
     /// @brief Checked upvalue access. Throws if index is OOB
     [[nodiscard]] inline upvalue_t at_upvalue(size_t index) const { return upvalues_.at(index); }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 }  // namespace meow::core::objects

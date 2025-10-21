@@ -109,7 +109,7 @@ inline int64_t to_int(meow::core::param_t value) noexcept {
             // However it's just a choice between many different choices
 
             errno = 0;
-            char *endptr = nullptr;
+            char* endptr = nullptr;
             const std::string token(str.begin(), str.end());
             int64_t value = std::strtoll(token.c_str(), &endptr, base);
             if (endptr == token.c_str())
@@ -126,7 +126,7 @@ inline int64_t to_int(meow::core::param_t value) noexcept {
 
             return static_cast<int64_t>(value);
         },
-        [](auto &&) -> int64_t { return 0; });
+        [](auto&&) -> int64_t { return 0; });
 }
 
 inline double to_float(meow::core::param_t value) noexcept {
@@ -138,7 +138,7 @@ inline double to_float(meow::core::param_t value) noexcept {
         [](meow::core::string_t s) -> double {
             std::string str = s->c_str();
 
-            for (auto &c : str) {
+            for (auto& c : str) {
                 c = static_cast<char>(std::tolower((unsigned char)c));
             }
 
@@ -152,9 +152,9 @@ inline double to_float(meow::core::param_t value) noexcept {
                 return -std::numeric_limits<double>::infinity();
             }
 
-            const char *cs = str.c_str();
+            const char* cs = str.c_str();
             errno = 0;
-            char *endptr = nullptr;
+            char* endptr = nullptr;
             double val = std::strtod(cs, &endptr);
 
             if (cs == endptr)
@@ -167,7 +167,7 @@ inline double to_float(meow::core::param_t value) noexcept {
             }
             return static_cast<double>(val);
         },
-        [](auto &&) -> double { return 0.0; });
+        [](auto&&) -> double { return 0.0; });
 }
 
 inline bool to_bool(meow::core::param_t value) noexcept {
@@ -178,7 +178,7 @@ inline bool to_bool(meow::core::param_t value) noexcept {
                        [](meow::core::string_t s) -> bool { !s->empty(); },
                        [](meow::core::array_t a) -> bool { return !a->empty(); },
                        [](meow::core::hash_table_t o) -> bool { return !o->empty(); },
-                       [](auto &&) -> bool { return true; });
+                       [](auto&&) -> bool { return true; });
 }
 }  // namespace meow::common
 

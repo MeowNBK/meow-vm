@@ -12,9 +12,9 @@ struct CallFrame {
     meow::core::module_t module_;
     size_t start_reg_;
     size_t ret_reg_;
-    const uint8_t *ip_;
+    const uint8_t* ip_;
     CallFrame(meow::core::function_t function, meow::core::module_t module, size_t start_reg,
-              size_t ret_reg, const uint8_t *ip)
+              size_t ret_reg, const uint8_t* ip)
         : function_(function), module_(module), start_reg_(start_reg), ret_reg_(ret_reg), ip_(ip) {}
 };
 
@@ -33,7 +33,7 @@ struct ExecutionContext {
     std::vector<ExceptionHandler> exception_handlers_;
 
     size_t current_base_ = 0;
-    CallFrame *current_frame_ = nullptr;
+    CallFrame* current_frame_ = nullptr;
 
     inline void reset() noexcept {
         call_stack_.clear();
@@ -42,11 +42,11 @@ struct ExecutionContext {
         exception_handlers_.clear();
     }
 
-    inline void trace(meow::memory::GCVisitor &visitor) const noexcept {
-        for (const auto &reg : registers_) {
+    inline void trace(meow::memory::GCVisitor& visitor) const noexcept {
+        for (const auto& reg : registers_) {
             visitor.visit_value(reg);
         }
-        for (const auto &upvalue : open_upvalues_) {
+        for (const auto& upvalue : open_upvalues_) {
             visitor.visit_object(upvalue);
         }
     }

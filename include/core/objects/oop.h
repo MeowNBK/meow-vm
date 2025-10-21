@@ -47,7 +47,7 @@ class ObjClass : public meow::core::MeowObject {
         methods_[name] = value;
     }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 
 class ObjInstance : public meow::core::MeowObject {
@@ -78,7 +78,7 @@ class ObjInstance : public meow::core::MeowObject {
         return fields_.find(name) != fields_.end();
     }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 
 class ObjBoundMethod : public MeowObject {
@@ -97,6 +97,6 @@ class ObjBoundMethod : public MeowObject {
     inline instance_t get_instance() const noexcept { return instance_; }
     inline function_t get_function() const noexcept { return function_; }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 }  // namespace meow::core::objects

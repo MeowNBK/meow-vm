@@ -37,27 +37,27 @@ class OperatorDispatcher {
     using BinaryOpFunction = core::return_t (*)(meow::core::param_t, meow::core::param_t);
     using UnaryOpFunction = core::return_t (*)(meow::core::param_t);
 
-    memory::MemoryManager *heap_;
+    memory::MemoryManager* heap_;
     BinaryOpFunction binary_dispatch_table_[NUM_OPCODES][NUM_VALUE_TYPES][NUM_VALUE_TYPES];
     UnaryOpFunction unary_dispatch_table_[NUM_OPCODES][NUM_VALUE_TYPES];
 
    public:
-    explicit OperatorDispatcher(memory::MemoryManager *heap) noexcept;
+    explicit OperatorDispatcher(memory::MemoryManager* heap) noexcept;
 
-    [[nodiscard]] inline const BinaryOpFunction *find(core::OpCode op_code,
+    [[nodiscard]] inline const BinaryOpFunction* find(core::OpCode op_code,
                                                       meow::core::param_t left,
                                                       meow::core::param_t right) const noexcept {
         auto left_type = get_value_type(left);
         auto right_type = get_value_type(right);
-        const BinaryOpFunction *function =
+        const BinaryOpFunction* function =
             &binary_dispatch_table_[+op_code][+left_type][+right_type];
         return (*function) ? function : nullptr;
     }
 
-    [[nodiscard]] inline const UnaryOpFunction *find(core::OpCode op_code,
+    [[nodiscard]] inline const UnaryOpFunction* find(core::OpCode op_code,
                                                      meow::core::param_t right) const noexcept {
         auto right_type = get_value_type(right);
-        const UnaryOpFunction *function = &unary_dispatch_table_[+op_code][+right_type];
+        const UnaryOpFunction* function = &unary_dispatch_table_[+op_code][+right_type];
         return (*function) ? function : nullptr;
     }
 };

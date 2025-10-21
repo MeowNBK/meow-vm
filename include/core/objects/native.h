@@ -29,7 +29,7 @@ class ObjNativeFunction : public meow::core::MeowObject {
    public:
     using native_fn_simple = std::function<meow::core::return_t(meow::core::arguments_t)>;
     using native_fn_double =
-        std::function<meow::core::return_t(engine_t *, meow::core::arguments_t)>;
+        std::function<meow::core::return_t(engine_t*, meow::core::arguments_t)>;
 
    private:
     std::variant<native_fn_simple, native_fn_double> function_;
@@ -44,7 +44,7 @@ class ObjNativeFunction : public meow::core::MeowObject {
         }
         return meow::core::value_t();
     }
-    [[nodiscard]] inline meow::core::return_t call(engine_t *engine, meow::core::arguments_t args) {
+    [[nodiscard]] inline meow::core::return_t call(engine_t* engine, meow::core::arguments_t args) {
         if (auto p = std::get_if<native_fn_double>(&function_)) {
             return (*p)(engine, args);
         } else if (auto p = std::get_if<native_fn_simple>(&function_)) {
@@ -53,6 +53,6 @@ class ObjNativeFunction : public meow::core::MeowObject {
         return meow::core::value_t();
     }
 
-    void trace(visitor_t &) const noexcept override {}
+    void trace(visitor_t&) const noexcept override {}
 };
 }  // namespace meow::core::objects

@@ -26,15 +26,15 @@ class ObjArray : public meow::core::MeowObject {
    public:
     // --- Constructors & destructor ---
     ObjArray() = default;
-    explicit ObjArray(const container_t &elements) : elements_(elements) {}
-    explicit ObjArray(container_t &&elements) noexcept : elements_(std::move(elements)) {}
+    explicit ObjArray(const container_t& elements) : elements_(elements) {}
+    explicit ObjArray(container_t&& elements) noexcept : elements_(std::move(elements)) {}
     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {}
 
     // --- Rule of 5 ---
-    ObjArray(const ObjArray &) = delete;
-    ObjArray(ObjArray &&) = default;
-    ObjArray &operator=(const ObjArray &) = delete;
-    ObjArray &operator=(ObjArray &&) = default;
+    ObjArray(const ObjArray&) = delete;
+    ObjArray(ObjArray&&) = default;
+    ObjArray& operator=(const ObjArray&) = delete;
+    ObjArray& operator=(ObjArray&&) = default;
     ~ObjArray() override = default;
 
     // --- Iterator types ---
@@ -51,7 +51,7 @@ class ObjArray : public meow::core::MeowObject {
     }
     /// @brief Unchecked element modification. For performance-critical code
     template <typename T>
-    inline void set(size_t index, T &&value) noexcept {
+    inline void set(size_t index, T&& value) noexcept {
         elements_[index] = std::forward<T>(value);
     }
     /// @brief Checked element access. Throws if index is OOB
@@ -70,12 +70,12 @@ class ObjArray : public meow::core::MeowObject {
 
     // --- Modifiers ---
     template <typename T>
-    inline void push(T &&value) {
+    inline void push(T&& value) {
         elements_.emplace_back(std::forward<T>(value));
     }
     inline void pop() noexcept { elements_.pop_back(); }
     template <typename... Args>
-    inline void emplace(Args &&...args) {
+    inline void emplace(Args&&... args) {
         elements_.emplace_back(std::forward<Args>(args)...);
     }
     inline void resize(size_t size) { elements_.resize(size); }
@@ -93,6 +93,6 @@ class ObjArray : public meow::core::MeowObject {
     inline const_reverse_iterator rbegin() const noexcept { return elements_.rbegin(); }
     inline const_reverse_iterator rend() const noexcept { return elements_.rend(); }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 }  // namespace meow::core::objects

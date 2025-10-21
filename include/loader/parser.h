@@ -19,20 +19,20 @@ class MemoryManager;
 namespace meow::loader {
 class TextParser {
    public:
-    explicit TextParser(meow::memory::MemoryManager *heap) noexcept;
-    TextParser(const TextParser &) = delete;
-    TextParser(TextParser &&) = default;
-    TextParser &operator=(const TextParser &) = delete;
-    TextParser &operator=(TextParser &&) = delete;
+    explicit TextParser(meow::memory::MemoryManager* heap) noexcept;
+    TextParser(const TextParser&) = delete;
+    TextParser(TextParser&&) = default;
+    TextParser& operator=(const TextParser&) = delete;
+    TextParser& operator=(TextParser&&) = delete;
     ~TextParser() noexcept = default;
-    meow::core::proto_t parse_file(const std::string &filepath, meow::memory::MemoryManager &mm);
-    meow::core::proto_t parse_source(const std::string &source, meow::memory::MemoryManager &mm,
-                                     const std::string &source_name = "<string>");
-    [[nodiscard]] const std::unordered_map<std::string, meow::core::proto_t> &get_finalized_protos()
+    meow::core::proto_t parse_file(const std::string& filepath, meow::memory::MemoryManager& mm);
+    meow::core::proto_t parse_source(const std::string& source, meow::memory::MemoryManager& mm,
+                                     const std::string& source_name = "<string>");
+    [[nodiscard]] const std::unordered_map<std::string, meow::core::proto_t>& get_finalized_protos()
         const;
 
    private:
-    meow::memory::MemoryManager *heap_ = nullptr;
+    meow::memory::MemoryManager* heap_ = nullptr;
     std::string current_source_name_;
     std::vector<Token> tokens_;
     size_t current_token_index_ = 0;
@@ -50,7 +50,7 @@ class TextParser {
         bool upvalues_defined = false;
         size_t func_directive_line = 0;
         size_t func_directive_col = 0;
-        size_t add_temp_constant(const meow::core::Value &value) {
+        size_t add_temp_constant(const meow::core::Value& value) {
             auto it = constant_map.find(value);
             if (it != constant_map.end()) {
                 return it->second;
@@ -79,7 +79,7 @@ class TextParser {
             return true;
         }
     };
-    ProtoBuildData *current_proto_data_ = nullptr;
+    ProtoBuildData* current_proto_data_ = nullptr;
     std::map<std::string, ProtoBuildData> build_data_map_;
     std::unordered_map<std::string, meow::core::proto_t> finalized_protos_;
     void parse();
@@ -91,18 +91,18 @@ class TextParser {
     void parse_upvalue_directive();
     void parse_label_definition();
     void parse_instruction();
-    [[nodiscard]] const Token &current_token() const;
-    [[nodiscard]] const Token &peek_token(size_t offset = 1) const;
+    [[nodiscard]] const Token& current_token() const;
+    [[nodiscard]] const Token& peek_token(size_t offset = 1) const;
     [[nodiscard]] bool is_at_end() const;
     void advance();
-    const Token &consume_token(TokenType expected, const std::string &error_message);
+    const Token& consume_token(TokenType expected, const std::string& error_message);
     bool match_token(TokenType type);
     meow::core::Value parse_const_value_from_tokens();
-    [[nodiscard]] static std::string unescape_string(const std::string &escaped);
-    void resolve_labels_for_build_data(ProtoBuildData &data);
-    std::vector<meow::core::Value> build_final_constant_pool(ProtoBuildData &data);
-    void link_final_constant_pool(meow::core::Value &constant);
-    [[noreturn]] void throw_parse_error(const std::string &message);
-    [[noreturn]] void throw_parse_error(const std::string &message, const Token &token);
+    [[nodiscard]] static std::string unescape_string(const std::string& escaped);
+    void resolve_labels_for_build_data(ProtoBuildData& data);
+    std::vector<meow::core::Value> build_final_constant_pool(ProtoBuildData& data);
+    void link_final_constant_pool(meow::core::Value& constant);
+    [[noreturn]] void throw_parse_error(const std::string& message);
+    [[noreturn]] void throw_parse_error(const std::string& message, const Token& token);
 };
 }  // namespace meow::loader

@@ -19,7 +19,7 @@ class GarbageCollector {
      * @brief Đăng kí một object để GC quản lí
      * @param[in] object Object cần được GC quản li
      */
-    virtual void register_object(const meow::core::MeowObject *object) = 0;
+    virtual void register_object(const meow::core::MeowObject* object) = 0;
 
     /**
      * @brief Dọn dẹp các object không còn dược sử dụng

@@ -20,18 +20,18 @@ class ObjClosure;
 class ObjModule;
 }  // namespace objects
 
-using array_t = objects::ObjArray *;
-using string_t = const objects::ObjString *;
-using hash_table_t = objects::ObjHashTable *;
+using array_t = objects::ObjArray*;
+using string_t = const objects::ObjString*;
+using hash_table_t = objects::ObjHashTable*;
 
-using instance_t = objects::ObjInstance *;
-using class_t = objects::ObjClass *;
-using bound_method_t = objects::ObjBoundMethod *;
-using upvalue_t = objects::ObjUpvalue *;
-using proto_t = objects::ObjFunctionProto *;
-using function_t = objects::ObjClosure *;
-using native_fn_t = objects::ObjNativeFunction *;
-using module_t = objects::ObjModule *;
+using instance_t = objects::ObjInstance*;
+using class_t = objects::ObjClass*;
+using bound_method_t = objects::ObjBoundMethod*;
+using upvalue_t = objects::ObjUpvalue*;
+using proto_t = objects::ObjFunctionProto*;
+using function_t = objects::ObjClosure*;
+using native_fn_t = objects::ObjNativeFunction*;
+using module_t = objects::ObjModule*;
 
 using null_t = std::monostate;
 using bool_t = bool;

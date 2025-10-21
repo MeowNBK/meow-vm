@@ -21,8 +21,8 @@ class HashTable {
    private:
     using value_type = U;
     using key_t = T;
-    using const_value_reference_t = const value_type &;
-    using const_key_reference_t = const key_t &;
+    using const_value_reference_t = const value_type&;
+    using const_key_reference_t = const key_t&;
     using pair_type = Pair<key_t, value_type>;
     using table_t = utils::Vector<utils::List<utils::Pair<key_t, value_type>>>;
 

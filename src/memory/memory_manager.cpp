@@ -8,7 +8,7 @@ MemoryManager::MemoryManager(std::unique_ptr<GarbageCollector> gc)
 
 MemoryManager::~MemoryManager() noexcept = default;
 
-meow::core::string_t MemoryManager::new_string(const std::string &string) {
+meow::core::string_t MemoryManager::new_string(const std::string& string) {
     auto it = string_pool_.find(string);
     if (it != string_pool_.end()) {
         return it->second;
@@ -19,16 +19,16 @@ meow::core::string_t MemoryManager::new_string(const std::string &string) {
     return new_string_object;
 }
 
-meow::core::string_t MemoryManager::new_string(const char *chars, size_t length) {
+meow::core::string_t MemoryManager::new_string(const char* chars, size_t length) {
     return new_string(std::string(chars, length));
 }
 
-meow::core::array_t MemoryManager::new_array(const std::vector<meow::core::Value> &elements) {
+meow::core::array_t MemoryManager::new_array(const std::vector<meow::core::Value>& elements) {
     return new_object<meow::core::objects::ObjArray>(elements);
 }
 
 meow::core::hash_table_t MemoryManager::new_hash(
-    const std::unordered_map<meow::core::string_t, meow::core::Value> &fields) {
+    const std::unordered_map<meow::core::string_t, meow::core::Value>& fields) {
     return new_object<meow::core::objects::ObjHashTable>(fields);
 }
 
@@ -38,7 +38,7 @@ meow::core::upvalue_t MemoryManager::new_upvalue(size_t index) {
 
 meow::core::proto_t MemoryManager::new_proto(size_t registers, size_t upvalues,
                                              meow::core::string_t name,
-                                             meow::runtime::Chunk &&chunk) {
+                                             meow::runtime::Chunk&& chunk) {
     return new_object<meow::core::objects::ObjFunctionProto>(registers, upvalues, name,
                                                              std::move(chunk));
 }

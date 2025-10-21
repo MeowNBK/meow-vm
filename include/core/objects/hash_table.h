@@ -28,14 +28,14 @@ class ObjHashTable : public MeowObject {
    public:
     // --- Constructors & destructor---
     ObjHashTable() = default;
-    explicit ObjHashTable(const map_t &fields) : fields_(fields) {}
-    explicit ObjHashTable(map_t &&fields) noexcept : fields_(std::move(fields)) {}
+    explicit ObjHashTable(const map_t& fields) : fields_(fields) {}
+    explicit ObjHashTable(map_t&& fields) noexcept : fields_(std::move(fields)) {}
 
     // --- Rule of 5 ---
-    ObjHashTable(const ObjHashTable &) = delete;
-    ObjHashTable(ObjHashTable &&) = delete;
-    ObjHashTable &operator=(const ObjHashTable &) = delete;
-    ObjHashTable &operator=(ObjHashTable &&) = delete;
+    ObjHashTable(const ObjHashTable&) = delete;
+    ObjHashTable(ObjHashTable&&) = delete;
+    ObjHashTable& operator=(const ObjHashTable&) = delete;
+    ObjHashTable& operator=(ObjHashTable&&) = delete;
     ~ObjHashTable() override = default;
 
     // --- Iterator types ---
@@ -48,7 +48,7 @@ class ObjHashTable : public MeowObject {
     [[nodiscard]] inline meow::core::return_t get(key_t key) noexcept { return fields_[key]; }
     // Unchecked lookup/update. For performance-critical code
     template <typename T>
-    inline void set(key_t key, T &&value) noexcept {
+    inline void set(key_t key, T&& value) noexcept {
         fields_[key] = std::forward<T>(value);
     }
     // Checked lookup. Throws if key is not found
@@ -65,6 +65,6 @@ class ObjHashTable : public MeowObject {
     inline const_iterator begin() const noexcept { return fields_.begin(); }
     inline const_iterator end() const noexcept { return fields_.end(); }
 
-    void trace(visitor_t &visitor) const noexcept override;
+    void trace(visitor_t& visitor) const noexcept override;
 };
 }  // namespace meow::core::objects

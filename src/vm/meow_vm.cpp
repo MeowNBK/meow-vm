@@ -15,12 +15,12 @@
 #include "core/objects/oop.h"
 
 template <typename... Args>
-inline void print(const std::format_string<Args...> fmt, Args &&...args) {
+inline void print(const std::format_string<Args...> fmt, Args&&... args) {
     std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void printl(const std::format_string<Args...> fmt, Args &&...args) {
+inline void printl(const std::format_string<Args...> fmt, Args&&... args) {
     std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...) << '\n';
 }
 
@@ -29,8 +29,8 @@ using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
 
-MeowVM::MeowVM(const std::string &entry_point_directory, const std::string &entry_path, int argc,
-               char *argv[]) {
+MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc,
+               char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
     args_.entry_path_ = entry_path;
     for (int i = 0; i < argc; ++i) {
@@ -57,7 +57,7 @@ MeowVM::~MeowVM() { printl("MeowVM shutting down."); }
 }
 
 using raw_value_t = meow::variant<OpCode, uint64_t, double, int64_t, uint16_t>;
-[[nodiscard]] inline constexpr Chunk make_chunk(const std::vector<raw_value_t> &code) {
+[[nodiscard]] inline constexpr Chunk make_chunk(const std::vector<raw_value_t>& code) {
     Chunk chunk;
 
     for (size_t i = 0; i < code.size(); ++i) {
@@ -75,7 +75,7 @@ void MeowVM::interpret() noexcept {
     try {
         prepare();
         run();
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         printl("An execption was threw: {}", e.what());
     }
 }
@@ -143,7 +143,7 @@ inline bool is_truthy(param_t value) noexcept {
     return true;
 }
 
-inline upvalue_t capture_upvalue(ExecutionContext *context, MemoryManager *heap,
+inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap,
                                  size_t register_index) {
     // Tìm kiếm các upvalue đã mở từ trên xuống dưới (chỉ số stack cao -> thấp)
     for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
@@ -165,7 +165,7 @@ inline upvalue_t capture_upvalue(ExecutionContext *context, MemoryManager *heap,
     return new_uv;
 }
 
-inline void close_upvalues(ExecutionContext *context, size_t last_index) noexcept {
+inline void close_upvalues(ExecutionContext* context, size_t last_index) noexcept {
     // Đóng tất cả upvalue có chỉ số register >= last_index
     while (!context->open_upvalues_.empty() &&
            context->open_upvalues_.back()->get_index() >= last_index) {
@@ -178,8 +178,8 @@ inline void close_upvalues(ExecutionContext *context, size_t last_index) noexcep
 void MeowVM::run() {
     printl("Starting MeowVM execution loop...");
 
-    const uint8_t *ip = context_->current_frame_->ip_;
-    CallFrame *frame = context_->current_frame_;
+    const uint8_t* ip = context_->current_frame_->ip_;
+    CallFrame* frame = context_->current_frame_;
 
 #define READ_BYTE() (*ip++)
 #define READ_U16() (ip += 2, (uint16_t)((ip[-2] | (ip[-1] << 8))))
@@ -288,8 +288,8 @@ void MeowVM::run() {
         uint16_t dst = READ_U16();                                       \
         uint16_t r1 = READ_U16();                                        \
         uint16_t r2 = READ_U16();                                        \
-        auto &left = REGISTER(r1);                                       \
-        auto &right = REGISTER(r2);                                      \
+        auto& left = REGISTER(r1);                                       \
+        auto& right = REGISTER(r2);                                      \
         if (auto func = op_dispatcher_->find(OpCode::OP, left, right)) { \
             REGISTER(dst) = (*func)(left, right);                        \
         } else {                                                         \
@@ -320,7 +320,7 @@ void MeowVM::run() {
     case OpCode::OP: {                                           \
         uint16_t dst = READ_U16();                               \
         uint16_t src = READ_U16();                               \
-        auto &val = REGISTER(src);                               \
+        auto& val = REGISTER(src);                               \
         if (auto func = op_dispatcher_->find(OpCode::OP, val)) { \
             REGISTER(dst) = (*func)(val);                        \
         } else {                                                 \
@@ -385,7 +385,7 @@ void MeowVM::run() {
                     function_t closure = heap_->new_function(proto);
 
                     for (size_t i = 0; i < proto->get_num_upvalues(); ++i) {
-                        const auto &desc = proto->get_desc(i);
+                        const auto& desc = proto->get_desc(i);
                         if (desc.is_local_) {
                             // Bắt upvalue từ thanh ghi của frame hiện tại
                             closure->set_upvalue(
@@ -453,7 +453,7 @@ void MeowVM::run() {
                         ret_reg = static_cast<size_t>(-1);  // Luôn là void
                     }
 
-                    Value &callee = REGISTER(fn_reg);
+                    Value& callee = REGISTER(fn_reg);
 
                     // --- TRƯỜNG HỢP 1: Native Function (Gọi nhanh) ---
                     if (callee.is_native_fn()) {
@@ -624,8 +624,8 @@ void MeowVM::run() {
 
                     auto hash_table = heap_->new_hash();
                     for (size_t i = 0; i < count; ++i) {
-                        Value &key = REGISTER(start_idx + i * 2);
-                        Value &val = REGISTER(start_idx + i * 2 + 1);
+                        Value& key = REGISTER(start_idx + i * 2);
+                        Value& val = REGISTER(start_idx + i * 2 + 1);
                         if (!key.is_string()) {
                             throw_vm_error("NEW_HASH: Key is not a string.");
                         }
@@ -639,8 +639,8 @@ void MeowVM::run() {
                     uint16_t dst = READ_U16();
                     uint16_t src_reg = READ_U16();
                     uint16_t key_reg = READ_U16();
-                    Value &src = REGISTER(src_reg);
-                    Value &key = REGISTER(key_reg);
+                    Value& src = REGISTER(src_reg);
+                    Value& key = REGISTER(key_reg);
 
                     if (src.is_array()) {
                         if (!key.is_int())
@@ -680,9 +680,9 @@ void MeowVM::run() {
                     uint16_t src_reg = READ_U16();
                     uint16_t key_reg = READ_U16();
                     uint16_t val_reg = READ_U16();
-                    Value &src = REGISTER(src_reg);
-                    Value &key = REGISTER(key_reg);
-                    Value &val = REGISTER(val_reg);
+                    Value& src = REGISTER(src_reg);
+                    Value& key = REGISTER(key_reg);
+                    Value& val = REGISTER(val_reg);
 
                     if (src.is_array()) {
                         if (!key.is_int())
@@ -710,7 +710,7 @@ void MeowVM::run() {
                 case OpCode::GET_KEYS: {
                     uint16_t dst = READ_U16();
                     uint16_t src_reg = READ_U16();
-                    Value &src = REGISTER(src_reg);
+                    Value& src = REGISTER(src_reg);
                     auto keys_array = heap_->new_array();
 
                     if (src.is_hash_table()) {
@@ -743,7 +743,7 @@ void MeowVM::run() {
                 case OpCode::GET_VALUES: {
                     uint16_t dst = READ_U16();
                     uint16_t src_reg = READ_U16();
-                    Value &src = REGISTER(src_reg);
+                    Value& src = REGISTER(src_reg);
                     auto vals_array = heap_->new_array();
 
                     if (src.is_hash_table()) {
@@ -783,7 +783,7 @@ void MeowVM::run() {
                 case OpCode::NEW_INSTANCE: {
                     uint16_t dst = READ_U16();
                     uint16_t class_reg = READ_U16();
-                    Value &class_val = REGISTER(class_reg);
+                    Value& class_val = REGISTER(class_reg);
                     if (!class_val.is_class())
                         throw_vm_error("NEW_INSTANCE: operand is not a class.");
                     REGISTER(dst) = Value(heap_->new_instance(class_val.as_class()));
@@ -793,7 +793,7 @@ void MeowVM::run() {
                     uint16_t dst = READ_U16();
                     uint16_t obj_reg = READ_U16();
                     uint16_t name_idx = READ_U16();
-                    Value &obj = REGISTER(obj_reg);
+                    Value& obj = REGISTER(obj_reg);
                     string_t name = CONSTANT(name_idx).as_string();
 
                     if (obj.is_instance()) {
@@ -839,9 +839,9 @@ void MeowVM::run() {
                     uint16_t obj_reg = READ_U16();
                     uint16_t name_idx = READ_U16();
                     uint16_t val_reg = READ_U16();
-                    Value &obj = REGISTER(obj_reg);
+                    Value& obj = REGISTER(obj_reg);
                     string_t name = CONSTANT(name_idx).as_string();
-                    Value &val = REGISTER(val_reg);
+                    Value& val = REGISTER(val_reg);
 
                     if (obj.is_instance()) {
                         obj.as_instance()->set_field(name, val);
@@ -854,9 +854,9 @@ void MeowVM::run() {
                     uint16_t call_reg = READ_U16();
                     uint16_t name_idx = READ_U16();
                     uint16_t method_reg = READ_U16();
-                    Value &class_val = REGISTER(call_reg);
+                    Value& class_val = REGISTER(call_reg);
                     string_t name = CONSTANT(name_idx).as_string();
-                    Value &methodVal = REGISTER(method_reg);
+                    Value& methodVal = REGISTER(method_reg);
                     if (!class_val.is_class())
                         throw_vm_error("SET_METHOD: target is not a class.");
                     if (!methodVal.is_function())
@@ -867,8 +867,8 @@ void MeowVM::run() {
                 case OpCode::INHERIT: {
                     uint16_t sub_reg = READ_U16();
                     uint16_t super_reg = READ_U16();
-                    Value &sub_val = REGISTER(sub_reg);
-                    Value &super_val = REGISTER(super_reg);
+                    Value& sub_val = REGISTER(sub_reg);
+                    Value& super_val = REGISTER(super_reg);
                     if (!sub_val.is_class() || !super_val.is_class()) {
                         throw_vm_error("INHERIT: Toán hạng phải là class.");
                     }
@@ -890,7 +890,7 @@ void MeowVM::run() {
 
                     // 1. Giả định 'this' (receiver) luôn ở thanh ghi 0 (R0) của
                     // frame hiện tại
-                    Value &receiver_val = REGISTER(0);
+                    Value& receiver_val = REGISTER(0);
                     if (!receiver_val.is_instance()) {
                         throw_vm_error(
                             "GET_SUPER: 'super' phải được dùng bên trong một "
@@ -983,7 +983,7 @@ void MeowVM::run() {
                     uint16_t dst = READ_U16();
                     uint16_t mod_reg = READ_U16();
                     uint16_t name_idx = READ_U16();
-                    Value &mod_val = REGISTER(mod_reg);
+                    Value& mod_val = REGISTER(mod_reg);
                     string_t name = CONSTANT(name_idx).as_string();
                     if (!mod_val.is_module())
                         throw_vm_error("GET_EXPORT: operand is not a module.");
@@ -1012,7 +1012,7 @@ void MeowVM::run() {
                 default:
                     throw_vm_error("Unknown opcode");
             }
-        } catch (const VMError &e) {  // CẬP NHẬT: Khối catch
+        } catch (const VMError& e) {  // CẬP NHẬT: Khối catch
             printl("An execption was threw: {}", e.what());
 
             if (context_->exception_handlers_.empty()) {

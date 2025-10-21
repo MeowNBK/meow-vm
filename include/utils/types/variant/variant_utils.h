@@ -85,7 +85,7 @@ template <typename T, typename = void>
 struct has_eq : std::false_type {};
 
 template <typename T>
-struct has_eq<T, std::void_t<decltype(std::declval<const T &>() == std::declval<const T &>())>>
+struct has_eq<T, std::void_t<decltype(std::declval<const T&>() == std::declval<const T&>())>>
     : std::true_type {};
 
 // ---------------- detect meow::variant and extract inner list ----------------

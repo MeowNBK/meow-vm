@@ -16,11 +16,11 @@ template <typename T>
 class List {
    private:
     using value_t = T;
-    using const_reference_t = const value_t &;
-    using move_t = value_t &&;
+    using const_reference_t = const value_t&;
+    using move_t = value_t&&;
     using node_t = utils::Node<value_t>;
-    using node_pointer_t = node_t *;
-    using const_node_pointer_t = const node_t *;
+    using node_pointer_t = node_t*;
+    using const_node_pointer_t = const node_t*;
 
     // --- Metadata ---
     node_pointer_t head_;
@@ -28,7 +28,7 @@ class List {
     size_t size_ = 0;
 
     // --- Helpers ---
-    inline void copy_from(const List &other) noexcept {
+    inline void copy_from(const List& other) noexcept {
         tail_ = head_ = nullptr;
         size_ = 0;
         const_node_pointer_t current = other.head_;
@@ -37,7 +37,7 @@ class List {
             current = current->next_;
         }
     }
-    inline void move_from(List &&other) noexcept {
+    inline void move_from(List&& other) noexcept {
         head_ = std::move(other.head_);
         tail_ = std::move(other.tail_);
         size_ = std::move(other.size_);
@@ -48,15 +48,15 @@ class List {
    public:
     // --- Constructors & destructor
     List() noexcept : head_(nullptr), tail_(nullptr) {}
-    explicit List(const List &other) noexcept { copy_from(other); }
-    explicit List(List &&other) noexcept { move_from(std::move(other)); }
-    inline List &operator=(const List &other) {
+    explicit List(const List& other) noexcept { copy_from(other); }
+    explicit List(List&& other) noexcept { move_from(std::move(other)); }
+    inline List& operator=(const List& other) {
         if (this == &other)
             return *this;
         copy_from(other);
         return *this;
     }
-    inline List &operator=(List &&other) noexcept {
+    inline List& operator=(List&& other) noexcept {
         move_from(std::move(other));
         return *this;
     }

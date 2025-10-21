@@ -15,18 +15,18 @@ struct BuiltinRegistry {
                        std::unordered_map<meow::core::string_t, meow::core::Value>>
         getters_;
 
-    inline void trace(meow::memory::GCVisitor &visitor) const noexcept {
-        for (const auto &[name, method] : methods_) {
+    inline void trace(meow::memory::GCVisitor& visitor) const noexcept {
+        for (const auto& [name, method] : methods_) {
             visitor.visit_object(name);
-            for (const auto &[key, value] : method) {
+            for (const auto& [key, value] : method) {
                 visitor.visit_object(key);
                 visitor.visit_value(value);
             }
         }
 
-        for (const auto &[name, getter] : getters_) {
+        for (const auto& [name, getter] : getters_) {
             visitor.visit_object(name);
-            for (const auto &[key, value] : getter) {
+            for (const auto& [key, value] : getter) {
                 visitor.visit_object(key);
                 visitor.visit_value(value);
             }

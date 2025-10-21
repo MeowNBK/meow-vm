@@ -141,7 +141,7 @@ Token Lexer::make_token(TokenType type, size_t length) const {
     return Token{src_.substr(token_start_pos_, length), type, token_start_line_, token_start_col_};
 }
 
-Token Lexer::make_error_token(const std::string &message) const {
+Token Lexer::make_error_token(const std::string& message) const {
     return Token{std::string_view(message), TokenType::UNKNOWN, token_start_line_,
                  token_start_col_};
 }

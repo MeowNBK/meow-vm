@@ -18,9 +18,8 @@ ColumnLimit: 100
 
 # --- Căn chỉnh (Alignment) ---
 
-# Căn chỉnh con trỏ/tham chiếu sang bên phải (ví dụ: int* x)
-# Nếu bạn thích `int *x` (kiểu Google), đổi thành 'Left'.
-PointerAlignment: Right
+DerivePointerAlignment: false
+PointerAlignment: Left
 ReferenceAlignment: Pointer
 
 # --- Sắp xếp Includes ---

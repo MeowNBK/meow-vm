@@ -52,7 +52,7 @@ std::filesystem::path get_executable_dir() noexcept {
     }
 }
 
-std::filesystem::path normalize_path(const std::filesystem::path &p) noexcept {
+std::filesystem::path normalize_path(const std::filesystem::path& p) noexcept {
     try {
         if (p.empty())
             return p;
@@ -62,7 +62,7 @@ std::filesystem::path normalize_path(const std::filesystem::path &p) noexcept {
     }
 }
 
-bool file_exists(const std::filesystem::path &p) noexcept {
+bool file_exists(const std::filesystem::path& p) noexcept {
     try {
         return std::filesystem::exists(p);
     } catch (...) {
@@ -70,7 +70,7 @@ bool file_exists(const std::filesystem::path &p) noexcept {
     }
 }
 
-std::string read_first_non_empty_line_trimmed(const std::filesystem::path &path) noexcept {
+std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path) noexcept {
     try {
         std::ifstream in(path);
         if (!in)
@@ -78,12 +78,12 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path &path)
         std::string line;
         while (std::getline(in, line)) {
             // trim both ends
-            auto ltrim = [](std::string &s) {
+            auto ltrim = [](std::string& s) {
                 s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
                             return !std::isspace(ch);
                         }));
             };
-            auto rtrim = [](std::string &s) {
+            auto rtrim = [](std::string& s) {
                 s.erase(std::find_if(s.rbegin(), s.rend(),
                                      [](unsigned char ch) { return !std::isspace(ch); })
                             .base(),
@@ -99,8 +99,8 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path &path)
     return std::string();
 }
 
-std::string expand_token(const std::string &raw, const std::string &token,
-                         const std::filesystem::path &replacement) noexcept {
+std::string expand_token(const std::string& raw, const std::string& token,
+                         const std::filesystem::path& replacement) noexcept {
     if (token.empty() || raw.find(token) == std::string::npos)
         return raw;
     std::string out;
@@ -125,14 +125,14 @@ struct cache_key {
     std::string config_filename;
     std::string token;
     bool treat_bin_as_parent;
-    bool operator==(const cache_key &o) const noexcept {
+    bool operator==(const cache_key& o) const noexcept {
         return config_filename == o.config_filename && token == o.token &&
                treat_bin_as_parent == o.treat_bin_as_parent;
     }
 };
 namespace {
 struct key_hash {
-    size_t operator()(cache_key const &k) const noexcept {
+    size_t operator()(cache_key const& k) const noexcept {
         std::hash<std::string> h;
         size_t r = h(k.config_filename);
         r = r * 1315423911u + h(k.token);
@@ -146,7 +146,7 @@ static std::unordered_map<cache_key, std::filesystem::path, key_hash> s_root_cac
 }  // namespace
 
 std::filesystem::path detect_root_cached(
-    const std::string &config_filename, const std::string &token, bool treat_bin_as_parent,
+    const std::string& config_filename, const std::string& token, bool treat_bin_as_parent,
     std::function<std::filesystem::path()> exe_dir_provider) noexcept {
     try {
         cache_key k{config_filename, token, treat_bin_as_parent};
@@ -191,7 +191,7 @@ std::filesystem::path detect_root_cached(
 
 // -------------------- default search roots helper --------------------
 std::vector<std::filesystem::path> make_default_search_roots(
-    const std::filesystem::path &root) noexcept {
+    const std::filesystem::path& root) noexcept {
     std::vector<std::filesystem::path> v;
     try {
         v.reserve(5);
@@ -206,18 +206,18 @@ std::vector<std::filesystem::path> make_default_search_roots(
 }
 
 // -------------------- library resolution generic --------------------
-std::string resolve_library_path_generic(const std::string &module_path,
-                                         const std::string &importer, const std::string &entry_path,
-                                         const std::vector<std::string> &forbidden_extensions,
-                                         const std::vector<std::string> &candidate_extensions,
-                                         const std::vector<std::filesystem::path> &search_roots,
+std::string resolve_library_path_generic(const std::string& module_path,
+                                         const std::string& importer, const std::string& entry_path,
+                                         const std::vector<std::string>& forbidden_extensions,
+                                         const std::vector<std::string>& candidate_extensions,
+                                         const std::vector<std::filesystem::path>& search_roots,
                                          bool extra_relative_search) noexcept {
     try {
         std::filesystem::path candidate(module_path);
         std::string ext = candidate.extension().string();
         if (!ext.empty()) {
             std::string ext_l = to_lower_copy(ext);
-            for (const auto &f : forbidden_extensions) {
+            for (const auto& f : forbidden_extensions) {
                 if (ext_l == to_lower_copy(f))
                     return "";  // caller indicated do-not-treat-as-native
             }
@@ -231,7 +231,7 @@ std::string resolve_library_path_generic(const std::string &module_path,
         // If no extension on module_path and candidate_extensions provided, try
         // each appended ext.
         if (candidate.extension().empty() && !candidate_extensions.empty()) {
-            for (const auto &ce : candidate_extensions) {
+            for (const auto& ce : candidate_extensions) {
                 std::filesystem::path p = candidate;
                 p.replace_extension(ce);
                 to_try.push_back(p);
@@ -241,8 +241,8 @@ std::string resolve_library_path_generic(const std::string &module_path,
         }
 
         // Try search_roots first (provided by caller)
-        for (const auto &root : search_roots) {
-            for (const auto &t : to_try) {
+        for (const auto& root : search_roots) {
+            for (const auto& t : to_try) {
                 std::filesystem::path p = root / t;
                 if (file_exists(p))
                     return normalize_path(p).string();
@@ -250,7 +250,7 @@ std::string resolve_library_path_generic(const std::string &module_path,
         }
 
         // Try direct (relative to cwd or absolute)
-        for (const auto &t : to_try) {
+        for (const auto& t : to_try) {
             if (file_exists(t))
                 return normalize_path(t).string();
         }
@@ -263,7 +263,7 @@ std::string resolve_library_path_generic(const std::string &module_path,
             else
                 base_dir = std::filesystem::path(importer).parent_path();
 
-            for (const auto &t : to_try) {
+            for (const auto& t : to_try) {
                 std::filesystem::path p = normalize_path(base_dir / t);
                 if (file_exists(p))
                     return p.string();
@@ -304,41 +304,41 @@ std::string platform_last_error() noexcept {
         s.pop_back();
     return s;
 #else
-    const char *e = dlerror();
+    const char* e = dlerror();
     return e ? std::string(e) : std::string();
 #endif
 }
 
 // -------------------- native library open/get_symbol/close
 // --------------------
-void *open_native_library(const std::string &path) noexcept {
+void* open_native_library(const std::string& path) noexcept {
 #if defined(_WIN32)
     HMODULE h = LoadLibraryA(path.c_str());
-    return reinterpret_cast<void *>(h);
+    return reinterpret_cast<void*>(h);
 #else
     // clear previous errors
     dlerror();
-    void *h = dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    void* h = dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
     return h;
 #endif
 }
 
-void *get_native_symbol(void *handle, const char *symbol_name) noexcept {
+void* get_native_symbol(void* handle, const char* symbol_name) noexcept {
     if (!handle || !symbol_name)
         return nullptr;
 #if defined(_WIN32)
     FARPROC p = GetProcAddress(reinterpret_cast<HMODULE>(handle), symbol_name);
-    return reinterpret_cast<void *>(p);
+    return reinterpret_cast<void*>(p);
 #else
     dlerror();
-    void *p = dlsym(handle, symbol_name);
-    const char *err = dlerror();
+    void* p = dlsym(handle, symbol_name);
+    const char* err = dlerror();
     (void)err;  // caller may call platform_last_error() for details
     return p;
 #endif
 }
 
-void close_native_library(void *handle) noexcept {
+void close_native_library(void* handle) noexcept {
     if (!handle)
         return;
 #if defined(_WIN32)

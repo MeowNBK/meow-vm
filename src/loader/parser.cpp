@@ -78,8 +78,8 @@ static const std::unordered_map<std::string_view, OpCode> OPCODE_PARSE_MAP = [] 
     map["IMPORT_ALL"] = OpCode::IMPORT_ALL;
     return map;
 }();
-TextParser::TextParser(MemoryManager *heap) noexcept : heap_(heap) {}
-[[noreturn]] void TextParser::throw_parse_error(const std::string &message) {
+TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
+[[noreturn]] void TextParser::throw_parse_error(const std::string& message) {
     if (current_token_index_ < tokens_.size()) {
         throw_parse_error(message, current_token());
     } else {
@@ -90,7 +90,7 @@ TextParser::TextParser(MemoryManager *heap) noexcept : heap_(heap) {}
         throw std::runtime_error(error_message);
     }
 }
-[[noreturn]] void TextParser::throw_parse_error(const std::string &message, const Token &token) {
+[[noreturn]] void TextParser::throw_parse_error(const std::string& message, const Token& token) {
     std::string error_message = std::format("Lỗi phân tích cú pháp [{}:{}:{}]: {}",
                                             current_source_name_, token.line, token.col, message);
     if (!token.lexeme.empty() && token.type != TokenType::END_OF_FILE) {
@@ -98,13 +98,13 @@ TextParser::TextParser(MemoryManager *heap) noexcept : heap_(heap) {}
     }
     throw std::runtime_error(error_message);
 }
-const Token &TextParser::current_token() const {
+const Token& TextParser::current_token() const {
     if (current_token_index_ >= tokens_.size()) {
         return tokens_.back();
     }
     return tokens_[current_token_index_];
 }
-const Token &TextParser::peek_token(size_t offset) const {
+const Token& TextParser::peek_token(size_t offset) const {
     size_t index = current_token_index_ + offset;
     if (index >= tokens_.size()) {
         return tokens_.back();
@@ -117,8 +117,8 @@ void TextParser::advance() {
         current_token_index_++;
     }
 }
-const Token &TextParser::consume_token(TokenType expected, const std::string &error_message) {
-    const Token &token = current_token();
+const Token& TextParser::consume_token(TokenType expected, const std::string& error_message) {
+    const Token& token = current_token();
     if (token.type != expected) {
         throw_parse_error(error_message, token);
     }
@@ -132,7 +132,7 @@ bool TextParser::match_token(TokenType type) {
     }
     return false;
 }
-std::string TextParser::unescape_string(const std::string &escaped) {
+std::string TextParser::unescape_string(const std::string& escaped) {
     std::stringstream ss;
     bool is_escaping = false;
     for (char c : escaped) {
@@ -166,7 +166,7 @@ std::string TextParser::unescape_string(const std::string &escaped) {
     }
     return ss.str();
 }
-proto_t TextParser::parse_file(const std::string &filepath, MemoryManager &mm) {
+proto_t TextParser::parse_file(const std::string& filepath, MemoryManager& mm) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
         throw std::runtime_error("Không thể mở tệp: " + filepath);
@@ -176,8 +176,8 @@ proto_t TextParser::parse_file(const std::string &filepath, MemoryManager &mm) {
     file.close();
     return parse_source(buffer.str(), mm, filepath);
 }
-proto_t TextParser::parse_source(const std::string &source, MemoryManager &mm,
-                                 const std::string &source_name) {
+proto_t TextParser::parse_source(const std::string& source, MemoryManager& mm,
+                                 const std::string& source_name) {
     heap_ = &mm;
     current_source_name_ = source_name;
     current_token_index_ = 0;
@@ -196,12 +196,12 @@ proto_t TextParser::parse_source(const std::string &source, MemoryManager &mm,
         tokens_.push_back({"", TokenType::END_OF_FILE, last_line, last_col});
     }
     parse();
-    for (auto &[name, data] : build_data_map_) {
+    for (auto& [name, data] : build_data_map_) {
         resolve_labels_for_build_data(data);
     }
     finalized_protos_.clear();
-    std::vector<std::pair<proto_t, ProtoBuildData *>> protos_to_link;
-    for (auto &[name, data] : build_data_map_) {
+    std::vector<std::pair<proto_t, ProtoBuildData*>> protos_to_link;
+    for (auto& [name, data] : build_data_map_) {
         string_t func_name_obj = heap_->new_string(name);
         std::vector<Value> final_constants = build_final_constant_pool(data);
         Chunk final_chunk(std::move(data.temp_code), std::move(final_constants));
@@ -220,17 +220,17 @@ proto_t TextParser::parse_source(const std::string &source, MemoryManager &mm,
         finalized_protos_[name] = new_proto;
         protos_to_link.push_back({new_proto, &data});
     }
-    for (auto &pair : protos_to_link) {
+    for (auto& pair : protos_to_link) {
         proto_t proto_to_link = pair.first;
-        const Chunk &chunk_ref = proto_to_link->get_chunk();
+        const Chunk& chunk_ref = proto_to_link->get_chunk();
         for (size_t i = 0; i < chunk_ref.get_pool_size(); ++i) {
             Value constant = chunk_ref.get_constant(i);
             if (constant.is_string()) {
-                const meow::core::objects::ObjString *str_obj = constant.as_string();
+                const meow::core::objects::ObjString* str_obj = constant.as_string();
                 std::string_view placeholder_name = str_obj->c_str();
                 auto target_it = finalized_protos_.find(std::string(placeholder_name));
                 if (target_it != finalized_protos_.end()) {
-                    Value &const_ref = const_cast<Chunk &>(chunk_ref).get_constant_ref(i);
+                    Value& const_ref = const_cast<Chunk&>(chunk_ref).get_constant_ref(i);
                     const_ref = Value(target_it->second);
                 }
             }
@@ -245,7 +245,7 @@ proto_t TextParser::parse_source(const std::string &source, MemoryManager &mm,
     build_data_map_.clear();
     return main_it->second;
 }
-const std::unordered_map<std::string, proto_t> &TextParser::get_finalized_protos() const {
+const std::unordered_map<std::string, proto_t>& TextParser::get_finalized_protos() const {
     return finalized_protos_;
 }
 void TextParser::parse() {
@@ -253,7 +253,7 @@ void TextParser::parse() {
         parse_statement();
     }
     if (current_proto_data_) {
-        const Token &last_token = tokens_.empty() ? Token{"", TokenType::UNKNOWN, 0, 0}
+        const Token& last_token = tokens_.empty() ? Token{"", TokenType::UNKNOWN, 0, 0}
                                                   : tokens_[current_token_index_ - 1];
         throw_parse_error("Thiếu chỉ thị '.endfunc' cho hàm '" + current_proto_data_->name +
                               "' bắt đầu tại dòng " +
@@ -262,7 +262,7 @@ void TextParser::parse() {
     }
 }
 void TextParser::parse_statement() {
-    const Token &token = current_token();
+    const Token& token = current_token();
     switch (token.type) {
         case TokenType::DIR_FUNC:
             if (current_proto_data_) {
@@ -351,8 +351,8 @@ void TextParser::parse_statement() {
     }
 }
 void TextParser::parse_func_directive() {
-    const Token &func_token = consume_token(TokenType::DIR_FUNC, "Mong đợi '.func'.");
-    const Token &name_token = consume_token(TokenType::IDENTIFIER, "Mong đợi tên hàm sau '.func'.");
+    const Token& func_token = consume_token(TokenType::DIR_FUNC, "Mong đợi '.func'.");
+    const Token& name_token = consume_token(TokenType::IDENTIFIER, "Mong đợi tên hàm sau '.func'.");
     std::string func_name(name_token.lexeme);
     if (func_name.empty() ||
         (func_name[0] != '@' && !std::isalpha(func_name[0]) && func_name[0] != '_')) {
@@ -385,7 +385,7 @@ void TextParser::parse_registers_directive() {
         throw_parse_error("Lỗi nội bộ: current_proto_data_ là null khi parse .registers.");
     if (current_proto_data_->registers_defined)
         throw_parse_error("Chỉ thị '.registers' đã được định nghĩa cho hàm này.");
-    const Token &num_token =
+    const Token& num_token =
         consume_token(TokenType::NUMBER_INT,
                       "Mong đợi số lượng thanh ghi (số nguyên không âm) sau '.registers'.");
     try {
@@ -409,7 +409,7 @@ void TextParser::parse_upvalues_directive() {
         throw_parse_error("Lỗi nội bộ: current_proto_data_ là null khi parse .upvalues.");
     if (current_proto_data_->upvalues_defined)
         throw_parse_error("Chỉ thị '.upvalues' đã được định nghĩa cho hàm này.");
-    const Token &num_token = consume_token(
+    const Token& num_token = consume_token(
         TokenType::NUMBER_INT, "Mong đợi số lượng upvalue (số nguyên không âm) sau '.upvalues'.");
     try {
         uint64_t num_up;
@@ -442,7 +442,7 @@ void TextParser::parse_upvalue_directive() {
         throw_parse_error("Chỉ thị '.upvalues' phải được định nghĩa trước '.upvalue'.",
                           tokens_[current_token_index_ - 1]);
     }
-    const Token &index_token =
+    const Token& index_token =
         consume_token(TokenType::NUMBER_INT, "Mong đợi chỉ số upvalue (0-based) sau '.upvalue'.");
     size_t uv_index;
     try {
@@ -461,7 +461,7 @@ void TextParser::parse_upvalue_directive() {
                               std::to_string(current_proto_data_->num_upvalues) + ").",
                           index_token);
     }
-    const Token &type_token =
+    const Token& type_token =
         consume_token(TokenType::IDENTIFIER, "Mong đợi loại upvalue ('local' hoặc 'parent').");
     bool is_local;
     if (type_token.lexeme == "local") {
@@ -471,7 +471,7 @@ void TextParser::parse_upvalue_directive() {
     } else {
         throw_parse_error("Loại upvalue không hợp lệ. Phải là 'local' hoặc 'parent'.", type_token);
     }
-    const Token &slot_token = consume_token(TokenType::NUMBER_INT,
+    const Token& slot_token = consume_token(TokenType::NUMBER_INT,
                                             "Mong đợi chỉ số slot (thanh ghi nếu 'local', "
                                             "upvalue cha nếu 'parent').");
     size_t slot_index;
@@ -498,7 +498,7 @@ void TextParser::parse_upvalue_directive() {
     current_proto_data_->upvalue_descs[uv_index] = UpvalueDesc(is_local, slot_index);
 }
 void TextParser::parse_label_definition() {
-    const Token &label_token =
+    const Token& label_token =
         consume_token(TokenType::LABEL_DEF, "Lỗi nội bộ: Mong đợi định nghĩa nhãn.");
     if (!current_proto_data_)
         throw_parse_error("Lỗi nội bộ: current_proto_data_ là null khi parse label def.");
@@ -511,16 +511,16 @@ void TextParser::parse_label_definition() {
     current_proto_data_->labels[label_name] = current_proto_data_->temp_code.size();
 }
 void TextParser::parse_instruction() {
-    const Token &opcode_token = consume_token(TokenType::OPCODE, "Lỗi nội bộ: Mong đợi opcode.");
+    const Token& opcode_token = consume_token(TokenType::OPCODE, "Lỗi nội bộ: Mong đợi opcode.");
     if (!current_proto_data_)
         throw_parse_error("Lỗi nội bộ: current_proto_data_ là null khi parse instruction.");
     auto it = OPCODE_PARSE_MAP.find(opcode_token.lexeme);
     OpCode opcode = it->second;
-    ProtoBuildData &data_ref = *current_proto_data_;
+    ProtoBuildData& data_ref = *current_proto_data_;
     size_t instruction_opcode_pos = data_ref.temp_code.size();
     data_ref.write_byte(static_cast<uint8_t>(opcode));
     auto parse_u16_arg = [&]() -> uint16_t {
-        const Token &token =
+        const Token& token =
             consume_token(TokenType::NUMBER_INT, "Mong đợi đối số là số nguyên 16-bit không dấu.");
         uint64_t value_u64;
         auto result = std::from_chars(token.lexeme.data(),
@@ -534,7 +534,7 @@ void TextParser::parse_instruction() {
         return static_cast<uint16_t>(value_u64);
     };
     auto parse_i64_arg = [&]() -> int64_t {
-        const Token &token = current_token();
+        const Token& token = current_token();
         int64_t value;
         auto result =
             std::from_chars(token.lexeme.data(), token.lexeme.data() + token.lexeme.size(), value);
@@ -560,7 +560,7 @@ void TextParser::parse_instruction() {
         throw_parse_error("Mong đợi đối số là số nguyên 64-bit.", token);
     };
     auto parse_f64_arg = [&]() -> double {
-        const Token &token = current_token();
+        const Token& token = current_token();
         if (token.type != TokenType::NUMBER_FLOAT && token.type != TokenType::NUMBER_INT) {
             throw_parse_error("Mong đợi đối số là số thực hoặc số nguyên.", token);
         }
@@ -577,7 +577,7 @@ void TextParser::parse_instruction() {
         }
     };
     auto parse_address_or_label_arg = [&]() {
-        const Token &token = current_token();
+        const Token& token = current_token();
         if (token.type == TokenType::NUMBER_INT) {
             uint16_t address = parse_u16_arg();
             data_ref.write_u16(address);
@@ -619,7 +619,7 @@ void TextParser::parse_instruction() {
         case OpCode::IMPORT_MODULE:
             data_ref.write_u16(parse_u16_arg());
             {
-                const Token &name_token = current_token();
+                const Token& name_token = current_token();
                 Value name_val;
                 if (name_token.type == TokenType::STRING ||
                     name_token.type == TokenType::IDENTIFIER) {
@@ -640,7 +640,7 @@ void TextParser::parse_instruction() {
             break;
         case OpCode::EXPORT:
         case OpCode::SET_GLOBAL: {
-            const Token &name_token = current_token();
+            const Token& name_token = current_token();
             Value name_val;
             if (name_token.type == TokenType::STRING) {
                 name_val = parse_const_value_from_tokens();
@@ -712,7 +712,7 @@ void TextParser::parse_instruction() {
             data_ref.write_u16(parse_u16_arg());
             data_ref.write_u16(parse_u16_arg());
             {
-                const Token &name_token = current_token();
+                const Token& name_token = current_token();
                 Value name_val;
                 if (name_token.type == TokenType::STRING) {
                     name_val = parse_const_value_from_tokens();
@@ -737,7 +737,7 @@ void TextParser::parse_instruction() {
         case OpCode::SET_PROP:
             data_ref.write_u16(parse_u16_arg());
             {
-                const Token &name_token = current_token();
+                const Token& name_token = current_token();
                 Value name_val;
                 if (name_token.type == TokenType::STRING) {
                     name_val = parse_const_value_from_tokens();
@@ -780,7 +780,7 @@ void TextParser::parse_instruction() {
             data_ref.write_u16(parse_u16_arg());
             break;
         case OpCode::RETURN: {
-            const Token &ret_token = current_token();
+            const Token& ret_token = current_token();
             if (ret_token.type == TokenType::NUMBER_INT && ret_token.lexeme == "-1") {
                 advance();
                 data_ref.write_u16(0xFFFF);
@@ -809,7 +809,7 @@ void TextParser::parse_instruction() {
     }
 }
 Value TextParser::parse_const_value_from_tokens() {
-    const Token &token = current_token();
+    const Token& token = current_token();
     switch (token.type) {
         case TokenType::STRING: {
             advance();
@@ -867,8 +867,8 @@ Value TextParser::parse_const_value_from_tokens() {
             throw_parse_error("Token không mong đợi cho giá trị hằng số.", token);
     }
 }
-void TextParser::resolve_labels_for_build_data(ProtoBuildData &data) {
-    for (const auto &jump_info : data.pending_jumps) {
+void TextParser::resolve_labels_for_build_data(ProtoBuildData& data) {
+    for (const auto& jump_info : data.pending_jumps) {
         [[maybe_unused]] size_t instruction_opcode_pos = std::get<0>(jump_info);
         size_t patch_target_offset = std::get<1>(jump_info);
         std::string_view label_name = std::get<2>(jump_info);
@@ -893,13 +893,13 @@ void TextParser::resolve_labels_for_build_data(ProtoBuildData &data) {
     }
     data.pending_jumps.clear();
 }
-std::vector<Value> TextParser::build_final_constant_pool(ProtoBuildData &data) {
+std::vector<Value> TextParser::build_final_constant_pool(ProtoBuildData& data) {
     const std::string prefix = "::proto_ref::";
     std::vector<Value> final_constants;
     final_constants.reserve(data.temp_constants.size());
-    for (const auto &constant : data.temp_constants) {
+    for (const auto& constant : data.temp_constants) {
         if (constant.is_string()) {
-            const meow::core::objects::ObjString *str_obj = constant.as_string();
+            const meow::core::objects::ObjString* str_obj = constant.as_string();
             std::string_view s = str_obj->c_str();
             if (s.size() > prefix.size() && s.substr(0, prefix.size()) == prefix) {
                 std::string target_proto_name = std::string(s.substr(prefix.size()));

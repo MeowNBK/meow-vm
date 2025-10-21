@@ -23,15 +23,15 @@ class ObjString : public MeowObject {
    public:
     // --- Constructors & destructor ---
     ObjString() = default;
-    explicit ObjString(const storage_t &data) : data_(data) {}
-    explicit ObjString(storage_t &&data) noexcept : data_(std::move(data)) {}
-    explicit ObjString(const char *data) : data_(data) {}
+    explicit ObjString(const storage_t& data) : data_(data) {}
+    explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {}
+    explicit ObjString(const char* data) : data_(data) {}
 
     // --- Rule of 5 ---
-    ObjString(const ObjString &) = delete;
-    ObjString(ObjString &&) = default;
-    ObjString &operator=(const ObjString &) = delete;
-    ObjString &operator=(ObjString &&) = default;
+    ObjString(const ObjString&) = delete;
+    ObjString(ObjString&&) = default;
+    ObjString& operator=(const ObjString&) = delete;
+    ObjString& operator=(ObjString&&) = default;
     ~ObjString() override = default;
 
     // --- Iterator types ---
@@ -46,7 +46,7 @@ class ObjString : public MeowObject {
     [[nodiscard]] inline char at(size_t index) const { return data_.at(index); }
 
     // --- String access ---
-    [[nodiscard]] inline const char *c_str() const noexcept { return data_.c_str(); }
+    [[nodiscard]] inline const char* c_str() const noexcept { return data_.c_str(); }
 
     // --- Capacity ---
     [[nodiscard]] inline size_t size() const noexcept { return data_.size(); }
@@ -58,6 +58,6 @@ class ObjString : public MeowObject {
     inline const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
     inline const_reverse_iterator rend() const noexcept { return data_.rend(); }
 
-    inline void trace(visitor_t &) const noexcept override {}
+    inline void trace(visitor_t&) const noexcept override {}
 };
 }  // namespace meow::core::objects

@@ -14,11 +14,11 @@ template <typename T>
 class Vector {
    private:
     using value_t = T;
-    using reference_t = value_t &;
-    using move_t = value_t &&;
-    using pointer_t = value_t *;
-    using const_reference_t = const value_t &;
-    using const_pointer_t = const value_t *;
+    using reference_t = value_t&;
+    using move_t = value_t&&;
+    using pointer_t = value_t*;
+    using const_reference_t = const value_t&;
+    using const_pointer_t = const value_t*;
 
     // --- Metadata ---
     pointer_t data_;
@@ -35,7 +35,7 @@ class Vector {
         data_ = temp_data;
         capacity_ = new_capacity;
     }
-    inline void copy_from(const Vector &other) noexcept {
+    inline void copy_from(const Vector& other) noexcept {
         size_ = other.size_;
         capacity_ = other.capacity_;
         delete[] data_;
@@ -44,7 +44,7 @@ class Vector {
             data_[i] = other.data_[i];
         }
     }
-    inline void move_from(Vector &&other) noexcept {
+    inline void move_from(Vector&& other) noexcept {
         delete[] data_;
         data_ = other.data_;
         size_ = other.size_;
@@ -58,18 +58,18 @@ class Vector {
     // --- Constructors & destructor
     Vector(size_t new_capacity = 10) noexcept
         : data_(new value_t[new_capacity]()), size_(0), capacity_(new_capacity) {}
-    explicit Vector(const Vector &other) noexcept
+    explicit Vector(const Vector& other) noexcept
         : data_(new value_t[other.capacity_]), size_(other.size_), capacity_(other.capacity_) {
         for (size_t i = 0; i < size_; ++i) {
             data_[i] = other.data_[i];
         }
     }
-    explicit Vector(Vector &&other) noexcept { move_from(std::move(other)); }
-    inline Vector &operator=(const Vector &other) noexcept {
+    explicit Vector(Vector&& other) noexcept { move_from(std::move(other)); }
+    inline Vector& operator=(const Vector& other) noexcept {
         copy_from(other);
         return *this;
     }
-    inline Vector &operator=(Vector &&other) noexcept {
+    inline Vector& operator=(Vector&& other) noexcept {
         move_from(std::move(other));
         return *this;
     }

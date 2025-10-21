@@ -33,19 +33,19 @@ class Value {
     // --- Constructors ---
     Value() : data_(null_t{}) {}
     template <ValueAssignable T>
-    Value(T &&value) noexcept(noexcept(data_ = std::forward<T>(value)))
+    Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
         : data_(std::forward<T>(value)) {}
 
     // --- Rule of five ---
-    Value(const Value &other) : data_(other.data_) {}
-    Value(Value &&other) : data_(std::move(other.data_)) {}
-    inline Value &operator=(const Value &other) noexcept {
+    Value(const Value& other) : data_(other.data_) {}
+    Value(Value&& other) : data_(std::move(other.data_)) {}
+    inline Value& operator=(const Value& other) noexcept {
         if (this == &other)
             return *this;
         data_ = other.data_;
         return *this;
     }
-    inline Value &operator=(Value &&other) noexcept {
+    inline Value& operator=(Value&& other) noexcept {
         if (this == &other)
             return *this;
         data_ = std::move(other.data_);
@@ -55,7 +55,7 @@ class Value {
 
     // --- Other overload ---
     template <ValueAssignable T>
-    inline Value &operator=(T &&value) noexcept(noexcept(data_ = std::forward<T>(value))) {
+    inline Value& operator=(T&& value) noexcept(noexcept(data_ = std::forward<T>(value))) {
         data_ = std::forward<T>(value);
         return *this;
     }
@@ -109,11 +109,11 @@ class Value {
     //     });
     // }
 
-    [[nodiscard]] inline meow::core::MeowObject *as_object() const noexcept { return nullptr; }
+    [[nodiscard]] inline meow::core::MeowObject* as_object() const noexcept { return nullptr; }
 
-    inline const bool *as_if_bool() const noexcept { return data_.get_if<bool_t>(); }
-    inline const int64_t *as_if_int() const noexcept { return data_.get_if<int_t>(); }
-    inline const double *as_if_float() const noexcept { return data_.get_if<float_t>(); }
+    inline const bool* as_if_bool() const noexcept { return data_.get_if<bool_t>(); }
+    inline const int64_t* as_if_int() const noexcept { return data_.get_if<int_t>(); }
+    inline const double* as_if_float() const noexcept { return data_.get_if<float_t>(); }
     // inline meow::core::MeowObject* const* as_if_object() const noexcept {
     //     thread_local static meow::core::MeowObject* object = nullptr; //
     //     force to use static variable, no choice left, no multi thread-usage
@@ -124,9 +124,9 @@ class Value {
     //     return nullptr;
     // }
 
-    inline bool *as_if_bool() noexcept { return data_.get_if<bool_t>(); }
-    inline int64_t *as_if_int() noexcept { return data_.get_if<int_t>(); }
-    inline double *as_if_float() noexcept { return data_.get_if<float_t>(); }
+    inline bool* as_if_bool() noexcept { return data_.get_if<bool_t>(); }
+    inline int64_t* as_if_int() noexcept { return data_.get_if<int_t>(); }
+    inline double* as_if_float() noexcept { return data_.get_if<float_t>(); }
     // inline meow::core::MeowObject** as_if_object() noexcept {
     //     thread-local static meow::core::MeowObject* object = nullptr;
     //     if (is_object()) {
@@ -137,22 +137,22 @@ class Value {
     // }
 
     template <typename Visitor>
-    decltype(auto) visit(Visitor &&vis) {
+    decltype(auto) visit(Visitor&& vis) {
         return data_.visit(vis);
     }
 
     template <typename Visitor>
-    decltype(auto) visit(Visitor &&vis) const {
+    decltype(auto) visit(Visitor&& vis) const {
         return data_.visit(vis);
     }
 
     template <typename... Fs>
-    decltype(auto) visit(Fs &&...fs) {
+    decltype(auto) visit(Fs&&... fs) {
         return data_.visit(std::forward<Fs>(fs)...);
     }
 
     template <typename... Fs>
-    decltype(auto) visit(Fs &&...fs) const {
+    decltype(auto) visit(Fs&&... fs) const {
         return data_.visit(std::forward<Fs>(fs)...);
     }
 };
