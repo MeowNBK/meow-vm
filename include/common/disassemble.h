@@ -73,7 +73,8 @@
 // }
 
 // // ---------- helper: read var-length arg (matching your writeArg) ----------
-// static inline uint16_t readVarArg (const std::vector<uint8_t>& code, size_t &ip, size_t codeSize) noexcept {
+// static inline uint16_t readVarArg (const std::vector<uint8_t>& code, size_t
+// &ip, size_t codeSize) noexcept {
 //     if (ip >= codeSize) return 0;
 //     uint8_t b0 = code[ip++];
 //     if ((b0 & 0x80) == 0) {
@@ -86,12 +87,14 @@
 //             return static_cast<uint16_t>(b0 & 0x7F);
 //         }
 //         uint8_t b1 = code[ip++];
-//         return static_cast<uint16_t>((b0 & 0x7F) | (static_cast<uint16_t>(b1) << 7));
+//         return static_cast<uint16_t>((b0 & 0x7F) | (static_cast<uint16_t>(b1)
+//         << 7));
 //     }
 // };
 
 // // ---------- keep an i64 reader for immediates (LOAD_INT) ----------
-// static inline int64_t read_i64_le (const std::vector<uint8_t>& code, size_t &ip, size_t codeSize) noexcept {
+// static inline int64_t read_i64_le (const std::vector<uint8_t>& code, size_t
+// &ip, size_t codeSize) noexcept {
 //     if (ip + 7 >= codeSize) {
 //         // truncated: read remaining bytes little-endian
 //         int64_t out = 0;
@@ -129,11 +132,13 @@
 //         if (val.is<Bool>()) return val.get<Bool>() ? "true" : "false";
 //         if (val.is<String>()) {
 //             ObjString* s = val.get<String>();
-//             return s ? std::string("\"") + s->utf8() + "\"" : std::string("\"<null string>\"");
+//             return s ? std::string("\"") + s->utf8() + "\"" :
+//             std::string("\"<null string>\"");
 //         }
 //         if (val.is<Proto>()) {
 //             ObjFunctionProto* p = val.get<Proto>();
-//             return p ? std::string("<function proto '") + p->getSourceName() + "'>" : "<function proto null>";
+//             return p ? std::string("<function proto '") + p->getSourceName()
+//             + "'>" : "<function proto null>";
 //         }
 //         if (val.is<Function>()) return "<closure>";
 //         if (val.is<Instance>()) return "<instance>";
@@ -153,9 +158,9 @@
 //         uint8_t rawOpcode = code[ip++]; // opcode always 1 byte
 //         OpCode op = static_cast<OpCode>(rawOpcode);
 
-//         os << "     " << std::right << std::setw(4) << static_cast<Int>(instOffset) << ": ";
-//         std::string opname = opCodeToString(op);
-//         os << std::left << std::setw(12) << opname;
+//         os << "     " << std::right << std::setw(4) <<
+//         static_cast<Int>(instOffset) << ": "; std::string opname =
+//         opCodeToString(op); os << std::left << std::setw(12) << opname;
 
 //         // Parse args using readVarArg where appropriate.
 //         switch (op) {
@@ -168,9 +173,10 @@
 //             case OpCode::LOAD_CONST: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t cidx = readVarArg(code, ip, codeSize);
-//                 std::string valStr = (cidx < chunk.constantPool.size()) ? valueToString(chunk.constantPool[cidx]) : "<const OOB>";
-//                 os << "  args=[dst=" << dst << ", cidx=" << cidx << " -> " << valStr << "]";
-//                 break;
+//                 std::string valStr = (cidx < chunk.constantPool.size()) ?
+//                 valueToString(chunk.constantPool[cidx]) : "<const OOB>"; os
+//                 << "  args=[dst=" << dst << ", cidx=" << cidx << " -> " <<
+//                 valStr << "]"; break;
 //             }
 //             case OpCode::LOAD_INT: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
@@ -187,16 +193,17 @@
 //             }
 
 //             // Binary ops: dst, r1, r2
-//             case OpCode::ADD: case OpCode::SUB: case OpCode::MUL: case OpCode::DIV:
-//             case OpCode::MOD: case OpCode::POW: case OpCode::EQ: case OpCode::NEQ:
-//             case OpCode::GT: case OpCode::GE: case OpCode::LT: case OpCode::LE:
-//             case OpCode::BIT_AND: case OpCode::BIT_OR: case OpCode::BIT_XOR:
-//             case OpCode::LSHIFT: case OpCode::RSHIFT: {
+//             case OpCode::ADD: case OpCode::SUB: case OpCode::MUL: case
+//             OpCode::DIV: case OpCode::MOD: case OpCode::POW: case OpCode::EQ:
+//             case OpCode::NEQ: case OpCode::GT: case OpCode::GE: case
+//             OpCode::LT: case OpCode::LE: case OpCode::BIT_AND: case
+//             OpCode::BIT_OR: case OpCode::BIT_XOR: case OpCode::LSHIFT: case
+//             OpCode::RSHIFT: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t r1  = readVarArg(code, ip, codeSize);
 //                 uint16_t r2  = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", r1=" << r1 << ", r2=" << r2 << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", r1=" << r1 << ", r2=" << r2
+//                 << "]"; break;
 //             }
 
 //             // Unary:
@@ -210,16 +217,18 @@
 //             case OpCode::GET_GLOBAL: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t cidx = readVarArg(code, ip, codeSize);
-//                 std::string name = (cidx < chunk.constantPool.size()) ? valueToString(chunk.constantPool[cidx]) : "<bad-name>";
-//                 os << "  args=[dst=" << dst << ", nameIdx=" << cidx << " -> " << name << "]";
-//                 break;
+//                 std::string name = (cidx < chunk.constantPool.size()) ?
+//                 valueToString(chunk.constantPool[cidx]) : "<bad-name>"; os <<
+//                 "  args=[dst=" << dst << ", nameIdx=" << cidx << " -> " <<
+//                 name << "]"; break;
 //             }
 //             case OpCode::SET_GLOBAL: {
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
 //                 uint16_t src = readVarArg(code, ip, codeSize);
-//                 std::string name = (nameIdx < chunk.constantPool.size()) ? valueToString(chunk.constantPool[nameIdx]) : "<bad-name>";
-//                 os << "  args=[nameIdx=" << nameIdx << " -> " << name << ", src=" << src << "]";
-//                 break;
+//                 std::string name = (nameIdx < chunk.constantPool.size()) ?
+//                 valueToString(chunk.constantPool[nameIdx]) : "<bad-name>"; os
+//                 << "  args=[nameIdx=" << nameIdx << " -> " << name << ",
+//                 src=" << src << "]"; break;
 //             }
 
 //             case OpCode::GET_UPVALUE: {
@@ -239,16 +248,18 @@
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t protoIdx = readVarArg(code, ip, codeSize);
 //                 os << "  args=[dst=" << dst << ", protoIdx=" << protoIdx;
-//                 if (protoIdx < chunk.constantPool.size() && chunk.constantPool[protoIdx].is<Proto>()) {
-//                     ObjFunctionProto* inner = chunk.constantPool[protoIdx].get<Proto>();
-//                     if (inner) {
+//                 if (protoIdx < chunk.constantPool.size() &&
+//                 chunk.constantPool[protoIdx].is<Proto>()) {
+//                     ObjFunctionProto* inner =
+//                     chunk.constantPool[protoIdx].get<Proto>(); if (inner) {
 //                         size_t nUp = inner->getNumUpvalues();
 //                         os << ", upvalues=" << nUp << " {";
 //                         for (size_t ui = 0; ui < nUp; ++ui) {
 //                             if (ip >= codeSize) { os << "??"; break; }
-//                             uint16_t isLocal = readVarArg(code, ip, codeSize);
-//                             uint16_t index   = readVarArg(code, ip, codeSize);
-//                             os << (ui ? ", " : "") << (isLocal ? "local" : "env") << ":" << index;
+//                             uint16_t isLocal = readVarArg(code, ip,
+//                             codeSize); uint16_t index   = readVarArg(code,
+//                             ip, codeSize); os << (ui ? ", " : "") << (isLocal
+//                             ? "local" : "env") << ":" << index;
 //                         }
 //                         os << "}";
 //                     } else {
@@ -291,19 +302,25 @@
 //             }
 
 //             case OpCode::RETURN: {
-//                 // As your emitter supports optional arg, we try to read 0 or 1 arg.
-//                 // Convention: if writer emitted a register it will be encoded as varArg; we attempt to read it.
-//                 // If there are no bytes left, it is empty. If we accidentally read something that is actually next opcode,
-//                 // this can mis-sync; hence the emitter should be consistent. (If you prefer explicit flag, we can change.)
-//                 if (ip >= codeSize) {
+//                 // As your emitter supports optional arg, we try to read 0 or
+//                 1 arg.
+//                 // Convention: if writer emitted a register it will be
+//                 encoded as varArg; we attempt to read it.
+//                 // If there are no bytes left, it is empty. If we
+//                 accidentally read something that is actually next opcode,
+//                 // this can mis-sync; hence the emitter should be consistent.
+//                 (If you prefer explicit flag, we can change.) if (ip >=
+//                 codeSize) {
 //                     os << "  args=[]";
 //                 } else {
-//                     // We'll peek: try to decode varArg but *do not* treat 0..(max opcode value) specially.
-//                     // This is best-effort: if your emitter sometimes omits the arg, this will consume next opcode incorrectly.
-//                     // If that happens, tell me and we add an explicit byte flag in encoding.
-//                     size_t saveIp = ip;
-//                     uint16_t maybeReg = readVarArg(code, ip, codeSize);
-//                     os << "  args=[retReg=" << maybeReg << "]";
+//                     // We'll peek: try to decode varArg but *do not* treat
+//                     0..(max opcode value) specially.
+//                     // This is best-effort: if your emitter sometimes omits
+//                     the arg, this will consume next opcode incorrectly.
+//                     // If that happens, tell me and we add an explicit byte
+//                     flag in encoding. size_t saveIp = ip; uint16_t maybeReg =
+//                     readVarArg(code, ip, codeSize); os << "  args=[retReg="
+//                     << maybeReg << "]";
 //                 }
 //                 break;
 //             }
@@ -318,24 +335,24 @@
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t startIdx = readVarArg(code, ip, codeSize);
 //                 uint16_t count = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", startIdx=" << startIdx << ", count=" << count << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", startIdx=" << startIdx <<
+//                 ", count=" << count << "]"; break;
 //             }
 
 //             case OpCode::GET_INDEX: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t srcReg = readVarArg(code, ip, codeSize);
 //                 uint16_t keyReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", src=" << srcReg << ", key=" << keyReg << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", src=" << srcReg << ", key="
+//                 << keyReg << "]"; break;
 //             }
 
 //             case OpCode::SET_INDEX: {
 //                 uint16_t srcReg = readVarArg(code, ip, codeSize);
 //                 uint16_t keyReg = readVarArg(code, ip, codeSize);
 //                 uint16_t valReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[src=" << srcReg << ", key=" << keyReg << ", val=" << valReg << "]";
-//                 break;
+//                 os << "  args=[src=" << srcReg << ", key=" << keyReg << ",
+//                 val=" << valReg << "]"; break;
 //             }
 
 //             case OpCode::GET_KEYS:
@@ -349,22 +366,22 @@
 //             case OpCode::IMPORT_MODULE: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t pathIdx = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", pathIdx=" << pathIdx << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", pathIdx=" << pathIdx <<
+//                 "]"; break;
 //             }
 //             case OpCode::EXPORT: {
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
 //                 uint16_t srcReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[nameIdx=" << nameIdx << ", src=" << srcReg << "]";
-//                 break;
+//                 os << "  args=[nameIdx=" << nameIdx << ", src=" << srcReg <<
+//                 "]"; break;
 //             }
 //             case OpCode::GET_EXPORT:
 //             case OpCode::GET_MODULE_EXPORT: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t moduleReg = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", moduleReg=" << moduleReg << ", nameIdx=" << nameIdx << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", moduleReg=" << moduleReg <<
+//                 ", nameIdx=" << nameIdx << "]"; break;
 //             }
 //             case OpCode::IMPORT_ALL: {
 //                 uint16_t moduleReg = readVarArg(code, ip, codeSize);
@@ -375,53 +392,53 @@
 //             case OpCode::NEW_CLASS: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", nameIdx=" << nameIdx << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", nameIdx=" << nameIdx <<
+//                 "]"; break;
 //             }
 
 //             case OpCode::NEW_INSTANCE: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t classReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", classReg=" << classReg << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", classReg=" << classReg <<
+//                 "]"; break;
 //             }
 
 //             case OpCode::GET_PROP: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t objReg = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", objReg=" << objReg << ", nameIdx=" << nameIdx << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", objReg=" << objReg << ",
+//                 nameIdx=" << nameIdx << "]"; break;
 //             }
 
 //             case OpCode::SET_PROP: {
 //                 uint16_t objReg = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
 //                 uint16_t valReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[objReg=" << objReg << ", nameIdx=" << nameIdx << ", valReg=" << valReg << "]";
-//                 break;
+//                 os << "  args=[objReg=" << objReg << ", nameIdx=" << nameIdx
+//                 << ", valReg=" << valReg << "]"; break;
 //             }
 
 //             case OpCode::SET_METHOD: {
 //                 uint16_t classReg = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
 //                 uint16_t methodReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[classReg=" << classReg << ", nameIdx=" << nameIdx << ", methodReg=" << methodReg << "]";
-//                 break;
+//                 os << "  args=[classReg=" << classReg << ", nameIdx=" <<
+//                 nameIdx << ", methodReg=" << methodReg << "]"; break;
 //             }
 
 //             case OpCode::INHERIT: {
 //                 uint16_t subClassReg = readVarArg(code, ip, codeSize);
 //                 uint16_t superClassReg = readVarArg(code, ip, codeSize);
-//                 os << "  args=[subClassReg=" << subClassReg << ", superClassReg=" << superClassReg << "]";
-//                 break;
+//                 os << "  args=[subClassReg=" << subClassReg << ",
+//                 superClassReg=" << superClassReg << "]"; break;
 //             }
 
 //             case OpCode::GET_SUPER: {
 //                 uint16_t dst = readVarArg(code, ip, codeSize);
 //                 uint16_t nameIdx = readVarArg(code, ip, codeSize);
-//                 os << "  args=[dst=" << dst << ", nameIdx=" << nameIdx << "]";
-//                 break;
+//                 os << "  args=[dst=" << dst << ", nameIdx=" << nameIdx <<
+//                 "]"; break;
 //             }
 
 //             case OpCode::SETUP_TRY: {

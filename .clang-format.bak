@@ -1,0 +1,62 @@
+# ============================================
+# Clang-format config: Siêu đẹp cho C++ dev (clean)
+# ============================================
+
+BasedOnStyle: LLVM
+Standard: Latest
+
+# Indentation & spacing
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 8
+UseTab: Never
+IndentWrappedFunctionNames: false
+AlignAfterOpenBracket: Align
+AlignOperands: Align
+AlignTrailingComments: Always
+AlignConsecutiveDeclarations: true
+BinPackArguments: false
+BinPackParameters: false
+PointerAlignment: Right
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpacesInContainerLiterals: true
+SpacesInAngles: Never
+ReflowComments: true
+
+# Column & line breaking
+ColumnLimit: 100
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: MultiLine
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+
+# Brace & block style
+AllowShortLoopsOnASingleLine: false
+AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+SplitEmptyFunction: true
+SplitEmptyRecord: true
+SplitEmptyNamespace: true
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterFunction: false
+  AfterNamespace: false
+  BeforeCatch: false
+  BeforeElse: false
+
+# Includes
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive
+
+# Misc
+KeepEmptyLinesAtEOF: false
+MaxEmptyLinesToKeep: 1
+FixNamespaceComments: true

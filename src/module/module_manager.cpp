@@ -13,13 +13,16 @@
 
 // class ModuleManager {
 // public:
-//     Expected<Module, Diagnostic> loadModule(const std::string& modulePath, const std::string& importerPath, bool isBinary);
+//     Expected<Module, Diagnostic> loadModule(const std::string& modulePath,
+//     const std::string& importerPath, bool isBinary);
 
-//     inline std::unordered_map<std::string, Module>& getModuleCache() noexcept {
+//     inline std::unordered_map<std::string, Module>& getModuleCache() noexcept
+//     {
 //         return moduleCache;
 //     }
 
-//     inline const std::unordered_map<std::string, Module>& getModuleCache() const noexcept {
+//     inline const std::unordered_map<std::string, Module>& getModuleCache()
+//     const noexcept {
 //         return moduleCache;
 //     }
 
@@ -51,7 +54,6 @@
 //     MemoryManager* memoryManager;
 // };
 
-
 // #include "module/module_manager.h"
 // #include "memory/memory_manager.h"
 // #include "vm/meow_engine.h"
@@ -76,13 +78,14 @@
 //     char buf[MAX_PATH];
 //     DWORD len = GetModuleFileNameA(NULL, buf, MAX_PATH);
 //     if (len == 0) throw std::runtime_error("GetModuleFileNameA failed");
-//     return std::filesystem::path(std::string(buf, static_cast<size_t>(len))).parent_path();
+//     return std::filesystem::path(std::string(buf,
+//     static_cast<size_t>(len))).parent_path();
 // #elif defined(__linux__)
 //     char buf[PATH_MAX];
 //     ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-//     if (len == -1) throw std::runtime_error("readlink(/proc/self/exe) failed");
-//     buf[len] = '\0';
-//     return std::filesystem::path(std::string(buf)).parent_path();
+//     if (len == -1) throw std::runtime_error("readlink(/proc/self/exe)
+//     failed"); buf[len] = '\0'; return
+//     std::filesystem::path(std::string(buf)).parent_path();
 // #elif defined(__APPLE__)
 //     uint32_t size = 0;
 //     _NSGetExecutablePath(nullptr, &size); // will set size
@@ -98,7 +101,8 @@
 // }
 
 // // --- helper: expand token $ORIGIN in a path string to exeDir ---
-// static std::string expandOriginToken(const std::string& raw, const std::filesystem::path& exeDir) {
+// static std::string expandOriginToken(const std::string& raw, const
+// std::filesystem::path& exeDir) {
 //     std::string out;
 //     const std::string token = "$ORIGIN";
 //     size_t pos = 0;
@@ -122,8 +126,8 @@
 
 //     std::filesystem::path result;
 //     try {
-//         std::filesystem::path exeDir = getExecutableDir(); // thư mục chứa binary
-//         std::filesystem::path configFile = exeDir / "meow-root";
+//         std::filesystem::path exeDir = getExecutableDir(); // thư mục chứa
+//         binary std::filesystem::path configFile = exeDir / "meow-root";
 
 //         // 1) nếu có file meow-root, đọc và expand $ORIGIN
 //         if (std::filesystem::exists(configFile)) {
@@ -132,22 +136,24 @@
 //                 std::string line;
 //                 std::getline(in, line);
 //                 // trim (simple)
-//                 while (!line.empty() && (line.back() == '\n' || line.back() == '\r' || line.back() == ' ' || line.back() == '\t')) line.pop_back();
-//                 size_t i = 0;
-//                 while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-//                 if (i > 0) line = line.substr(i);
+//                 while (!line.empty() && (line.back() == '\n' || line.back()
+//                 == '\r' || line.back() == ' ' || line.back() == '\t'))
+//                 line.pop_back(); size_t i = 0; while (i < line.size() &&
+//                 (line[i] == ' ' || line[i] == '\t')) ++i; if (i > 0) line =
+//                 line.substr(i);
 
 //                 if (!line.empty()) {
 //                     std::string expanded = expandOriginToken(line, exeDir);
-//                     result = std::filesystem::absolute(std::filesystem::path(expanded));
+//                     result =
+//                     std::filesystem::absolute(std::filesystem::path(expanded));
 //                     cached = result;
 //                     return result;
 //                 }
 //             }
 //         }
 
-//         // 2) fallback nhanh: nếu exeDir là "bin", dùng parent; ngược lại dùng exeDir
-//         if (exeDir.filename() == "bin") {
+//         // 2) fallback nhanh: nếu exeDir là "bin", dùng parent; ngược lại
+//         dùng exeDir if (exeDir.filename() == "bin") {
 //             result = exeDir.parent_path();
 //         } else {
 //             result = exeDir;
@@ -163,13 +169,13 @@
 //     }
 // }
 
-
 // static std::string platformLastError() {
 // #if defined(_WIN32)
 //     DWORD err = GetLastError();
 //     if (!err) return "";
 //     LPSTR msgBuf = nullptr;
-//     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+//     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+//     FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 //                    nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 //                    (LPSTR)&msgBuf, 0, nullptr);
 //     std::string msg = msgBuf ? msgBuf : "";
@@ -182,7 +188,8 @@
 // }
 
 // // Trả về Expected<Module, Diagnostic> thay vì ném VMError
-// Expected<Module, Diagnostic> ModuleManager::loadModule(const std::string& modulePath, const std::string& importerPath, Bool isBinary) {
+// Expected<Module, Diagnostic> ModuleManager::loadModule(const std::string&
+// modulePath, const std::string& importerPath, Bool isBinary) {
 //     // check cache by requested modulePath first
 //     if (auto it = moduleCache.find(modulePath); it != moduleCache.end()) {
 //         return it->second;
@@ -196,16 +203,17 @@
 //     std::string libExtension = ".so";
 // #endif
 
-//     auto resolveLibraryPath = [&](const std::string& modPath, const std::string& importer) -> std::string {
+//     auto resolveLibraryPath = [&](const std::string& modPath, const
+//     std::string& importer) -> std::string {
 //         try {
 //             std::filesystem::path candidate(modPath);
 //             std::string ext = candidate.extension().string();
 
-//             // if explicit meow/text/binary extension provided, don't try to treat as native library here
-//             if (!ext.empty()) {
+//             // if explicit meow/text/binary extension provided, don't try to
+//             treat as native library here if (!ext.empty()) {
 //                 std::string extLower = ext;
-//                 for (char &c : extLower) c = (char)std::tolower((unsigned char)c);
-//                 if (extLower == ".meow" || extLower == ".meowb") {
+//                 for (char &c : extLower) c = (char)std::tolower((unsigned
+//                 char)c); if (extLower == ".meow" || extLower == ".meowb") {
 //                     return "";
 //                 }
 //             }
@@ -214,40 +222,49 @@
 //                 candidate.replace_extension(libExtension);
 //             }
 
-//             if (candidate.is_absolute() && std::filesystem::exists(candidate)) {
-//                 return std::filesystem::absolute(candidate).lexically_normal().string();
+//             if (candidate.is_absolute() &&
+//             std::filesystem::exists(candidate)) {
+//                 return
+//                 std::filesystem::absolute(candidate).lexically_normal().string();
 //             }
 
 //             std::filesystem::path stdlibRoot = detectStdlibRoot_cached();
 //             std::filesystem::path stdlibPath = stdlibRoot / candidate;
 //             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             stdlibPath = stdlibRoot / "lib" / candidate;
 //             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             stdlibPath = stdlibRoot / "stdlib" / candidate;
 //             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             stdlibPath = stdlibRoot / "bin" / "stdlib" / candidate;
 //             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             stdlibPath = stdlibRoot / "bin" / candidate;
 //             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             // try parent/bin/stdlib as extra attempt
-//             stdlibPath = std::filesystem::absolute(stdlibRoot / ".." / "bin" / "stdlib" / candidate);
-//             if (std::filesystem::exists(stdlibPath)) {
-//                 return std::filesystem::absolute(stdlibPath).lexically_normal().string();
+//             stdlibPath = std::filesystem::absolute(stdlibRoot / ".." / "bin"
+//             / "stdlib" / candidate); if (std::filesystem::exists(stdlibPath))
+//             {
+//                 return
+//                 std::filesystem::absolute(stdlibPath).lexically_normal().string();
 //             }
 
 //             // try relative to importer
@@ -255,8 +272,9 @@
 //                 ? std::filesystem::path(entryPath)
 //                 : std::filesystem::path(importer).parent_path();
 
-//             std::filesystem::path relativePath = std::filesystem::absolute(baseDir / candidate);
-//             if (std::filesystem::exists(relativePath)) {
+//             std::filesystem::path relativePath =
+//             std::filesystem::absolute(baseDir / candidate); if
+//             (std::filesystem::exists(relativePath)) {
 //                 return relativePath.lexically_normal().string();
 //             }
 
@@ -279,18 +297,20 @@
 // #endif
 //         if (!handle) {
 //             std::string detail = platformLastError();
-//             Diagnostic d(RuntimeError::NativeLibraryLoadFailed, libPath, std::vector<std::string>{ libPath, detail });
-//             return Expected<Module, Diagnostic>(d);
+//             Diagnostic d(RuntimeError::NativeLibraryLoadFailed, libPath,
+//             std::vector<std::string>{ libPath, detail }); return
+//             Expected<Module, Diagnostic>(d);
 //         }
 
 //         using NativeFunction = Module(*)(MeowEngine*);
 //         NativeFunction factory = nullptr;
 
 // #if defined(_WIN32)
-//         FARPROC procAddress = GetProcAddress((HMODULE)handle, "CreateMeowModule");
-//         if (procAddress == nullptr) {
+//         FARPROC procAddress = GetProcAddress((HMODULE)handle,
+//         "CreateMeowModule"); if (procAddress == nullptr) {
 //             std::string detail = platformLastError();
-//             Diagnostic d(RuntimeError::NativeLibrarySymbolNotFound, libPath, std::vector<std::string>{ "CreateMeowModule", libPath, detail });
+//             Diagnostic d(RuntimeError::NativeLibrarySymbolNotFound, libPath,
+//             std::vector<std::string>{ "CreateMeowModule", libPath, detail });
 //             return Expected<Module, Diagnostic>(d);
 //         }
 //         factory = reinterpret_cast<NativeFunction>(procAddress);
@@ -300,7 +320,8 @@
 //         const char* derr = dlerror();
 //         if (sym == nullptr || derr != nullptr) {
 //             std::string detail = platformLastError();
-//             Diagnostic d(RuntimeError::NativeLibrarySymbolNotFound, libPath, std::vector<std::string>{ "CreateMeowModule", libPath, detail });
+//             Diagnostic d(RuntimeError::NativeLibrarySymbolNotFound, libPath,
+//             std::vector<std::string>{ "CreateMeowModule", libPath, detail });
 //             return Expected<Module, Diagnostic>(d);
 //         }
 //         factory = reinterpret_cast<NativeFunction>(sym);
@@ -312,8 +333,9 @@
 //             nativeModule = factory(engine);
 //         } catch (...) {
 //             // If factory throws, convert to Diagnostic
-//             Diagnostic d(RuntimeError::NativeLibraryLoadFailed, libPath, std::vector<std::string>{ libPath, "factory-threw" });
-//             return Expected<Module, Diagnostic>(d);
+//             Diagnostic d(RuntimeError::NativeLibraryLoadFailed, libPath,
+//             std::vector<std::string>{ libPath, "factory-threw" }); return
+//             Expected<Module, Diagnostic>(d);
 //         }
 
 //         // cache both the requested modulePath and physical libPath
@@ -323,26 +345,31 @@
 //         return Expected<Module, Diagnostic>(nativeModule);
 //     }
 
-//     // Not native library (or not found as native). Resolve relative/absolute path for meow module
-//     std::filesystem::path baseDir = (importerPath == entryPath)
+//     // Not native library (or not found as native). Resolve relative/absolute
+//     path for meow module std::filesystem::path baseDir = (importerPath ==
+//     entryPath)
 //         ? std::filesystem::path(entryPath)
 //         : std::filesystem::path(importerPath).parent_path();
-//     std::filesystem::path resolvedPath = std::filesystem::absolute(baseDir / modulePath);
-//     std::string absolutePath = resolvedPath.lexically_normal().string();
+//     std::filesystem::path resolvedPath = std::filesystem::absolute(baseDir /
+//     modulePath); std::string absolutePath =
+//     resolvedPath.lexically_normal().string();
 
 //     if (auto it = moduleCache.find(absolutePath); it != moduleCache.end()) {
 //         return it->second;
 //     }
 
-//     // parse module (binary/text). Parsers now return Expected<Bool, Diagnostic>
-//     std::unordered_map<std::string, Proto> protosLocal;
-//     if (isBinary) {
+//     // parse module (binary/text). Parsers now return Expected<Bool,
+//     Diagnostic> std::unordered_map<std::string, Proto> protosLocal; if
+//     (isBinary) {
 //         // auto r = binaryParser.parseFile(absolutePath, *memoryManager);
 //         // if (!r) {
-//         //     // pass through the Diagnostic from parser but mark error kind as ModuleLoadFailed
+//         //     // pass through the Diagnostic from parser but mark error kind
+//         as ModuleLoadFailed
 //         //     Diagnostic diag = r.error();
-//         //     // wrap/augment diag if desired; here we create a ModuleLoadFailed to be consistent
-//         //     Diagnostic out(RuntimeError::ModuleLoadFailed, absolutePath, std::vector<std::string>{ absolutePath });
+//         //     // wrap/augment diag if desired; here we create a
+//         ModuleLoadFailed to be consistent
+//         //     Diagnostic out(RuntimeError::ModuleLoadFailed, absolutePath,
+//         std::vector<std::string>{ absolutePath });
 //         //     // Prefer the parser's detailed diag args if present
 //         //     if (!diag.args.empty()) out.args = diag.args;
 //         //     return Expected<Module, Diagnostic>(out);
@@ -352,9 +379,10 @@
 //         auto r = textParser.parseFile(absolutePath, *memoryManager);
 //         if (!r) {
 //             Diagnostic diag = r.error();
-//             Diagnostic out(RuntimeError::ModuleLoadFailed, absolutePath, std::vector<std::string>{ absolutePath });
-//             if (!diag.args.empty()) out.args = diag.args;
-//             return Expected<Module, Diagnostic>(out);
+//             Diagnostic out(RuntimeError::ModuleLoadFailed, absolutePath,
+//             std::vector<std::string>{ absolutePath }); if
+//             (!diag.args.empty()) out.args = diag.args; return
+//             Expected<Module, Diagnostic>(out);
 //         }
 //         protosLocal = textParser.protos;
 //     }
@@ -362,16 +390,19 @@
 //     const std::string mainName = "@main";
 //     auto pit = protosLocal.find(mainName);
 //     if (pit == protosLocal.end()) {
-//         Diagnostic d(RuntimeError::MissingMainFunction, absolutePath, std::vector<std::string>{ modulePath, mainName });
-//         return Expected<Module, Diagnostic>(d);
+//         Diagnostic d(RuntimeError::MissingMainFunction, absolutePath,
+//         std::vector<std::string>{ modulePath, mainName }); return
+//         Expected<Module, Diagnostic>(d);
 //     }
 
 //     // create module object
 //     Module newModule = nullptr;
 //     try {
-//         newModule = memoryManager->newObject<ObjModule>(modulePath, absolutePath, isBinary);
+//         newModule = memoryManager->newObject<ObjModule>(modulePath,
+//         absolutePath, isBinary);
 //     } catch (...) {
-//         // Diagnostic d(RuntimeError::ModuleLoadFailed, absolutePath, std::vector<std::string>{ "alloc-failed" });
+//         // Diagnostic d(RuntimeError::ModuleLoadFailed, absolutePath,
+//         std::vector<std::string>{ "alloc-failed" });
 //         // return Expected<Module, Diagnostic>(d);
 //     }
 
