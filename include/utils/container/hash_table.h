@@ -41,8 +41,7 @@ class HashTable {
         const_key_reference_t key) noexcept {
         size_t index = hash(key, table_.size());
         for (auto it = table_[index].begin(); it != table_[index].end(); it = it->next()) {
-            if (it->data_.first_ == key)
-                return it->data_.second_;
+            if (it->data_.first_ == key) return it->data_.second_;
         }
         return temp_value_;
     }

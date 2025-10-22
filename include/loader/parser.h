@@ -72,8 +72,7 @@ class TextParser {
         }
         void write_f64(double val) { write_u64(std::bit_cast<uint64_t>(val)); }
         bool patch_u16(size_t offset, uint16_t value) {
-            if (offset + 1 >= temp_code.size())
-                return false;
+            if (offset + 1 >= temp_code.size()) return false;
             temp_code[offset] = static_cast<uint8_t>(value & 0xFF);
             temp_code[offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
             return true;

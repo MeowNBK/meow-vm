@@ -71,9 +71,6 @@ class ObjFunctionProto : public meow::core::MeowObject {
     [[nodiscard]] inline const UpvalueDesc& get_desc(size_t index) const noexcept {
         return upvalue_descs_[index];
     }
-    [[nodiscard]] inline void set_desc(size_t index, const UpvalueDesc& desc) noexcept {
-        upvalue_descs_[index] = desc;
-    }
     /// @brief Checked upvalue desc access. For performence-critical code
     [[nodiscard]] inline const UpvalueDesc& at_desc(size_t index) const {
         return upvalue_descs_.at(index);

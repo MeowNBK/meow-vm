@@ -124,22 +124,16 @@ void MeowVM::prepare() noexcept {
 }
 
 inline bool is_truthy(param_t value) noexcept {
-    if (value.is_null())
-        return false;
-    if (value.is_bool())
-        return value.as_bool();
-    if (value.is_int())
-        return value.as_int() != 0;
+    if (value.is_null()) return false;
+    if (value.is_bool()) return value.as_bool();
+    if (value.is_int()) return value.as_int() != 0;
     if (value.is_float()) {
         double r = value.as_float();
         return r != 0.0 && !std::isnan(r);
     }
-    if (value.is_string())
-        return !value.as_string()->empty();
-    if (value.is_array())
-        return !value.as_array()->empty();
-    if (value.is_hash_table())
-        return !value.as_hash_table()->empty();
+    if (value.is_string()) return !value.as_string()->empty();
+    if (value.is_array()) return !value.as_array()->empty();
+    if (value.is_hash_table()) return !value.as_hash_table()->empty();
     return true;
 }
 
@@ -148,10 +142,8 @@ inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap,
     // Tìm kiếm các upvalue đã mở từ trên xuống dưới (chỉ số stack cao -> thấp)
     for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
         upvalue_t uv = *it;
-        if (uv->get_index() == register_index)
-            return uv;
-        if (uv->get_index() < register_index)
-            break;  // Đã đi qua, không cần tìm nữa
+        if (uv->get_index() == register_index) return uv;
+        if (uv->get_index() < register_index) break;  // Đã đi qua, không cần tìm nữa
     }
 
     // Không tìm thấy, tạo mới
@@ -581,8 +573,7 @@ void MeowVM::run() {
 
                     if (context_->call_stack_.empty()) {
                         printl("Call stack empty. Halting.");
-                        if (!context_->registers_.empty())
-                            context_->registers_[0] = return_value;
+                        if (!context_->registers_.empty()) context_->registers_[0] = return_value;
                         return;
                     }
 
@@ -643,8 +634,7 @@ void MeowVM::run() {
                     Value& key = REGISTER(key_reg);
 
                     if (src.is_array()) {
-                        if (!key.is_int())
-                            throw_vm_error("Array index must be an integer.");
+                        if (!key.is_int()) throw_vm_error("Array index must be an integer.");
                         int64_t idx = key.as_int();
                         array_t arr = src.as_array();
                         if (idx < 0 || (uint64_t)idx >= arr->size()) {
@@ -652,8 +642,7 @@ void MeowVM::run() {
                         }
                         REGISTER(dst) = arr->get(idx);
                     } else if (src.is_hash_table()) {
-                        if (!key.is_string())
-                            throw_vm_error("Hash table key must be a string.");
+                        if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
                         hash_table_t hash = src.as_hash_table();
                         if (hash->has(key.as_string())) {
                             REGISTER(dst) = hash->get(key.as_string());
@@ -661,8 +650,7 @@ void MeowVM::run() {
                             REGISTER(dst) = Value(null_t{});
                         }
                     } else if (src.is_string()) {
-                        if (!key.is_int())
-                            throw_vm_error("String index must be an integer.");
+                        if (!key.is_int()) throw_vm_error("String index must be an integer.");
                         int64_t idx = key.as_int();
                         string_t str = src.as_string();
                         if (idx < 0 || (uint64_t)idx >= str->size()) {
@@ -685,19 +673,16 @@ void MeowVM::run() {
                     Value& val = REGISTER(val_reg);
 
                     if (src.is_array()) {
-                        if (!key.is_int())
-                            throw_vm_error("Array index must be an integer.");
+                        if (!key.is_int()) throw_vm_error("Array index must be an integer.");
                         int64_t idx = key.as_int();
                         array_t arr = src.as_array();
-                        if (idx < 0)
-                            throw_vm_error("Array index cannot be negative.");
+                        if (idx < 0) throw_vm_error("Array index cannot be negative.");
                         if ((uint64_t)idx >= arr->size()) {
                             arr->resize(idx + 1);  // Tự động mở rộng
                         }
                         arr->set(idx, val);
                     } else if (src.is_hash_table()) {
-                        if (!key.is_string())
-                            throw_vm_error("Hash table key must be a string.");
+                        if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
                         hash_table_t hash = src.as_hash_table();
                         hash->set(key.as_string(), val);
                     } else {
@@ -813,8 +798,7 @@ void MeowVM::run() {
                             }
                             k = k->get_super();
                         }
-                        if (k)
-                            break;  // Đã tìm thấy method
+                        if (k) break;  // Đã tìm thấy method
                     }
 
                     // --- PHẦN MỚI ---
@@ -857,8 +841,7 @@ void MeowVM::run() {
                     Value& class_val = REGISTER(call_reg);
                     string_t name = CONSTANT(name_idx).as_string();
                     Value& methodVal = REGISTER(method_reg);
-                    if (!class_val.is_class())
-                        throw_vm_error("SET_METHOD: target is not a class.");
+                    if (!class_val.is_class()) throw_vm_error("SET_METHOD: target is not a class.");
                     if (!methodVal.is_function())
                         throw_vm_error("SET_METHOD: value is not a function.");
                     class_val.as_class()->set_method(name, methodVal);
@@ -988,8 +971,7 @@ void MeowVM::run() {
                     if (!mod_val.is_module())
                         throw_vm_error("GET_EXPORT: operand is not a module.");
                     module_t mod = mod_val.as_module();
-                    if (!mod->has_export(name))
-                        throw_vm_error("Module does not export name.");
+                    if (!mod->has_export(name)) throw_vm_error("Module does not export name.");
                     REGISTER(dst) = mod->get_export(name);
                     break;
                 }

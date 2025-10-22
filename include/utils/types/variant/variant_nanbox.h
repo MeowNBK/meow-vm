@@ -46,10 +46,9 @@ static_assert(MEOW_LITTLE_64,
 #if defined(__GNUC__) || defined(__clang__)
 #define MEOW_LIKELY(x) (__builtin_expect(!!(x), 1))
 #define MEOW_UNLIKELY(x) (__builtin_expect(!!(x), 0))
-#define MEOW_ASSUME(x)               \
-    do {                             \
-        if (!(x))                    \
-            __builtin_unreachable(); \
+#define MEOW_ASSUME(x)                     \
+    do {                                   \
+        if (!(x)) __builtin_unreachable(); \
     } while (0)
 #else
 #define MEOW_LIKELY(x) (x)
@@ -247,8 +246,7 @@ class NaNBoxedVariant {
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE bool holds() const noexcept {
         constexpr std::size_t idx = detail::type_list_index_of<std::decay_t<T>, flat_list>::value;
-        if (idx == detail::invalid_index)
-            return false;
+        if (idx == detail::invalid_index) return false;
         return index_ == static_cast<index_t>(idx);
     }
     template <typename T>
@@ -266,29 +264,25 @@ class NaNBoxedVariant {
     }
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE std::decay_t<T> safe_get() {
-        if (MEOW_UNLIKELY(!holds<T>()))
-            throw std::bad_variant_access();
+        if (MEOW_UNLIKELY(!holds<T>())) throw std::bad_variant_access();
         return reconstruct_value<std::decay_t<T>>();
     }
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE std::decay_t<T> safe_get() const {
-        if (MEOW_UNLIKELY(!holds<T>()))
-            throw std::bad_variant_access();
+        if (MEOW_UNLIKELY(!holds<T>())) throw std::bad_variant_access();
         return reconstruct_value<std::decay_t<T>>();
     }
 
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE std::decay_t<T>* get_if() noexcept {
-        if (MEOW_UNLIKELY(!holds<T>()))
-            return nullptr;
+        if (MEOW_UNLIKELY(!holds<T>())) return nullptr;
         thread_local static std::decay_t<T> temp;
         temp = reconstruct_value<std::decay_t<T>>();
         return &temp;
     }
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE const std::decay_t<T>* get_if() const noexcept {
-        if (MEOW_UNLIKELY(!holds<T>()))
-            return nullptr;
+        if (MEOW_UNLIKELY(!holds<T>())) return nullptr;
         thread_local static std::decay_t<T> temp;
         temp = reconstruct_value<std::decay_t<T>>();
         return &temp;
@@ -296,14 +290,12 @@ class NaNBoxedVariant {
 
     template <typename Visitor>
     MEOW_ALWAYS_INLINE decltype(auto) visit(Visitor&& vis) {
-        if (MEOW_UNLIKELY(index_ == npos))
-            throw std::bad_variant_access();
+        if (MEOW_UNLIKELY(index_ == npos)) throw std::bad_variant_access();
         return visit_impl(std::forward<Visitor>(vis));
     }
     template <typename Visitor>
     MEOW_ALWAYS_INLINE decltype(auto) visit(Visitor&& vis) const {
-        if (MEOW_UNLIKELY(index_ == npos))
-            throw std::bad_variant_access();
+        if (MEOW_UNLIKELY(index_ == npos)) throw std::bad_variant_access();
         return visit_impl_const(std::forward<Visitor>(vis));
     }
 
@@ -332,8 +324,7 @@ class NaNBoxedVariant {
                                       detail::type_list_index_of<double, flat_list>::value)
                                 : npos)
                          : static_cast<index_t>((tag - 1) < alternatives_count ? (tag - 1) : 255);
-            if (index_ == 255)
-                index_ = npos;
+            if (index_ == 255) index_ = npos;
         }
     }
 
@@ -353,10 +344,8 @@ class NaNBoxedVariant {
     }
 
     MEOW_ALWAYS_INLINE bool operator==(const NaNBoxedVariant& o) const noexcept {
-        if (index_ != o.index_)
-            return false;
-        if (index_ == npos)
-            return true;
+        if (index_ != o.index_) return false;
+        if (index_ == npos) return true;
         return bits_ == o.bits_;
     }
     MEOW_ALWAYS_INLINE bool operator!=(const NaNBoxedVariant& o) const noexcept {

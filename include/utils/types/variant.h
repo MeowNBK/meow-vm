@@ -186,8 +186,7 @@ class variant {
     // Assign from another meow::variant (rvalue)
     template <typename... U>
     variant& operator=(meow::variant<U...>&& other) noexcept {
-        if (reinterpret_cast<void*>(&other) == reinterpret_cast<void*>(this))
-            return *this;
+        if (reinterpret_cast<void*>(&other) == reinterpret_cast<void*>(this)) return *this;
         if (other.valueless()) {
             storage_ = implementation_t{};
             return *this;

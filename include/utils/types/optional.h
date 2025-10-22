@@ -66,8 +66,7 @@ class Optional {
 
     // --- Operator overloads ---
     inline Optional& operator=(const Optional& other) noexcept {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         reset();
         has_value_ = other.has_value_;
         if (has_value_) {
@@ -76,8 +75,7 @@ class Optional {
         return *this;
     }
     inline Optional& operator=(Optional&& other) noexcept {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         reset();
         if (has_value_) {
             new (storage_) T(std::move(other.get()));
@@ -108,13 +106,11 @@ class Optional {
     [[nodiscard]] inline const T& get() const noexcept { return *ptr(); }
     [[nodiscard]] inline T& get() noexcept { return *ptr(); }
     [[nodiscard]] inline const T& safe_get() const {
-        if (!has_value_)
-            throw std::runtime_error("No value");
+        if (!has_value_) throw std::runtime_error("No value");
         return *ptr();
     }
     [[nodiscard]] inline T& safe_get() {
-        if (!has_value_)
-            throw std::runtime_error("No value");
+        if (!has_value_) throw std::runtime_error("No value");
         return *ptr();
     }
 

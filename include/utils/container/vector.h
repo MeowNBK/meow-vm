@@ -93,21 +93,18 @@ class Vector {
 
     // --- Modifiers ---
     inline void push(const_reference_t value) noexcept {
-        if (size_ >= capacity_)
-            grow(capacity_ * 2);
+        if (size_ >= capacity_) grow(capacity_ * 2);
         data_[size_] = value;
         ++size_;
     }
     inline void push(move_t value) noexcept {
-        if (size >= capacity_)
-            grow(capacity * 2);
+        if (size >= capacity_) grow(capacity * 2);
         data_[size_] = std::move(value);
         ++size_;
         s
     }
     inline void pop() noexcept {
-        if (size_ > 0)
-            --size_;
+        if (size_ > 0) --size_;
     }
     inline void resize(size_t new_size, const_reference_t temp_value = value_t()) noexcept {
         if (new_size > size_) {

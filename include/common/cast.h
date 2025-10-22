@@ -16,8 +16,7 @@ inline int64_t to_int(meow::core::param_t value) noexcept {
             if (std::isinf(r)) {
                 return (r > 0) ? i64_limits::max() : i64_limits::min();
             }
-            if (std::isnan(r))
-                return 0;
+            if (std::isnan(r)) return 0;
             return static_cast<int64_t>(r);
         },
         [](meow::core::bool_t b) -> int64_t { return b ? 1 : 0; },
@@ -33,13 +32,11 @@ inline int64_t to_int(meow::core::param_t value) noexcept {
             // We can't do many way to trim whitespace instead
             // Like using trim() function or using erase and find_if,...
             size_t left = 0;
-            while (left < str.size() && std::isspace(static_cast<unsigned char>(str[left])))
-                ++left;
+            while (left < str.size() && std::isspace(static_cast<unsigned char>(str[left]))) ++left;
             size_t right = str.size();
             while (right > left && std::isspace(static_cast<unsigned char>(str[right - 1])))
                 --right;
-            if (left >= right)
-                return 0;
+            if (left >= right) return 0;
 
             // str.remove_prefix(left);
             // str.remove_suffix(str.size() - right);
@@ -112,8 +109,7 @@ inline int64_t to_int(meow::core::param_t value) noexcept {
             char* endptr = nullptr;
             const std::string token(str.begin(), str.end());
             int64_t value = std::strtoll(token.c_str(), &endptr, base);
-            if (endptr == token.c_str())
-                return 0;
+            if (endptr == token.c_str()) return 0;
             if (errno == ERANGE) {
                 return (value > 0) ? i64_limits::max() : i64_limits::min();
             }
@@ -157,8 +153,7 @@ inline double to_float(meow::core::param_t value) noexcept {
             char* endptr = nullptr;
             double val = std::strtod(cs, &endptr);
 
-            if (cs == endptr)
-                return 0.0;
+            if (cs == endptr) return 0.0;
 
             // Checks range
             if (errno == ERANGE) {

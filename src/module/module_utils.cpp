@@ -28,22 +28,19 @@ std::filesystem::path get_executable_dir() noexcept {
 #if defined(_WIN32)
         char buf[MAX_PATH];
         DWORD len = GetModuleFileNameA(NULL, buf, MAX_PATH);
-        if (len == 0)
-            return std::filesystem::current_path();
+        if (len == 0) return std::filesystem::current_path();
         return std::filesystem::path(std::string(buf, static_cast<size_t>(len))).parent_path();
 #elif defined(__APPLE__)
         uint32_t size = 0;
         if (_NSGetExecutablePath(nullptr, &size) != 0 && size == 0)
             return std::filesystem::current_path();
         std::vector<char> buf(size ? size : 1);
-        if (_NSGetExecutablePath(buf.data(), &size) != 0)
-            return std::filesystem::current_path();
+        if (_NSGetExecutablePath(buf.data(), &size) != 0) return std::filesystem::current_path();
         return std::filesystem::absolute(std::filesystem::path(buf.data())).parent_path();
 #else
         char buf[PATH_MAX];
         ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-        if (len == -1)
-            return std::filesystem::current_path();
+        if (len == -1) return std::filesystem::current_path();
         buf[len] = '\0';
         return std::filesystem::path(std::string(buf, static_cast<size_t>(len))).parent_path();
 #endif
@@ -54,8 +51,7 @@ std::filesystem::path get_executable_dir() noexcept {
 
 std::filesystem::path normalize_path(const std::filesystem::path& p) noexcept {
     try {
-        if (p.empty())
-            return p;
+        if (p.empty()) return p;
         return std::filesystem::absolute(p).lexically_normal();
     } catch (...) {
         return p;
@@ -73,8 +69,7 @@ bool file_exists(const std::filesystem::path& p) noexcept {
 std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path) noexcept {
     try {
         std::ifstream in(path);
-        if (!in)
-            return std::string();
+        if (!in) return std::string();
         std::string line;
         while (std::getline(in, line)) {
             // trim both ends
@@ -91,8 +86,7 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path)
             };
             rtrim(line);
             ltrim(line);
-            if (!line.empty())
-                return line;
+            if (!line.empty()) return line;
         }
     } catch (...) {
     }
@@ -101,8 +95,7 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path)
 
 std::string expand_token(const std::string& raw, const std::string& token,
                          const std::filesystem::path& replacement) noexcept {
-    if (token.empty() || raw.find(token) == std::string::npos)
-        return raw;
+    if (token.empty() || raw.find(token) == std::string::npos) return raw;
     std::string out;
     out.reserve(raw.size() + replacement.string().size());
     size_t pos = 0;
@@ -153,8 +146,7 @@ std::filesystem::path detect_root_cached(
         {
             std::lock_guard<std::mutex> lk(s_cache_mutex);
             auto it = s_root_cache.find(k);
-            if (it != s_root_cache.end())
-                return it->second;
+            if (it != s_root_cache.end()) return it->second;
         }
 
         std::filesystem::path exe_dir = exe_dir_provider();
@@ -176,8 +168,7 @@ std::filesystem::path detect_root_cached(
         }
 
         std::filesystem::path fallback = exe_dir;
-        if (treat_bin_as_parent && exe_dir.filename() == "bin")
-            fallback = exe_dir.parent_path();
+        if (treat_bin_as_parent && exe_dir.filename() == "bin") fallback = exe_dir.parent_path();
         std::filesystem::path result = normalize_path(fallback);
         {
             std::lock_guard<std::mutex> lk(s_cache_mutex);
@@ -244,15 +235,13 @@ std::string resolve_library_path_generic(const std::string& module_path,
         for (const auto& root : search_roots) {
             for (const auto& t : to_try) {
                 std::filesystem::path p = root / t;
-                if (file_exists(p))
-                    return normalize_path(p).string();
+                if (file_exists(p)) return normalize_path(p).string();
             }
         }
 
         // Try direct (relative to cwd or absolute)
         for (const auto& t : to_try) {
-            if (file_exists(t))
-                return normalize_path(t).string();
+            if (file_exists(t)) return normalize_path(t).string();
         }
 
         // Try relative to importer / entry_path
@@ -265,8 +254,7 @@ std::string resolve_library_path_generic(const std::string& module_path,
 
             for (const auto& t : to_try) {
                 std::filesystem::path p = normalize_path(base_dir / t);
-                if (file_exists(p))
-                    return p.string();
+                if (file_exists(p)) return p.string();
             }
         }
 
@@ -290,15 +278,13 @@ std::string get_platform_library_extension() noexcept {
 std::string platform_last_error() noexcept {
 #if defined(_WIN32)
     DWORD err = GetLastError();
-    if (err == 0)
-        return std::string();
+    if (err == 0) return std::string();
     LPSTR buf = nullptr;
     FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, nullptr);
     std::string s = buf ? std::string(buf) : std::string();
-    if (buf)
-        LocalFree(buf);
+    if (buf) LocalFree(buf);
     while (!s.empty() &&
            (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
         s.pop_back();
@@ -324,8 +310,7 @@ void* open_native_library(const std::string& path) noexcept {
 }
 
 void* get_native_symbol(void* handle, const char* symbol_name) noexcept {
-    if (!handle || !symbol_name)
-        return nullptr;
+    if (!handle || !symbol_name) return nullptr;
 #if defined(_WIN32)
     FARPROC p = GetProcAddress(reinterpret_cast<HMODULE>(handle), symbol_name);
     return reinterpret_cast<void*>(p);
@@ -339,8 +324,7 @@ void* get_native_symbol(void* handle, const char* symbol_name) noexcept {
 }
 
 void close_native_library(void* handle) noexcept {
-    if (!handle)
-        return;
+    if (!handle) return;
 #if defined(_WIN32)
     FreeLibrary(reinterpret_cast<HMODULE>(handle));
 #else

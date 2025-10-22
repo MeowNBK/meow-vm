@@ -196,8 +196,7 @@ class FallbackVariant {
 
     // copy/move assign
     FallbackVariant& operator=(const FallbackVariant& other) {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         if (other.index_ == npos) {
             destroy_current();
             index_ = npos;
@@ -213,8 +212,7 @@ class FallbackVariant {
     }
 
     FallbackVariant& operator=(FallbackVariant&& other) noexcept {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         if (other.index_ == npos) {
             destroy_current();
             index_ = npos;
@@ -284,15 +282,13 @@ class FallbackVariant {
     template <typename T>
     T* get_if() noexcept {
         constexpr std::size_t idx = detail::type_list_index_of<T, flat_list>::value;
-        if (idx == detail::invalid_index || index_ != static_cast<index_t>(idx))
-            return nullptr;
+        if (idx == detail::invalid_index || index_ != static_cast<index_t>(idx)) return nullptr;
         return reinterpret_cast<T*>(storage_ptr());
     }
     template <typename T>
     const T* get_if() const noexcept {
         constexpr std::size_t idx = detail::type_list_index_of<T, flat_list>::value;
-        if (idx == detail::invalid_index || index_ != static_cast<index_t>(idx))
-            return nullptr;
+        if (idx == detail::invalid_index || index_ != static_cast<index_t>(idx)) return nullptr;
         return reinterpret_cast<const T*>(storage_ptr());
     }
 
@@ -308,14 +304,12 @@ class FallbackVariant {
     // safe get (throws if holds different type)
     template <typename T>
     const T& safe_get() const {
-        if (!holds<T>())
-            throw std::bad_variant_access();
+        if (!holds<T>()) throw std::bad_variant_access();
         return get<T>();
     }
     template <typename T>
     T& safe_get() {
-        if (!holds<T>())
-            throw std::bad_variant_access();
+        if (!holds<T>()) throw std::bad_variant_access();
         return get<T>();
     }
 
@@ -333,8 +327,7 @@ class FallbackVariant {
             return holds_any_of<typename U::inner_types>();
         } else {
             constexpr std::size_t idx = detail::type_list_index_of<U, flat_list>::value;
-            if (idx == detail::invalid_index)
-                return false;
+            if (idx == detail::invalid_index) return false;
             return index_ == static_cast<index_t>(idx);
         }
     }
@@ -342,8 +335,7 @@ class FallbackVariant {
     // visit (lvalue & const-lvalue)
     template <typename Visitor>
     decltype(auto) visit(Visitor&& vis) {
-        if (index_ == npos)
-            throw std::bad_variant_access();
+        if (index_ == npos) throw std::bad_variant_access();
         static_assert(visitor_returns<Visitor, flat_list, 0>::value,
                       "FallbackVariant::visit: visitor must return same type for "
                       "all alternatives (or use void)");
@@ -353,8 +345,7 @@ class FallbackVariant {
 
     template <typename Visitor>
     decltype(auto) visit(Visitor&& vis) const {
-        if (index_ == npos)
-            throw std::bad_variant_access();
+        if (index_ == npos) throw std::bad_variant_access();
         static_assert(visitor_returns<Visitor, flat_list, 1>::value,
                       "FallbackVariant::visit(const): visitor must return same "
                       "type for all alternatives (or use void)");
@@ -376,11 +367,9 @@ class FallbackVariant {
 
     // optimized swap
     void swap(FallbackVariant& other) noexcept {
-        if (this == &other)
-            return;
+        if (this == &other) return;
         if (index_ == other.index_) {
-            if (index_ == npos)
-                return;
+            if (index_ == npos) return;
             swap_same_index(index_, other);
             return;
         }
@@ -432,23 +421,19 @@ class FallbackVariant {
     }
 
     const void* get_by_index(std::size_t idx) const noexcept {
-        if (idx == static_cast<std::size_t>(index_) && index_ != npos)
-            return storage_ptr();
+        if (idx == static_cast<std::size_t>(index_) && index_ != npos) return storage_ptr();
         return nullptr;
     }
     void* get_by_index(std::size_t idx) noexcept {
-        if (idx == static_cast<std::size_t>(index_) && index_ != npos)
-            return storage_ptr();
+        if (idx == static_cast<std::size_t>(index_) && index_ != npos) return storage_ptr();
         return nullptr;
     }
 
     static constexpr std::size_t alternatives() noexcept { return alternatives_count; }
 
     bool operator==(const FallbackVariant& other) const noexcept {
-        if (index_ != other.index_)
-            return false;
-        if (index_ == npos)
-            return true;
+        if (index_ != other.index_) return false;
+        if (index_ == npos) return true;
         return equal_same_index(static_cast<std::size_t>(index_), other);
     }
     bool operator!=(const FallbackVariant& other) const noexcept { return !(*this == other); }
@@ -521,8 +506,7 @@ class FallbackVariant {
     const void* storage_ptr() const noexcept { return static_cast<const void*>(storage_); }
 
     void destroy_current() noexcept {
-        if (index_ == npos)
-            return;
+        if (index_ == npos) return;
         full_ops::destroy_table[index_](storage_ptr());
         index_ = npos;
     }
@@ -595,8 +579,7 @@ class FallbackVariant {
         else {
             using InnerT = typename detail::nth_type<I, InnerList>::type;
             constexpr std::size_t idx = detail::type_list_index_of<InnerT, flat_list>::value;
-            if (idx != detail::invalid_index && index_ == static_cast<index_t>(idx))
-                return true;
+            if (idx != detail::invalid_index && index_ == static_cast<index_t>(idx)) return true;
             return holds_any_of_impl<InnerList, I + 1>();
         }
     }

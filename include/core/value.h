@@ -40,14 +40,12 @@ class Value {
     Value(const Value& other) : data_(other.data_) {}
     Value(Value&& other) : data_(std::move(other.data_)) {}
     inline Value& operator=(const Value& other) noexcept {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         data_ = other.data_;
         return *this;
     }
     inline Value& operator=(Value&& other) noexcept {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         data_ = std::move(other.data_);
         return *this;
     }

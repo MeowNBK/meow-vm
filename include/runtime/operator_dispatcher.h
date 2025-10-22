@@ -14,14 +14,10 @@ constexpr size_t NUM_VALUE_TYPES = static_cast<size_t>(core::ValueType::TotalVal
 constexpr size_t NUM_OPCODES = static_cast<size_t>(core::OpCode::TOTAL_OPCODES);
 
 inline core::ValueType get_value_type(meow::core::param_t value) noexcept {
-    if (value.is_null())
-        return core::ValueType::Null;
-    if (value.is_int())
-        return core::ValueType::Int;
-    if (value.is_float())
-        return core::ValueType::Float;
-    if (value.is_object())
-        return core::ValueType::Bool;
+    if (value.is_null()) return core::ValueType::Null;
+    if (value.is_int()) return core::ValueType::Int;
+    if (value.is_float()) return core::ValueType::Float;
+    if (value.is_object()) return core::ValueType::Bool;
     return core::ValueType::Null;
 }
 

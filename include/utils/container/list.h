@@ -51,8 +51,7 @@ class List {
     explicit List(const List& other) noexcept { copy_from(other); }
     explicit List(List&& other) noexcept { move_from(std::move(other)); }
     inline List& operator=(const List& other) {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
         copy_from(other);
         return *this;
     }
@@ -98,8 +97,7 @@ class List {
     [[nodiscard]] inline const_node_pointer_t find(const_reference_t value) const noexcept {
         const_node_pointer_t current = head_;
         while (current) {
-            if (current->data_ == value)
-                return current;
+            if (current->data_ == value) return current;
             current = current->next_;
         }
         return nullptr;
@@ -108,8 +106,7 @@ class List {
         size_t counter = 0;
         const_node_pointer_t current = head_;
         while (current) {
-            if (current->data_ == value)
-                ++counter;
+            if (current->data_ == value) ++counter;
             current = current->next_;
         }
         return counter;
@@ -139,8 +136,7 @@ class List {
     // --- Utilities ---
     [[nodiscard]] inline std::string str() const noexcept {
         std::ostringstream os;
-        if (!head_)
-            return "";
+        if (!head_) return "";
         node_pointer_t current = head_;
 
         while (current) {
@@ -149,8 +145,7 @@ class List {
         }
 
         std::string output = os.str();
-        if (output.back() == ' ')
-            output.pop_back();
+        if (output.back() == ' ') output.pop_back();
 
         return output;
     }

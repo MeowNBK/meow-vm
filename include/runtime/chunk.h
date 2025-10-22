@@ -112,8 +112,7 @@ class Chunk {
     }
 
     inline bool patch_u16(size_t offset, uint16_t value) noexcept {
-        if (offset + 1 >= code_.size())
-            return false;
+        if (offset + 1 >= code_.size()) return false;
 
         code_[offset] = static_cast<uint8_t>(value & 0xFF);
         code_[offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);

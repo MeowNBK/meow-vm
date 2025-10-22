@@ -44,8 +44,8 @@ IncludeCategories:
 AllowShortFunctionsOnASingleLine: All
 AllowShortLambdasOnASingleLine: All
 AllowShortEnumsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortLoopsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
 
 # --- Các tùy chọn về khoảng trắng (Spaces) ---
 
