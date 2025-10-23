@@ -16,7 +16,7 @@ using namespace meow::memory;
 using namespace meow::core::objects;
 static const std::unordered_map<std::string_view, OpCode> OPCODE_PARSE_MAP = [] {
     std::unordered_map<std::string_view, OpCode> map;
-    map.reserve(static_cast<size_t>(Opcode::TOTAL_OPCODES));
+    map.reserve(static_cast<size_t>(OpCode::TOTAL_OPCODES));
     map["LOAD_CONST"] = OpCode::LOAD_CONST;
     map["LOAD_NULL"] = OpCode::LOAD_NULL;
     map["LOAD_TRUE"] = OpCode::LOAD_TRUE;
@@ -80,7 +80,7 @@ static const std::unordered_map<std::string_view, OpCode> OPCODE_PARSE_MAP = [] 
     return map;
 }();
 TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
-[[noreturn]] void TextParser::throw_parse_error(string_view message) {
+[[noreturn]] void TextParser::throw_parse_error(std::string_view message) {
     if (current_token_index_ < tokens_.size()) {
         throw_parse_error(message, current_token());
     } else {
@@ -93,7 +93,7 @@ TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
         throw std::runtime_error(error_message);
     }
 }
-[[noreturn]] void TextParser::throw_parse_error(string_view message, const Token& token) {
+[[noreturn]] void TextParser::throw_parse_error(std::string_view message, const Token& token) {
     std::string error_message = std::format("Lỗi phân tích cú pháp [{}:{}:{}]: {}",
                                             current_source_name_, token.line, token.col,
                                             message);
@@ -121,7 +121,7 @@ void TextParser::advance() {
         current_token_index_++;
     }
 }
-const Token& TextParser::consume_token(TokenType expected, string_view error_message) {
+const Token& TextParser::consume_token(TokenType expected, std::string_view error_message) {
     const Token& token = current_token();
     if (token.type != expected) {
         throw_parse_error(error_message, token);
@@ -136,7 +136,7 @@ bool TextParser::match_token(TokenType type) {
     }
     return false;
 }
-std::string TextParser::unescape_string(string_view escaped) {
+std::string TextParser::unescape_string(std::string_view escaped) {
     std::stringstream ss;
     bool is_escaping = false;
     for (char c : escaped) {
@@ -171,7 +171,7 @@ std::string TextParser::unescape_string(string_view escaped) {
     return ss.str();
 }
 
-proto_t TextParser::parse_file(string_view filepath) {
+proto_t TextParser::parse_file(std::string_view filepath) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
         throw std::runtime_error("Không thể mở tệp: " + filepath);
@@ -181,8 +181,8 @@ proto_t TextParser::parse_file(string_view filepath) {
     file.close();
     return parse_source(buffer.str(), filepath);
 }
-proto_t TextParser::parse_source(string_view source,
-                                 string_view source_name) {
+proto_t TextParser::parse_source(std::string_view source,
+                                 std::string_view source_name) {
     current_source_name_ = source_name;
     current_token_index_ = 0;
     current_proto_data_ = nullptr;

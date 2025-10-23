@@ -25,9 +25,9 @@ class TextParser {
     TextParser& operator=(const TextParser&) = delete;
     TextParser& operator=(TextParser&&) = delete;
     ~TextParser() noexcept = default;
-    meow::core::proto_t parse_file(const std::string& filepath, meow::memory::MemoryManager& mm);
-    meow::core::proto_t parse_source(const std::string& source, meow::memory::MemoryManager& mm,
-                                     const std::string& source_name = "<string>");
+    meow::core::proto_t parse_file(std::string_view filepath);
+    meow::core::proto_t parse_source(std::string_view source,
+                                     std::string_view source_name = "<string>");
     [[nodiscard]] const std::unordered_map<std::string, meow::core::proto_t>& get_finalized_protos()
         const;
 
@@ -94,14 +94,14 @@ class TextParser {
     [[nodiscard]] const Token& peek_token(size_t offset = 1) const;
     [[nodiscard]] bool is_at_end() const;
     void advance();
-    const Token& consume_token(TokenType expected, const std::string& error_message);
+    const Token& consume_token(TokenType expected, std::string_view error_message);
     bool match_token(TokenType type);
     meow::core::Value parse_const_value_from_tokens();
-    [[nodiscard]] static std::string unescape_string(const std::string& escaped);
+    [[nodiscard]] static std::string unescape_string(std::string_view escaped);
     void resolve_labels_for_build_data(ProtoBuildData& data);
     std::vector<meow::core::Value> build_final_constant_pool(ProtoBuildData& data);
     void link_final_constant_pool(meow::core::Value& constant);
-    [[noreturn]] void throw_parse_error(const std::string& message);
-    [[noreturn]] void throw_parse_error(const std::string& message, const Token& token);
+    [[noreturn]] void throw_parse_error(std::string_view message);
+    [[noreturn]] void throw_parse_error(std::string_view message, const Token& token);
 };
 }  // namespace meow::loader
