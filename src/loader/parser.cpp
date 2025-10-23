@@ -8,6 +8,8 @@
 #include "core/objects/string.h"
 #include "memory/memory_manager.h"
 #include "runtime/chunk.h"
+#include "loader/lexer.h"
+
 
 namespace meow::loader {
 using namespace meow::core;
@@ -172,9 +174,9 @@ std::string TextParser::unescape_string(std::string_view escaped) {
 }
 
 proto_t TextParser::parse_file(std::string_view filepath) {
-    std::ifstream file(filepath);
+    std::ifstream file{std::string(filepath)};
     if (!file.is_open()) {
-        throw std::runtime_error("Không thể mở tệp: " + filepath);
+        throw std::runtime_error(std::string("Không thể mở tệp: ") + std::string(filepath));
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -218,8 +220,7 @@ proto_t TextParser::parse_source(std::string_view source,
                 name);
         }
         proto_t new_proto = heap_->new_proto(data.num_registers, data.num_upvalues,
-        func_name_obj,
-                                             std::move(final_chunk), std::move(final_descs));
+        func_name_obj, std::move(final_chunk), std::move(final_descs));
         if (!new_proto) {
             throw std::runtime_error("Lỗi cấp phát bộ nhớ khi tạo proto cho hàm " + name);
         }
@@ -418,8 +419,7 @@ void TextParser::parse_upvalues_directive() {
     if (current_proto_data_->upvalues_defined)
         throw_parse_error("Chỉ thị '.upvalues' đã được định nghĩa cho hàm này.");
     const Token& num_token = consume_token(
-        TokenType::NUMBER_INT, "Mong đợi số lượng upvalue (số nguyên không âm) sau
-        '.upvalues'.");
+        TokenType::NUMBER_INT, "Mong đợi số lượng upvalue (số nguyên không âm) sau '.upvalues'.");
     try {
         uint64_t num_up;
         auto result = std::from_chars(num_token.lexeme.data(),
@@ -452,8 +452,7 @@ void TextParser::parse_upvalue_directive() {
                           tokens_[current_token_index_ - 1]);
     }
     const Token& index_token =
-        consume_token(TokenType::NUMBER_INT, "Mong đợi chỉ số upvalue (0-based) sau
-        '.upvalue'.");
+        consume_token(TokenType::NUMBER_INT, "Mong đợi chỉ số upvalue (0-based) sau '.upvalue'.");
     size_t uv_index;
     try {
         uint64_t temp_idx;
@@ -532,8 +531,7 @@ void TextParser::parse_instruction() {
     data_ref.write_byte(static_cast<uint8_t>(opcode));
     auto parse_u16_arg = [&]() -> uint16_t {
         const Token& token =
-            consume_token(TokenType::NUMBER_INT, "Mong đợi đối số là số nguyên 16-bit không
-            dấu.");
+            consume_token(TokenType::NUMBER_INT, "Mong đợi đối số là số nguyên 16-bit không dấu.");
         uint64_t value_u64;
         auto result = std::from_chars(token.lexeme.data(),
                                       token.lexeme.data() + token.lexeme.size(), value_u64);

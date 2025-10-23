@@ -65,7 +65,14 @@ class ObjFunctionProto : public meow::core::MeowObject {
         : num_registers_(registers),
           num_upvalues_(upvalues),
           name_(name),
-          chunk_(std::move(chunk)) {}
+          chunk_(std::move(chunk)){}
+    explicit ObjFunctionProto(size_t registers, size_t upvalues, string_t name,
+                              chunk_t&& chunk, std::vector<UpvalueDesc>&& descs) noexcept
+        : num_registers_(registers),
+          num_upvalues_(upvalues),
+          name_(name),
+          chunk_(std::move(chunk)),
+          upvalue_descs_(std::move(descs)) {}
 
     /// @brief Unchecked upvalue desc access. For performance-critical code
     [[nodiscard]] inline const UpvalueDesc& get_desc(size_t index) const noexcept {

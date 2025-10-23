@@ -1,18 +1,13 @@
-// include/loader/parser.h (Minified)
 #pragma once
-#include <map>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
+
 #include "common/pch.h"
 #include "core/objects/function.h"
+#include "core/definitions.h"
 #include "core/op_codes.h"
 #include "core/type.h"
 #include "core/value.h"
-#include "loader/lexer.h"
 #include "runtime/chunk.h"
+
 namespace meow::memory {
 class MemoryManager;
 }
@@ -42,22 +37,16 @@ class TextParser {
         size_t num_upvalues = 0;
         std::vector<uint8_t> temp_code;
         std::vector<meow::core::Value> temp_constants;
-        std::map<meow::core::Value, size_t> constant_map;
         std::vector<meow::core::objects::UpvalueDesc> upvalue_descs;
-        std::map<std::string_view, size_t> labels;
+        std::unordered_map<std::string_view, size_t> labels;
         std::vector<std::tuple<size_t, size_t, std::string_view>> pending_jumps;
         bool registers_defined = false;
         bool upvalues_defined = false;
         size_t func_directive_line = 0;
         size_t func_directive_col = 0;
         size_t add_temp_constant(const meow::core::Value& value) {
-            auto it = constant_map.find(value);
-            if (it != constant_map.end()) {
-                return it->second;
-            }
             size_t new_index = temp_constants.size();
             temp_constants.push_back(value);
-            constant_map[value] = new_index;
             return new_index;
         }
         void write_byte(uint8_t byte) { temp_code.push_back(byte); }
@@ -79,7 +68,7 @@ class TextParser {
         }
     };
     ProtoBuildData* current_proto_data_ = nullptr;
-    std::map<std::string, ProtoBuildData> build_data_map_;
+    std::unordered_map<std::string, ProtoBuildData> build_data_map_;
     std::unordered_map<std::string, meow::core::proto_t> finalized_protos_;
     void parse();
     void parse_statement();

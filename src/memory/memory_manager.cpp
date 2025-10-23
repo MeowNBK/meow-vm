@@ -1,7 +1,7 @@
 #include "memory/memory_manager.h"
 #include "core/objects.h"
 
-using namespace meow::memory;
+namespace meow::memory {
 
 MemoryManager::MemoryManager(std::unique_ptr<GarbageCollector> gc)
     : gc_(std::move(gc)), gc_threshold_(1024), object_allocated_(0) {}
@@ -43,6 +43,14 @@ meow::core::proto_t MemoryManager::new_proto(size_t registers, size_t upvalues,
                                                              std::move(chunk));
 }
 
+meow::core::proto_t MemoryManager::new_proto(size_t registers, size_t upvalues,
+                                             meow::core::string_t name,
+                                             meow::runtime::Chunk&& chunk,
+                                             std::vector<meow::core::objects::UpvalueDesc>&& descs) {
+    return new_object<meow::core::objects::ObjFunctionProto>(registers, upvalues, name,
+                                                             std::move(chunk), std::move(descs));
+}
+
 meow::core::function_t MemoryManager::new_function(meow::core::proto_t proto) {
     return new_object<meow::core::objects::ObjClosure>(proto);
 }
@@ -75,3 +83,5 @@ meow::core::bound_method_t MemoryManager::new_bound_method(meow::core::instance_
                                                            meow::core::function_t function) {
     return new_object<meow::core::objects::ObjBoundMethod>(instance, function);
 }
+
+};

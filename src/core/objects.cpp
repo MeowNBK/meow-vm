@@ -1,7 +1,7 @@
 #include "core/objects.h"
 #include "memory/gc_visitor.h"
 
-using namespace meow::core::objects;
+namespace meow::core::objects {
 
 void ObjArray::trace(meow::memory::GCVisitor& visitor) const noexcept {
     for (const auto& element : elements_) {
@@ -68,4 +68,6 @@ void ObjModule::trace(meow::memory::GCVisitor& visitor) const noexcept {
         visitor.visit_value(value);
     }
     visitor.visit_object(main_proto_);
+}
+
 }

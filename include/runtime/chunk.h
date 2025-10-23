@@ -12,6 +12,8 @@ namespace meow::runtime {
 class Chunk {
    public:
     Chunk() = default;
+    Chunk(std::vector<uint8_t>&& code, std::vector<meow::core::Value>&& constants) noexcept
+        : code_(std::move(code)), constant_pool_(std::move(constants)) {}
 
     // inline void write_byte(uint8_t byte) {
     //     code_.push_back(byte);
