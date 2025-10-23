@@ -39,7 +39,8 @@ class MemoryManager {
     meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name,
                                   meow::runtime::Chunk&& chunk);
     meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name,
-                                  meow::runtime::Chunk&& chunk, std::vector<meow::core::objects::UpvalueDesc>&& descs);
+                                  meow::runtime::Chunk&& chunk,
+                                  std::vector<meow::core::objects::UpvalueDesc>&& descs);
     meow::core::function_t new_function(meow::core::proto_t proto);
     meow::core::module_t new_module(meow::core::string_t file_name, meow::core::string_t file_path,
                                     meow::core::proto_t main_proto = nullptr);

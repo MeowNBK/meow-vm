@@ -1,8 +1,8 @@
 #pragma once
 
 #include "common/pch.h"
-#include "core/objects/function.h"
 #include "core/definitions.h"
+#include "core/objects/function.h"
 #include "core/op_codes.h"
 #include "core/type.h"
 #include "core/value.h"

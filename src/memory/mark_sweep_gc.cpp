@@ -53,4 +53,4 @@ void MarkSweepGC::mark(const meow::core::MeowObject* object) {
     object->trace(*this);
 }
 
-}
+}  // namespace meow::memory

@@ -43,10 +43,9 @@ meow::core::proto_t MemoryManager::new_proto(size_t registers, size_t upvalues,
                                                              std::move(chunk));
 }
 
-meow::core::proto_t MemoryManager::new_proto(size_t registers, size_t upvalues,
-                                             meow::core::string_t name,
-                                             meow::runtime::Chunk&& chunk,
-                                             std::vector<meow::core::objects::UpvalueDesc>&& descs) {
+meow::core::proto_t MemoryManager::new_proto(
+    size_t registers, size_t upvalues, meow::core::string_t name, meow::runtime::Chunk&& chunk,
+    std::vector<meow::core::objects::UpvalueDesc>&& descs) {
     return new_object<meow::core::objects::ObjFunctionProto>(registers, upvalues, name,
                                                              std::move(chunk), std::move(descs));
 }
@@ -84,4 +83,4 @@ meow::core::bound_method_t MemoryManager::new_bound_method(meow::core::instance_
     return new_object<meow::core::objects::ObjBoundMethod>(instance, function);
 }
 
-};
+};  // namespace meow::memory

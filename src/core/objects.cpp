@@ -70,4 +70,4 @@ void ObjModule::trace(meow::memory::GCVisitor& visitor) const noexcept {
     visitor.visit_object(main_proto_);
 }
 
-}
+}  // namespace meow::core::objects

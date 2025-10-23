@@ -6,10 +6,9 @@
 #include <stdexcept>
 #include "core/objects/function.h"
 #include "core/objects/string.h"
+#include "loader/lexer.h"
 #include "memory/memory_manager.h"
 #include "runtime/chunk.h"
-#include "loader/lexer.h"
-
 
 namespace meow::loader {
 using namespace meow::core;
@@ -87,18 +86,15 @@ TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
         throw_parse_error(message, current_token());
     } else {
         size_t last_line = tokens_.empty() ? 1 : tokens_.back().line;
-        size_t last_col = tokens_.empty() ? 1 : tokens_.back().col +
-        tokens_.back().lexeme.length(); 
+        size_t last_col = tokens_.empty() ? 1 : tokens_.back().col + tokens_.back().lexeme.length();
         std::string error_message = std::format("Lỗi phân tích cú pháp [{}:{}:{}]: {}",
-                                                current_source_name_, last_line, last_col,
-                                                message);
+                                                current_source_name_, last_line, last_col, message);
         throw std::runtime_error(error_message);
     }
 }
 [[noreturn]] void TextParser::throw_parse_error(std::string_view message, const Token& token) {
     std::string error_message = std::format("Lỗi phân tích cú pháp [{}:{}:{}]: {}",
-                                            current_source_name_, token.line, token.col,
-                                            message);
+                                            current_source_name_, token.line, token.col, message);
     if (!token.lexeme.empty() && token.type != TokenType::END_OF_FILE) {
         error_message += std::format(" (gần '{}')", std::string(token.lexeme));
     }
@@ -183,8 +179,7 @@ proto_t TextParser::parse_file(std::string_view filepath) {
     file.close();
     return parse_source(buffer.str(), filepath);
 }
-proto_t TextParser::parse_source(std::string_view source,
-                                 std::string_view source_name) {
+proto_t TextParser::parse_source(std::string_view source, std::string_view source_name) {
     current_source_name_ = source_name;
     current_token_index_ = 0;
     current_proto_data_ = nullptr;
@@ -198,9 +193,8 @@ proto_t TextParser::parse_source(std::string_view source,
     }
     if (tokens_.empty() || tokens_.back().type != TokenType::END_OF_FILE) {
         size_t last_line = tokens_.empty() ? 1 : tokens_.back().line;
-        size_t last_col = tokens_.empty() ? 1 : tokens_.back().col +
-        tokens_.back().lexeme.length(); tokens_.push_back({"", TokenType::END_OF_FILE, last_line,
-        last_col});
+        size_t last_col = tokens_.empty() ? 1 : tokens_.back().col + tokens_.back().lexeme.length();
+        tokens_.push_back({"", TokenType::END_OF_FILE, last_line, last_col});
     }
     parse();
     for (auto& [name, data] : build_data_map_) {
@@ -219,8 +213,8 @@ proto_t TextParser::parse_source(std::string_view source,
                 "hàm " +
                 name);
         }
-        proto_t new_proto = heap_->new_proto(data.num_registers, data.num_upvalues,
-        func_name_obj, std::move(final_chunk), std::move(final_descs));
+        proto_t new_proto = heap_->new_proto(data.num_registers, data.num_upvalues, func_name_obj,
+                                             std::move(final_chunk), std::move(final_descs));
         if (!new_proto) {
             throw std::runtime_error("Lỗi cấp phát bộ nhớ khi tạo proto cho hàm " + name);
         }
@@ -245,8 +239,7 @@ proto_t TextParser::parse_source(std::string_view source,
     }
     auto main_it = finalized_protos_.find("main");
     if (main_it == finalized_protos_.end()) {
-        throw std::runtime_error("Không tìm thấy hàm chính '@main' trong " +
-        current_source_name_);
+        throw std::runtime_error("Không tìm thấy hàm chính '@main' trong " + current_source_name_);
     }
     heap_ = nullptr;
     tokens_.clear();
@@ -315,8 +308,7 @@ void TextParser::parse_statement() {
         case TokenType::LABEL_DEF:
             if (!current_proto_data_)
                 throw_parse_error("Nhãn phải nằm trong định nghĩa hàm (.func).", token);
-            if (!current_proto_data_->registers_defined ||
-            !current_proto_data_->upvalues_defined) {
+            if (!current_proto_data_->registers_defined || !current_proto_data_->upvalues_defined) {
                 throw_parse_error(
                     "Chỉ thị '.registers' và '.upvalues' phải được định "
                     "nghĩa trước nhãn.",
@@ -342,8 +334,8 @@ void TextParser::parse_statement() {
             parse_instruction();
             break;
         case TokenType::IDENTIFIER:
-            throw_parse_error("Token không mong đợi. Có thể thiếu directive hoặc opcode?",
-            token); break;
+            throw_parse_error("Token không mong đợi. Có thể thiếu directive hoặc opcode?", token);
+            break;
         case TokenType::NUMBER_INT:
         case TokenType::NUMBER_FLOAT:
         case TokenType::STRING:
@@ -361,8 +353,9 @@ void TextParser::parse_statement() {
 }
 void TextParser::parse_func_directive() {
     const Token& func_token = consume_token(TokenType::DIR_FUNC, "Mong đợi '.func'.");
-    const Token& name_token = consume_token(TokenType::IDENTIFIER, 
-        "Mong đợi tên hàm sau '.func'."); std::string func_name(name_token.lexeme); if (func_name.empty() ||
+    const Token& name_token = consume_token(TokenType::IDENTIFIER, "Mong đợi tên hàm sau '.func'.");
+    std::string func_name(name_token.lexeme);
+    if (func_name.empty() ||
         (func_name[0] != '@' && !std::isalpha(func_name[0]) && func_name[0] != '_')) {
         throw_parse_error("Tên hàm không hợp lệ.", name_token);
     }
@@ -399,8 +392,7 @@ void TextParser::parse_registers_directive() {
     try {
         uint64_t num_reg;
         auto result = std::from_chars(num_token.lexeme.data(),
-                                      num_token.lexeme.data() + num_token.lexeme.size(),
-                                      num_reg);
+                                      num_token.lexeme.data() + num_token.lexeme.size(), num_reg);
         if (result.ec != std::errc() ||
             result.ptr != num_token.lexeme.data() + num_token.lexeme.size() ||
             num_reg > std::numeric_limits<size_t>::max()) {
@@ -478,8 +470,7 @@ void TextParser::parse_upvalue_directive() {
     } else if (type_token.lexeme == "parent") {
         is_local = false;
     } else {
-        throw_parse_error("Loại upvalue không hợp lệ. Phải là 'local' hoặc 'parent'.",
-        type_token);
+        throw_parse_error("Loại upvalue không hợp lệ. Phải là 'local' hoặc 'parent'.", type_token);
     }
     const Token& slot_token = consume_token(TokenType::NUMBER_INT,
                                             "Mong đợi chỉ số slot (thanh ghi nếu 'local', "
@@ -535,8 +526,7 @@ void TextParser::parse_instruction() {
         uint64_t value_u64;
         auto result = std::from_chars(token.lexeme.data(),
                                       token.lexeme.data() + token.lexeme.size(), value_u64);
-        if (result.ec != std::errc() || result.ptr != token.lexeme.data() + token.lexeme.size()
-        ||
+        if (result.ec != std::errc() || result.ptr != token.lexeme.data() + token.lexeme.size() ||
             value_u64 > UINT16_MAX) {
             throw_parse_error("Đối số phải là số nguyên 16-bit không dấu hợp lệ (0-" +
                                   std::to_string(UINT16_MAX) + ").",
@@ -548,10 +538,8 @@ void TextParser::parse_instruction() {
         const Token& token = current_token();
         int64_t value;
         auto result =
-            std::from_chars(token.lexeme.data(), token.lexeme.data() + token.lexeme.size(),
-            value);
-        if (result.ec == std::errc() && result.ptr == token.lexeme.data() + token.lexeme.size())
-        {
+            std::from_chars(token.lexeme.data(), token.lexeme.data() + token.lexeme.size(), value);
+        if (result.ec == std::errc() && result.ptr == token.lexeme.data() + token.lexeme.size()) {
             advance();
             return value;
         } else if (token.type == TokenType::NUMBER_FLOAT && opcode == OpCode::LOAD_INT) {
@@ -860,17 +848,13 @@ Value TextParser::parse_const_value_from_tokens() {
         }
         case TokenType::IDENTIFIER: {
             advance();
-            if (token.lexeme == "true")
-                return Value(true);
-            if (token.lexeme == "false")
-                return Value(false);
-            if (token.lexeme == "null")
-                return Value(null_t{});
+            if (token.lexeme == "true") return Value(true);
+            if (token.lexeme == "false") return Value(false);
+            if (token.lexeme == "null") return Value(null_t{});
             if (!token.lexeme.empty() && token.lexeme.front() == '@') {
                 std::string_view proto_name_view = token.lexeme.substr(1);
                 if (proto_name_view.empty()) {
-                    throw_parse_error("Tên proto tham chiếu không được rỗng (chỉ có '@').",
-                    token);
+                    throw_parse_error("Tên proto tham chiếu không được rỗng (chỉ có '@').", token);
                 }
                 std::string ref_string = "::proto_ref::" + std::string(proto_name_view);
                 return Value(heap_->new_string(ref_string));
@@ -889,13 +873,11 @@ void TextParser::resolve_labels_for_build_data(ProtoBuildData& data) {
         auto label_it = data.labels.find(label_name);
         if (label_it == data.labels.end()) {
             throw std::runtime_error("Lỗi liên kết trong hàm '" + data.name +
-                                     "': Không tìm thấy nhãn '" + std::string(label_name) +
-                                     "'.");
+                                     "': Không tìm thấy nhãn '" + std::string(label_name) + "'.");
         }
         size_t target_address = label_it->second;
         if (target_address > UINT16_MAX) {
-            throw std::runtime_error("Lỗi liên kết trong hàm '" + data.name + "': Địa chỉ nhãn '"
-            +
+            throw std::runtime_error("Lỗi liên kết trong hàm '" + data.name + "': Địa chỉ nhãn '" +
                                      std::string(label_name) + "' (" +
                                      std::to_string(target_address) +
                                      ") vượt quá giới hạn 16-bit.");
