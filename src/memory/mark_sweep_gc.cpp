@@ -3,7 +3,7 @@
 #include "runtime/builtin_registry.h"
 #include "runtime/execution_context.h"
 
-namespace memory {
+namespace meow::memory {
 
 MarkSweepGC::~MarkSweepGC() {
     std::cout << "[destroy] Đang xử lí các object khi hủy GC" << std::endl;
