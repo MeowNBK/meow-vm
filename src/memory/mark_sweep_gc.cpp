@@ -3,7 +3,7 @@
 #include "runtime/builtin_registry.h"
 #include "runtime/execution_context.h"
 
-using namespace meow::memory;
+namespace memory {
 
 MarkSweepGC::~MarkSweepGC() {
     std::cout << "[destroy] Đang xử lí các object khi hủy GC" << std::endl;
@@ -51,4 +51,6 @@ void MarkSweepGC::mark(const meow::core::MeowObject* object) {
     if (it == metadata_.end() || it->second.is_marked_) return;
     it->second.is_marked_ = true;
     object->trace(*this);
+}
+
 }

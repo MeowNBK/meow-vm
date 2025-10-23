@@ -86,8 +86,8 @@ TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
     } else {
         size_t last_line = tokens_.empty() ? 1 : tokens_.back().line;
         size_t last_col = tokens_.empty() ? 1 : tokens_.back().col +
-        tokens_.back().lexeme.length(); std::string error_message = std::format("Lỗi phân tích cú
-        pháp [{}:{}:{}]: {}",
+        tokens_.back().lexeme.length(); 
+        std::string error_message = std::format("Lỗi phân tích cú pháp [{}:{}:{}]: {}",
                                                 current_source_name_, last_line, last_col,
                                                 message);
         throw std::runtime_error(error_message);
@@ -360,8 +360,8 @@ void TextParser::parse_statement() {
 }
 void TextParser::parse_func_directive() {
     const Token& func_token = consume_token(TokenType::DIR_FUNC, "Mong đợi '.func'.");
-    const Token& name_token = consume_token(TokenType::IDENTIFIER, "Mong đợi tên hàm sau
-    '.func'."); std::string func_name(name_token.lexeme); if (func_name.empty() ||
+    const Token& name_token = consume_token(TokenType::IDENTIFIER, 
+        "Mong đợi tên hàm sau '.func'."); std::string func_name(name_token.lexeme); if (func_name.empty() ||
         (func_name[0] != '@' && !std::isalpha(func_name[0]) && func_name[0] != '_')) {
         throw_parse_error("Tên hàm không hợp lệ.", name_token);
     }
