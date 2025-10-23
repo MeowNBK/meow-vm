@@ -196,7 +196,7 @@ Lexer::Lexer(std::string_view source)
       curr_(src_.empty() ? '\0' : src_[0]),
       line_starts_({0}) {}
 
-unsigned char Lexer::peek(size_t range) const noexcept {
+unsigned char Lexer::peek_char(size_t range) const noexcept {
     size_t dest_pos = pos_ + range;
     return dest_pos < src_.size() ? src_[dest_pos] : '\0';
 }
@@ -212,7 +212,7 @@ void Lexer::advance() noexcept {
     curr_ = pos_ < src_.size() ? src_[pos_] : '\0';
 }
 
-void Lexer::sync() noexcept {
+void Lexer::synchronize() noexcept {
     curr_ = pos_ < src_.size() ? src_[pos_] : '\0';
 
     auto it = std::upper_bound(line_starts_.begin(), line_starts_.end(), pos_);
@@ -234,7 +234,7 @@ void Lexer::retreat(size_t range) noexcept {
         pos_ -= range;
     }
 
-    sync();
+    synchronize();
 }
 
 bool Lexer::is_at_end() const noexcept { return pos_ >= src_.size(); }
@@ -251,7 +251,7 @@ Token Lexer::make_token(TokenType type, size_t length) const {
 }
 
 void Lexer::skip_whitespace() noexcept {
-    while (is_space(curr_)) advance();
+    while (is_space(curr_) || curr_ == ',') advance();
 }
 
 void Lexer::skip_comments() noexcept {
@@ -265,7 +265,7 @@ Token Lexer::scan_identifier() {
         advance();
         if (!(is_alpha(curr_) || curr_ == '_' || curr_ == '@')) {
             pos_ = token_start_pos_ + 1;
-            sync();
+            synchronize();
             return make_token(TokenType::UNKNOWN);
         }
     }
@@ -297,13 +297,13 @@ Token Lexer::scan_number() {
         advance();
         if (!is_digit(curr_)) {
             pos_ = start_pos;
-            sync();
+            synchronize();
             return make_token(TokenType::UNKNOWN);
         }
     }
 
     if (curr_ == '0' && !is_at_end(pos_ + 1)) {
-        unsigned char n = next();
+        unsigned char n = next_char();
         unsigned char nl = static_cast<unsigned char>(n | 0x20);
         if (nl == 'x' || nl == 'b' || nl == 'o') {
             advance();
@@ -316,7 +316,7 @@ Token Lexer::scan_number() {
                 }
                 if (digits == 0) {
                     pos_ = start_pos;
-                    sync();
+                    synchronize();
                     return make_token(TokenType::UNKNOWN);
                 }
             } else if (nl == 'b') {
@@ -326,7 +326,7 @@ Token Lexer::scan_number() {
                 }
                 if (digits == 0) {
                     pos_ = start_pos;
-                    sync();
+                    synchronize();
                     return make_token(TokenType::UNKNOWN);
                 }
             } else {
@@ -336,7 +336,7 @@ Token Lexer::scan_number() {
                 }
                 if (digits == 0) {
                     pos_ = start_pos;
-                    sync();
+                    synchronize();
                     return make_token(TokenType::UNKNOWN);
                 }
             }
@@ -347,7 +347,7 @@ Token Lexer::scan_number() {
     bool is_float = false;
     while (is_digit(curr_)) advance();
 
-    if (curr_ == '.' && is_digit(next())) {
+    if (curr_ == '.' && is_digit(next_char())) {
         is_float = true;
         advance();
         while (is_digit(curr_)) advance();
@@ -360,7 +360,7 @@ Token Lexer::scan_number() {
 
         if (!is_digit(curr_)) {
             pos_ = exp_start_pos;
-            sync();
+            synchronize();
         } else {
             while (is_digit(curr_)) advance();
             is_float = true;
@@ -404,7 +404,7 @@ Token Lexer::scan_token() {
     if (is_at_end()) {
         return make_token(TokenType::END_OF_FILE);
     } else if (curr_ == '.') {
-        if (!is_at_end(pos_ + 1) && (is_alpha(next()) || next() == '_')) {
+        if (!is_at_end(pos_ + 1) && (is_alpha(next_char()) || next_char() == '_')) {
             return scan_identifier();
         } else {
             advance();
@@ -417,7 +417,7 @@ Token Lexer::scan_token() {
             return make_token(TokenType::LABEL_DEF, token.lexeme.length());
         }
         return token;
-    } else if (is_digit(curr_) || ((curr_ == '-' || curr_ == '+') && is_digit(next()))) {
+    } else if (is_digit(curr_) || ((curr_ == '-' || curr_ == '+') && is_digit(next_char()))) {
         return scan_number();
     } else if (curr_ == '"' || curr_ == '\'') {
         return scan_string(curr_);
