@@ -3,77 +3,11 @@
 
 namespace meow::loader {
 
-// --- Bảng từ khóa/chỉ thị ---
 static const std::unordered_map<std::string_view, TokenType> DIRECTIVES = {
     {".func", TokenType::DIR_FUNC},           {".endfunc", TokenType::DIR_ENDFUNC},
     {".registers", TokenType::DIR_REGISTERS}, {".upvalues", TokenType::DIR_UPVALUES},
     {".upvalue", TokenType::DIR_UPVALUE},     {".const", TokenType::DIR_CONST}};
-
-// static const std::unordered_map<std::string_view, TokenType> OPCODES = [] {
-//     std::unordered_map<std::string_view, TokenType> map;
-//     map["LOAD_CONST"] = TokenType::OPCODE;
-//     map["LOAD_NULL"] = TokenType::OPCODE;
-//     map["LOAD_TRUE"] = TokenType::OPCODE;
-//     map["LOAD_FALSE"] = TokenType::OPCODE;
-//     map["LOAD_INT"] = TokenType::OPCODE;
-//     map["LOAD_FLOAT"] = TokenType::OPCODE;
-//     map["MOVE"] = TokenType::OPCODE;
-//     map["ADD"] = TokenType::OPCODE;
-//     map["SUB"] = TokenType::OPCODE;
-//     map["MUL"] = TokenType::OPCODE;
-//     map["DIV"] = TokenType::OPCODE;
-//     map["MOD"] = TokenType::OPCODE;
-//     map["POW"] = TokenType::OPCODE;
-//     map["EQ"] = TokenType::OPCODE;
-//     map["NEQ"] = TokenType::OPCODE;
-//     map["GT"] = TokenType::OPCODE;
-//     map["GE"] = TokenType::OPCODE;
-//     map["LT"] = TokenType::OPCODE;
-//     map["LE"] = TokenType::OPCODE;
-//     map["NEG"] = TokenType::OPCODE;
-//     map["NOT"] = TokenType::OPCODE;
-//     map["GET_GLOBAL"] = TokenType::OPCODE;
-//     map["SET_GLOBAL"] = TokenType::OPCODE;
-//     map["GET_UPVALUE"] = TokenType::OPCODE;
-//     map["SET_UPVALUE"] = TokenType::OPCODE;
-//     map["CLOSURE"] = TokenType::OPCODE;
-//     map["CLOSE_UPVALUES"] = TokenType::OPCODE;
-//     map["JUMP"] = TokenType::OPCODE;
-//     map["JUMP_IF_FALSE"] = TokenType::OPCODE;
-//     map["JUMP_IF_TRUE"] = TokenType::OPCODE;
-//     map["CALL"] = TokenType::OPCODE;
-//     map["CALL_VOID"] = TokenType::OPCODE;
-//     map["RETURN"] = TokenType::OPCODE;
-//     map["HALT"] = TokenType::OPCODE;
-//     map["NEW_ARRAY"] = TokenType::OPCODE;
-//     map["NEW_HASH"] = TokenType::OPCODE;
-//     map["GET_INDEX"] = TokenType::OPCODE;
-//     map["SET_INDEX"] = TokenType::OPCODE;
-//     map["GET_KEYS"] = TokenType::OPCODE;
-//     map["GET_VALUES"] = TokenType::OPCODE;
-//     map["NEW_CLASS"] = TokenType::OPCODE;
-//     map["NEW_INSTANCE"] = TokenType::OPCODE;
-//     map["GET_PROP"] = TokenType::OPCODE;
-//     map["SET_PROP"] = TokenType::OPCODE;
-//     map["SET_METHOD"] = TokenType::OPCODE;
-//     map["INHERIT"] = TokenType::OPCODE;
-//     map["GET_SUPER"] = TokenType::OPCODE;
-//     map["BIT_AND"] = TokenType::OPCODE;
-//     map["BIT_OR"] = TokenType::OPCODE;
-//     map["BIT_XOR"] = TokenType::OPCODE;
-//     map["BIT_NOT"] = TokenType::OPCODE;
-//     map["LSHIFT"] = TokenType::OPCODE;
-//     map["RSHIFT"] = TokenType::OPCODE;
-//     map["THROW"] = TokenType::OPCODE;
-//     map["SETUP_TRY"] = TokenType::OPCODE;
-//     map["POP_TRY"] = TokenType::OPCODE;
-//     map["IMPORT_MODULE"] = TokenType::OPCODE;
-//     map["EXPORT"] = TokenType::OPCODE;
-//     map["GET_EXPORT"] = TokenType::OPCODE; /*GET_MODULE_EXPORT is removed?*/
-//     map["IMPORT_ALL"] = TokenType::OPCODE;
-//     return map;
-// }();
-
+    
 static const std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)>
     OPCODES = [] {
         std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)> array =
@@ -139,7 +73,6 @@ static const std::array<std::string_view, static_cast<size_t>(meow::core::OpCode
                 "GET_EXPORT",
                 "IMPORT_ALL",
         };
-        // Sắp xếp mảng để sau này có thể dùng std::binary_search/std::lower_bound
         std::sort(array.begin(), array.end());
         return array;
     }();
@@ -158,10 +91,15 @@ static constexpr std::array<std::string_view, static_cast<size_t>(TokenType::TOT
         // Other
         "END_OF_FILE", "UNKNOWN"};
 
-// --- Helpers ---
 static constexpr inline bool is_digit(unsigned char c) noexcept { return c >= '0' && c <= '9'; }
 static constexpr inline bool is_xdigit(unsigned char c) noexcept {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+static constexpr inline bool is_bdigit(unsigned char c) noexcept {
+    return (c == '0' || c == '1');
+}
+static constexpr inline bool is_odigit(unsigned char) noexcept {
+    return (c >= '0' && c <= '7');
 }
 static constexpr inline bool is_alpha(unsigned char c) noexcept {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
@@ -320,7 +258,7 @@ Token Lexer::scan_number() {
                     return make_token(TokenType::UNKNOWN);
                 }
             } else if (nl == 'b') {
-                while (curr_ == '0' || curr_ == '1') {
+                while (is_bdigit(curr_)) {
                     advance();
                     ++digits;
                 }
@@ -330,7 +268,7 @@ Token Lexer::scan_number() {
                     return make_token(TokenType::UNKNOWN);
                 }
             } else {
-                while (curr_ >= '0' && curr_ <= '7') {
+                while (is_odigit(curr_)) {
                     advance();
                     ++digits;
                 }
