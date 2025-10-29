@@ -98,7 +98,7 @@ static constexpr inline bool is_xdigit(unsigned char c) noexcept {
 static constexpr inline bool is_bdigit(unsigned char c) noexcept {
     return (c == '0' || c == '1');
 }
-static constexpr inline bool is_odigit(unsigned char) noexcept {
+static constexpr inline bool is_odigit(unsigned char c) noexcept {
     return (c >= '0' && c <= '7');
 }
 static constexpr inline bool is_alpha(unsigned char c) noexcept {

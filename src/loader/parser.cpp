@@ -15,6 +15,7 @@ using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
 using namespace meow::core::objects;
+
 static const std::unordered_map<std::string_view, OpCode> OPCODE_PARSE_MAP = [] {
     std::unordered_map<std::string_view, OpCode> map;
     map.reserve(static_cast<size_t>(OpCode::TOTAL_OPCODES));
@@ -80,7 +81,11 @@ static const std::unordered_map<std::string_view, OpCode> OPCODE_PARSE_MAP = [] 
     map["IMPORT_ALL"] = OpCode::IMPORT_ALL;
     return map;
 }();
-TextParser::TextParser(MemoryManager* heap) noexcept : heap_(heap) {}
+
+TextParser::TextParser(MemoryManager* heap, const std::vector<Token>& tokens, std::string_view source_name) noexcept : heap_(heap), current_source_name_(source_name), tokens_(tokens), current_token_index_(0) {}
+
+TextParser::TextParser(MemoryManager* heap, std::vector<Token>&& tokens, std::string_view source_name) noexcept : heap_(heap), current_source_name_(source_name), tokens_(std::move(tokens)), current_token_index_(0) {}
+
 [[noreturn]] void TextParser::throw_parse_error(std::string_view message) {
     if (current_token_index_ < tokens_.size()) {
         throw_parse_error(message, current_token());
@@ -169,38 +174,12 @@ std::string TextParser::unescape_string(std::string_view escaped) {
     return ss.str();
 }
 
-proto_t TextParser::parse_file(std::string_view filepath) {
-    std::ifstream file{std::string(filepath)};
-    if (!file.is_open()) {
-        throw std::runtime_error(std::string("Không thể mở tệp: ") + std::string(filepath));
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    file.close();
-    return parse_source(buffer.str(), filepath);
-}
-proto_t TextParser::parse_source(std::string_view source, std::string_view source_name) {
-    current_source_name_ = source_name;
-    current_token_index_ = 0;
-    current_proto_data_ = nullptr;
-    build_data_map_.clear();
-    finalized_protos_.clear();
-    Lexer lexer(source);
-    tokens_ = lexer.tokenize();
-    if (!tokens_.empty() && tokens_.back().type == TokenType::UNKNOWN) {
-        throw_parse_error("Lỗi Lexer, ký tự không xác định hoặc chuỗi/comment không đóng.",
-                          tokens_.back());
-    }
-    if (tokens_.empty() || tokens_.back().type != TokenType::END_OF_FILE) {
-        size_t last_line = tokens_.empty() ? 1 : tokens_.back().line;
-        size_t last_col = tokens_.empty() ? 1 : tokens_.back().col + tokens_.back().lexeme.length();
-        tokens_.push_back({"", TokenType::END_OF_FILE, last_line, last_col});
-    }
+proto_t TextParser::parse_source() {
+    if (tokens_.empty()) tokens_.push_back({"", TokenType::END_OF_FILE, 1, 1});
     parse();
     for (auto& [name, data] : build_data_map_) {
         resolve_labels_for_build_data(data);
     }
-    finalized_protos_.clear();
     std::vector<std::pair<proto_t, ProtoBuildData*>> protos_to_link;
     for (auto& [name, data] : build_data_map_) {
         string_t func_name_obj = heap_->new_string(name);
@@ -254,14 +233,30 @@ void TextParser::parse() {
         parse_statement();
     }
     if (current_proto_data_) {
-        const Token& last_token = tokens_.empty() ? Token{"", TokenType::UNKNOWN, 0, 0}
-                                                  : tokens_[current_token_index_ - 1];
+        const Token& last_token = tokens_[current_token_index_ - 1];
         throw_parse_error("Thiếu chỉ thị '.endfunc' cho hàm '" + current_proto_data_->name +
                               "' bắt đầu tại dòng " +
                               std::to_string(current_proto_data_->func_directive_line),
                           last_token);
     }
 }
+
+void TextParser::parse() {
+    while (!is_at_end()) {
+        parse_statement();
+    }
+    if (current_proto_data_) {
+        const Token& last_token = tokens_[current_token_index_ - 1];
+        throw_parse_error(
+            "Thiếu chỉ thị '.endfunc' cho hàm '" +
+            current_proto_data_->name +
+            "' bắt đầu tại dòng " +
+            std::to_string(current_proto_data_->func_directive_line),
+            last_token
+        );
+    }
+}
+
 void TextParser::parse_statement() {
     const Token& token = current_token();
     switch (token.type) {

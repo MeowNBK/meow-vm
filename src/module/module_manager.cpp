@@ -4,6 +4,7 @@
 #include "core/objects/module.h"
 #include "core/objects/native.h"  // Cần thiết cho NativeFunction
 #include "core/objects/string.h"
+#include "loader/lexer.h"
 #include "loader/parser.h"  // Cần TextParser để load file .meow
 #include "memory/memory_manager.h"
 #include "module/module_utils.h"  // Chứa các hàm helper quan trọng
@@ -16,10 +17,11 @@ using namespace meow::loader;
 using namespace meow::memory;
 using namespace meow::vm;
 
+ModuleManager::ModuleManager(MemoryManager* heap, MeowEngine* engine) noexcept : heap_(heap), engine_(engine) {}
+
 // --- Hàm load_module ---
-module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_path_obj,
-                                    MemoryManager* heap, MeowEngine* engine) {
-    if (!module_path_obj || !importer_path_obj || !heap || !engine) {
+module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_path_obj) {
+    if (!module_path_obj || !importer_path_obj) {
         // Nên throw exception hoặc trả về một giá trị lỗi rõ ràng
         throw std::runtime_error("ModuleManager::load_module: Invalid arguments (null pointers).");
     }
@@ -54,7 +56,7 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
         // Tìm thấy file có vẻ là native library!
 
         // Kiểm tra cache bằng đường dẫn tuyệt đối đã giải quyết
-        string_t resolved_native_path_obj = heap->new_string(resolved_native_path);
+        string_t resolved_native_path_obj = heap_->new_string(resolved_native_path);
         if (auto it = module_cache_.find(resolved_native_path_obj); it != module_cache_.end()) {
             // Thêm vào cache với key là đường dẫn gốc luôn cho nhanh lần sau
             module_cache_[module_path_obj] = it->second;
@@ -87,7 +89,7 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
         module_t native_module = nullptr;
         try {
             // Gọi hàm factory để tạo module object
-            native_module = factory(engine, heap);
+            native_module = factory(engine_, heap_);
             if (!native_module) {
                 throw std::runtime_error("Native module factory for '" + resolved_native_path +
                                          "' returned null.");
@@ -134,7 +136,7 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
     }
 
     std::string meow_file_path = meow_file_path_fs.string();
-    string_t meow_file_path_obj = heap->new_string(meow_file_path);
+    string_t meow_file_path_obj = heap_->new_string(meow_file_path);
 
     // Kiểm tra cache bằng đường dẫn tuyệt đối của file .meow
     if (auto it = module_cache_.find(meow_file_path_obj); it != module_cache_.end()) {
@@ -144,10 +146,28 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
 
     // 5. Parse file .meow
     // Giả sử bạn có TextParser trong namespace meow::loader
-    TextParser parser(heap);
     proto_t main_proto = nullptr;
+
+    std::ifstream file(meow_file_path, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Không thể mở tệp: " + meow_file_path);
+    }
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    std::string buffer(size, '\0');
+
+    file.seekg(0);
+    file.read(&buffer[0], size);
+    file.close();
+
+    Lexer lexer(buffer);
+
+    auto tokens = lexer.tokenize();
+    
+    TextParser parser(heap_, std::move(tokens), meow_file_path);
+
     try {
-        main_proto = parser.parse_file(meow_file_path);  // Parser sẽ throw nếu có lỗi
+        main_proto = parser.parse_source();  // Parser sẽ throw nếu có lỗi
         if (!main_proto) {
             throw std::runtime_error("Parser returned null proto for '" + meow_file_path +
                                      "' without throwing.");
@@ -159,8 +179,8 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
 
     // 6. Tạo và cache module object cho file .meow
     // Lấy tên file từ đường dẫn đầy đủ
-    string_t filename_obj = heap->new_string(meow_file_path_fs.filename().string());
-    module_t meow_module = heap->new_module(filename_obj, meow_file_path_obj, main_proto);
+    string_t filename_obj = heap_->new_string(meow_file_path_fs.filename().string());
+    module_t meow_module = heap_->new_module(filename_obj, meow_file_path_obj, main_proto);
 
     // Cache lại module .meow với cả hai key
     module_cache_[module_path_obj] = meow_module;

@@ -44,7 +44,7 @@ MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entr
 
     heap_ = std::make_unique<meow::memory::MemoryManager>(std::move(gc));
 
-    mod_manager_ = std::make_unique<meow::module::ModuleManager>();
+    mod_manager_ = std::make_unique<meow::module::ModuleManager>(heap_.get(), this);
     op_dispatcher_ = std::make_unique<OperatorDispatcher>(heap_.get());
 
     printl("MeowVM initialized successfully!");
