@@ -7,7 +7,7 @@ static const std::unordered_map<std::string_view, TokenType> DIRECTIVES = {
     {".func", TokenType::DIR_FUNC},           {".endfunc", TokenType::DIR_ENDFUNC},
     {".registers", TokenType::DIR_REGISTERS}, {".upvalues", TokenType::DIR_UPVALUES},
     {".upvalue", TokenType::DIR_UPVALUE},     {".const", TokenType::DIR_CONST}};
-    
+
 static const std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)>
     OPCODES = [] {
         std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)> array =
@@ -95,12 +95,8 @@ static constexpr inline bool is_digit(unsigned char c) noexcept { return c >= '0
 static constexpr inline bool is_xdigit(unsigned char c) noexcept {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
-static constexpr inline bool is_bdigit(unsigned char c) noexcept {
-    return (c == '0' || c == '1');
-}
-static constexpr inline bool is_odigit(unsigned char c) noexcept {
-    return (c >= '0' && c <= '7');
-}
+static constexpr inline bool is_bdigit(unsigned char c) noexcept { return (c == '0' || c == '1'); }
+static constexpr inline bool is_odigit(unsigned char c) noexcept { return (c >= '0' && c <= '7'); }
 static constexpr inline bool is_alpha(unsigned char c) noexcept {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }

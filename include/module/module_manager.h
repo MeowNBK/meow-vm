@@ -14,7 +14,8 @@ class MemoryManager;
 namespace meow::module {
 class ModuleManager {
    public:
-    explicit ModuleManager(meow::memory::MemoryManager* heap, meow::vm::MeowEngine* engine) noexcept;
+    explicit ModuleManager(meow::memory::MemoryManager* heap,
+                           meow::vm::MeowEngine* engine) noexcept;
     ModuleManager(const ModuleManager&) = delete;
     ModuleManager(ModuleManager&&) = default;
     ModuleManager& operator=(const ModuleManager&) = delete;

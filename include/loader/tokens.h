@@ -36,4 +36,4 @@ struct Token {
     [[nodiscard]] std::string to_string() const;  // Để debug
 };
 
-}
+}  // namespace meow::loader

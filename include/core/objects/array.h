@@ -163,17 +163,21 @@ class ObjArray : public meow::core::MeowObject {
 
 //     /// @brief Unchecked element modification. For performance-critical code
 //     template <typename T>
-//     inline void set(size_t index, T&& value) noexcept(noexcept(elements_[index] = std::forward<T>(value))) {
+//     inline void set(size_t index, T&& value) noexcept(noexcept(elements_[index] =
+//     std::forward<T>(value))) {
 //         elements_[index] = std::forward<T>(value);
 //     }
 
 //     /// @brief Checked element access. Throws if index is OOB
-//     [[nodiscard]] inline meow::core::return_t at(size_t index) const { return elements_.at(index); }
+//     [[nodiscard]] inline meow::core::return_t at(size_t index) const { return
+//     elements_.at(index); }
 
-//     inline meow::core::return_t operator[](size_t index) const noexcept { return elements_[index]; }
-//     inline meow::core::mutable_t operator[](size_t index) noexcept { return elements_[index]; }
+//     inline meow::core::return_t operator[](size_t index) const noexcept { return
+//     elements_[index]; } inline meow::core::mutable_t operator[](size_t index) noexcept { return
+//     elements_[index]; }
 
-//     [[nodiscard]] inline meow::core::return_t front() const noexcept { return elements_.front(); }
+//     [[nodiscard]] inline meow::core::return_t front() const noexcept { return elements_.front();
+//     }
 //     [[nodiscard]] inline meow::core::mutable_t front() noexcept { return elements_.front(); }
 //     [[nodiscard]] inline meow::core::return_t back() const noexcept { return elements_.back(); }
 //     [[nodiscard]] inline meow::core::mutable_t back() noexcept { return elements_.back(); }
@@ -184,7 +188,8 @@ class ObjArray : public meow::core::MeowObject {
 
 // #if __cplusplus >= 202002L
 //     inline std::span<value_type> as_span() noexcept { return std::span<value_type>(elements_); }
-//     inline std::span<const value_type> as_span() const noexcept { return std::span<const value_type>(elements_); }
+//     inline std::span<const value_type> as_span() const noexcept { return std::span<const
+//     value_type>(elements_); }
 // #endif
 
 //     // --- Capacity ---
@@ -194,14 +199,16 @@ class ObjArray : public meow::core::MeowObject {
 
 //     // --- Modifiers ---
 //     template <typename T>
-//     inline void push(T&& value) noexcept(noexcept(std::declval<container_t&>().emplace_back(std::forward<T>(value)))) {
+//     inline void push(T&& value)
+//     noexcept(noexcept(std::declval<container_t&>().emplace_back(std::forward<T>(value)))) {
 //         elements_.emplace_back(std::forward<T>(value));
 //     }
 
 //     inline void pop() noexcept { elements_.pop_back(); }
 
 //     template <typename... Args>
-//     inline void emplace(Args&&... args) noexcept(noexcept(std::declval<container_t&>().emplace_back(std::forward<Args>(args)...))) {
+//     inline void emplace(Args&&... args)
+//     noexcept(noexcept(std::declval<container_t&>().emplace_back(std::forward<Args>(args)...))) {
 //         elements_.emplace_back(std::forward<Args>(args)...);
 //     }
 
@@ -239,12 +246,14 @@ class ObjArray : public meow::core::MeowObject {
 //     }
 
 //     template <typename Pred>
-//     inline iterator find_if(Pred&& pred) noexcept(noexcept(std::declval<Pred>()(std::declval<value_type>()))) {
+//     inline iterator find_if(Pred&& pred)
+//     noexcept(noexcept(std::declval<Pred>()(std::declval<value_type>()))) {
 //         return std::find_if(elements_.begin(), elements_.end(), std::forward<Pred>(pred));
 //     }
 
 //     template <typename Pred>
-//     inline const_iterator find_if(Pred&& pred) const noexcept(noexcept(std::declval<Pred>()(std::declval<value_type>()))) {
+//     inline const_iterator find_if(Pred&& pred) const
+//     noexcept(noexcept(std::declval<Pred>()(std::declval<value_type>()))) {
 //         return std::find_if(elements_.cbegin(), elements_.cend(), std::forward<Pred>(pred));
 //     }
 

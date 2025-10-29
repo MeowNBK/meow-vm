@@ -17,7 +17,8 @@ using namespace meow::loader;
 using namespace meow::memory;
 using namespace meow::vm;
 
-ModuleManager::ModuleManager(MemoryManager* heap, MeowEngine* engine) noexcept : heap_(heap), engine_(engine) {}
+ModuleManager::ModuleManager(MemoryManager* heap, MeowEngine* engine) noexcept
+    : heap_(heap), engine_(engine) {}
 
 // --- Hàm load_module ---
 module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_path_obj) {
@@ -163,7 +164,7 @@ module_t ModuleManager::load_module(string_t module_path_obj, string_t importer_
     Lexer lexer(buffer);
 
     auto tokens = lexer.tokenize();
-    
+
     TextParser parser(heap_, std::move(tokens), meow_file_path);
 
     try {
