@@ -1,4 +1,4 @@
-#include "loader/lexer.h"
+#include "module/loader/lexer.h"
 #include "core/op_codes.h"
 
 namespace meow::loader {

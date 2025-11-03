@@ -1,7 +1,7 @@
-#include "loader/parser.h"
+#include "module/loader/parser.h"
 #include "core/objects/function.h"
 #include "core/objects/string.h"
-#include "loader/lexer.h"
+#include "module/loader/lexer.h"
 #include "memory/memory_manager.h"
 #include "runtime/chunk.h"
 

@@ -4,8 +4,8 @@
 #include "core/objects/module.h"
 #include "core/objects/native.h"  // Cần thiết cho NativeFunction
 #include "core/objects/string.h"
-#include "loader/lexer.h"
-#include "loader/parser.h"  // Cần TextParser để load file .meow
+#include "module/loader/lexer.h"
+#include "module/loader/parser.h"  // Cần TextParser để load file .meow
 #include "memory/memory_manager.h"
 #include "module/module_utils.h"  // Chứa các hàm helper quan trọng
 #include "vm/meow_engine.h"       // Cần thiết cho hàm factory của native module
