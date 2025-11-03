@@ -22,7 +22,8 @@ namespace meow::diagnostics {
 /// ```
 /// ---------------------------------------------------------------------------
 struct SimpleLocaleSource final : public LocaleSource {
-    std::map<std::string, std::string> map;
+    ~SimpleLocaleSource() noexcept override = default;
+    std::unordered_map<std::string, std::string> map;
 
     /// Load key=value pairs from a text file.
     /// Lines starting with `#` are ignored.

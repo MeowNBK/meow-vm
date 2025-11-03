@@ -21,7 +21,7 @@ struct CallFrame {
 struct Diagnostic;
 
 struct LocaleSource {
-    virtual ~LocaleSource() = default;
+    virtual ~LocaleSource() noexcept = default;
     virtual std::optional<std::string> get_template(const std::string& message_id) = 0;
 };
 
