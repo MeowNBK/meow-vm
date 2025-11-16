@@ -1,0 +1,842 @@
+==> cmake configure --preset fast-debug
+Preset CMake variables:
+
+  CMAKE_BUILD_TYPE="Debug"
+  CMAKE_CXX_COMPILER="clang++"
+  CMAKE_CXX_COMPILER_LAUNCHER="ccache"
+  CMAKE_CXX_FLAGS_DEBUG="-g -O0 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer"
+  CMAKE_EXPORT_COMPILE_COMMANDS="YES"
+
+-- The CXX compiler identification is Clang 20.1.8
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- PCH: Found /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h -> Enabling precompiled headers.
+-- UNITY_BUILD: Enabled for meow-vm (may greatly speed up builds).
+-- Configuring done (1.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug
+==> build (ninja -j2)
+[0/2] Re-checking globbed directories...
+[1/4] Building CXX object CMakeFiles/meow-vm.dir/cmake_pch.hxx.pch
+[2/4] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o
+FAILED: CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o 
+ccache /usr/bin/clang++  -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/vm -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/memory -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/loader -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module -g -O0 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer -std=c++20 -Winvalid-pch -Xclang -include-pch -Xclang /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx -MD -MT CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o -MF CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o.d -o CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o -c /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:38:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/compare:40:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/concepts:46:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/type_traits:1049:21: error: static assertion failed due to requirement 'std::__is_complete_or_unbounded(std::__type_identity<meow::core::Value>{})': template argument must be a complete class or an unbounded array
+ 1049 |       static_assert(std::__is_complete_or_unbounded(__type_identity<_Tp>{}),
+      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_construct.h:188:21: note: in instantiation of template class 'std::is_destructible<meow::core::Value>' requested here
+  188 |       static_assert(is_destructible<_Value_type>::value,
+      |                     ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/alloc_traits.h:944:12: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *>' requested here
+  944 |       std::_Destroy(__first, __last);
+      |            ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:735:7: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *, meow::core::Value>' requested here
+  735 |         std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+      |              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in instantiation of member function 'std::vector<meow::core::Value>::~vector' requested here
+   40 |     ~ObjArray() override = default;
+      |     ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in defaulted destructor for 'meow::core::objects::ObjArray' first required here
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:43:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_algobase.h:67:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator.h:78:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_construct.h:162:30: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+  162 |           for (; __first != __last; ++__first)
+      |                                     ^ ~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_construct.h:193:35: note: in instantiation of function template specialization 'std::_Destroy_aux<false>::__destroy<meow::core::Value *>' requested here
+  193 |         return std::_Destroy_aux<false>::__destroy(__first, __last);
+      |                                          ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/alloc_traits.h:944:12: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *>' requested here
+  944 |       std::_Destroy(__first, __last);
+      |            ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:735:7: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *, meow::core::Value>' requested here
+  735 |         std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+      |              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in instantiation of member function 'std::vector<meow::core::Value>::~vector' requested here
+   40 |     ~ObjArray() override = default;
+      |     ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in defaulted destructor for 'meow::core::objects::ObjArray' first required here
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:43:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_algobase.h:67:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator.h:78:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_construct.h:195:25: error: incomplete type '_Value_type' (aka 'meow::core::Value') used in type trait expression
+  195 |       std::_Destroy_aux<__has_trivial_destructor(_Value_type)>::
+      |                         ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/alloc_traits.h:944:12: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *>' requested here
+  944 |       std::_Destroy(__first, __last);
+      |            ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:735:7: note: in instantiation of function template specialization 'std::_Destroy<meow::core::Value *, meow::core::Value>' requested here
+  735 |         std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+      |              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in instantiation of member function 'std::vector<meow::core::Value>::~vector' requested here
+   40 |     ~ObjArray() override = default;
+      |     ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in defaulted destructor for 'meow::core::objects::ObjArray' first required here
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:369:35: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+  369 |                       _M_impl._M_end_of_storage - _M_impl._M_start);
+      |                       ~~~~~~~~~~~~~~~~~~~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:733:7: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::~_Vector_base' requested here
+  733 |       ~vector() _GLIBCXX_NOEXCEPT
+      |       ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in instantiation of member function 'std::vector<meow::core::Value>::~vector' requested here
+   40 |     ~ObjArray() override = default;
+      |     ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:40:5: note: in defaulted destructor for 'meow::core::objects::ObjArray' first required here
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/core/objects.cpp:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:3:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:39:15: warning: explicitly defaulted move assignment operator is implicitly deleted [-Wdefaulted-function-deleted]
+   39 |     ObjArray& operator=(ObjArray&&) = default;
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:18:18: note: move assignment operator of 'ObjArray' is implicitly deleted because base class 'meow::core::ObjBase<ObjectType::ARRAY>' has a deleted move assignment operator
+   18 | class ObjArray : public meow::core::ObjBase<ObjectType::ARRAY> {
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:35:18: note: copy assignment operator of 'ObjBase<meow::core::ObjectType::ARRAY>' is implicitly deleted because base class 'MeowObject' has a deleted copy assignment operator
+   35 | struct ObjBase : public MeowObject {
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:24:22: note: copy assignment operator of 'MeowObject' is implicitly deleted because field 'type' is of const-qualified type 'const ObjectType'
+   24 |     const ObjectType type;
+      |                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:39:39: note: replace 'default' with 'delete'
+   39 |     ObjArray& operator=(ObjArray&&) = default;
+      |                                       ^~~~~~~
+      |                                       delete
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:993:50: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+  993 |       { return size_type(this->_M_impl._M_finish - this->_M_impl._M_start); }
+      |                          ~~~~~~~~~~~~~~~~~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:602:19: note: in instantiation of member function 'std::vector<meow::core::Value>::size' requested here
+  602 |       : _Base(__x.size(),
+      |                   ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:28:54: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   28 |     explicit ObjArray(const container_t& elements) : elements_(elements) {
+      |                                                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:12:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/string:43:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/allocator.h:191:38: error: invalid application of 'sizeof' to an incomplete type 'meow::core::Value'
+  191 |             if (__builtin_mul_overflow(__n, sizeof(_Tp), &__n))
+      |                                             ^~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/alloc_traits.h:478:20: note: in instantiation of member function 'std::allocator<meow::core::Value>::allocate' requested here
+  478 |       { return __a.allocate(__n); }
+      |                    ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:380:25: note: in instantiation of member function 'std::allocator_traits<std::allocator<meow::core::Value>>::allocate' requested here
+  380 |         return __n != 0 ? _Tr::allocate(_M_impl, __n) : pointer();
+      |                                ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:398:33: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::_M_allocate' requested here
+  398 |         this->_M_impl._M_start = this->_M_allocate(__n);
+      |                                        ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:334:9: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::_M_create_storage' requested here
+  334 |       { _M_create_storage(__n); }
+      |         ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:602:9: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::_Vector_base' requested here
+  602 |       : _Base(__x.size(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:28:54: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   28 |     explicit ObjArray(const container_t& elements) : elements_(elements) {
+      |                                                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:400:59: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+  400 |         this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+      |                                           ~~~~~~~~~~~~~~~~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:334:9: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::_M_create_storage' requested here
+  334 |       { _M_create_storage(__n); }
+      |         ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:602:9: note: in instantiation of member function 'std::_Vector_base<meow::core::Value, std::allocator<meow::core::Value>>::_Vector_base' requested here
+  602 |       : _Base(__x.size(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:28:54: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   28 |     explicit ObjArray(const container_t& elements) : elements_(elements) {
+      |                                                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:43:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_algobase.h:67:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator.h:1102:2: error: arithmetic on a pointer to an incomplete type 'const meow::core::Value'
+ 1102 |         ++_M_current;
+      |         ^ ~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:119:30: note: in instantiation of member function '__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>::operator++' requested here
+  119 |           for (; __first != __last; ++__first, (void)++__cur)
+      |                                     ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:371:14: note: in instantiation of function template specialization 'std::__do_uninit_copy<__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>, meow::core::Value *>' requested here
+  371 |         return std::__do_uninit_copy(__first, __last, __result);
+      |                     ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:606:9: note: in instantiation of function template specialization 'std::__uninitialized_copy_a<__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>, meow::core::Value *, meow::core::Value>' requested here
+  606 |           std::__uninitialized_copy_a(__x.begin(), __x.end(),
+      |                ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:28:54: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   28 |     explicit ObjArray(const container_t& elements) : elements_(elements) {
+      |                                                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:65:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:119:47: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+  119 |           for (; __first != __last; ++__first, (void)++__cur)
+      |                                                      ^ ~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:371:14: note: in instantiation of function template specialization 'std::__do_uninit_copy<__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>, meow::core::Value *>' requested here
+  371 |         return std::__do_uninit_copy(__first, __last, __result);
+      |                     ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:606:9: note: in instantiation of function template specialization 'std::__uninitialized_copy_a<__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>, meow::core::Value *, meow::core::Value>' requested here
+  606 |           std::__uninitialized_copy_a(__x.begin(), __x.end(),
+      |                ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:28:54: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   28 |     explicit ObjArray(const container_t& elements) : elements_(elements) {
+      |                                                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:39:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/initializer_list:77:45: error: arithmetic on a pointer to an incomplete type 'const meow::core::Value'
+   77 |       end() const noexcept { return begin() + size(); }
+      |                                     ~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:39: note: in instantiation of member function 'std::initializer_list<meow::core::Value>::end' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:43:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_algobase.h:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator_base_funcs.h:106:21: error: arithmetic on a pointer to an incomplete type 'const meow::core::Value'
+  106 |       return __last - __first;
+      |              ~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator_base_funcs.h:151:19: note: in instantiation of function template specialization 'std::__distance<const meow::core::Value *>' requested here
+  151 |       return std::__distance(__first, __last,
+      |                   ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1692:31: note: in instantiation of function template specialization 'std::distance<const meow::core::Value *>' requested here
+ 1692 |           const size_type __n = std::distance(__first, __last);
+      |                                      ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:2: note: in instantiation of function template specialization 'std::vector<meow::core::Value>::_M_range_initialize<const meow::core::Value *>' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1932:54: error: invalid application of 'sizeof' to an incomplete type 'meow::core::Value'
+ 1932 |           = __gnu_cxx::__numeric_traits<ptrdiff_t>::__max / sizeof(_Tp);
+      |                                                             ^~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1919:12: note: in instantiation of member function 'std::vector<meow::core::Value>::_S_max_size' requested here
+ 1919 |         if (__n > _S_max_size(_Tp_alloc_type(__a)))
+      |                   ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1694:26: note: in instantiation of member function 'std::vector<meow::core::Value>::_S_check_init_len' requested here
+ 1694 |             = this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+      |                                 ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:2: note: in instantiation of function template specialization 'std::vector<meow::core::Value>::_M_range_initialize<const meow::core::Value *>' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:12:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/string:54:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/basic_string.h:39:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/ext/alloc_traits.h:34:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/alloc_traits.h:572:22: error: invalid application of 'sizeof' to an incomplete type 'value_type' (aka 'meow::core::Value')
+  572 |         return size_t(-1) / sizeof(value_type);
+      |                             ^~~~~~~~~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1933:43: note: in instantiation of member function 'std::allocator_traits<std::allocator<meow::core::Value>>::max_size' requested here
+ 1933 |         const size_t __allocmax = _Alloc_traits::max_size(__a);
+      |                                                  ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1919:12: note: in instantiation of member function 'std::vector<meow::core::Value>::_S_max_size' requested here
+ 1919 |         if (__n > _S_max_size(_Tp_alloc_type(__a)))
+      |                   ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1694:26: note: in instantiation of member function 'std::vector<meow::core::Value>::_S_check_init_len' requested here
+ 1694 |             = this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+      |                                 ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:2: note: in instantiation of function template specialization 'std::vector<meow::core::Value>::_M_range_initialize<const meow::core::Value *>' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1695:61: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+ 1695 |           this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+      |                                             ~~~~~~~~~~~~~~~~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:2: note: in instantiation of function template specialization 'std::vector<meow::core::Value>::_M_range_initialize<const meow::core::Value *>' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:65:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:119:30: error: arithmetic on a pointer to an incomplete type 'const meow::core::Value'
+  119 |           for (; __first != __last; ++__first, (void)++__cur)
+      |                                     ^ ~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_uninitialized.h:371:14: note: in instantiation of function template specialization 'std::__do_uninit_copy<const meow::core::Value *, meow::core::Value *>' requested here
+  371 |         return std::__do_uninit_copy(__first, __last, __result);
+      |                     ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1697:11: note: in instantiation of function template specialization 'std::__uninitialized_copy_a<const meow::core::Value *, meow::core::Value *, meow::core::Value>' requested here
+ 1697 |             std::__uninitialized_copy_a(__first, __last,
+      |                  ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:682:2: note: in instantiation of function template specialization 'std::vector<meow::core::Value>::_M_range_initialize<const meow::core::Value *>' requested here
+  682 |         _M_range_initialize(__l.begin(), __l.end(),
+      |         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:32:78: note: in instantiation of member function 'std::vector<meow::core::Value>::vector' requested here
+   32 |     explicit ObjArray(std::initializer_list<meow::core::value_t> elements) : elements_(elements) {
+      |                                                                              ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1150:34: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+ 1150 |         return *(this->_M_impl._M_start + __n);
+      |                  ~~~~~~~~~~~~~~~~~~~~~~ ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:52:25: note: in instantiation of member function 'std::vector<meow::core::Value>::operator[]' requested here
+   52 |         return elements_[index];
+      |                         ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:16:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/vector:66:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1131:34: error: arithmetic on a pointer to an incomplete type 'meow::core::Value'
+ 1131 |         return *(this->_M_impl._M_start + __n);
+      |                  ~~~~~~~~~~~~~~~~~~~~~~ ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:57:18: note: in instantiation of member function 'std::vector<meow::core::Value>::operator[]' requested here
+   57 |         elements_[index] = std::forward<T>(value);
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/core/objects.cpp:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:3:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:67:16: error: binding reference of type 'value_t' (aka 'meow::core::Value') to value of type 'const value_type' (aka 'const meow::core::Value') drops 'const' qualifier
+   67 |         return elements_[index];
+      |                ^~~~~~~~~~~~~~~~
+In file included from <built-in>:1:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx:5:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h:10:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/array:43:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_algobase.h:67:
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_iterator.h:1149:45: error: arithmetic on a pointer to an incomplete type 'const meow::core::Value'
+ 1149 |       { return __normal_iterator(_M_current - __n); }
+      |                                  ~~~~~~~~~~ ^
+/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/bits/stl_vector.h:1250:17: note: in instantiation of member function '__gnu_cxx::__normal_iterator<const meow::core::Value *, std::vector<meow::core::Value>>::operator-' requested here
+ 1250 |         return *(end() - 1);
+      |                        ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:76:26: note: in instantiation of member function 'std::vector<meow::core::Value>::back' requested here
+   76 |         return elements_.back();
+      |                          ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/definitions.h:6:11: note: forward declaration of 'meow::core::Value'
+    6 |     class Value;
+      |           ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+1 warning and 20 errors generated.
+[3/4] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o
+FAILED: CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o 
+ccache /usr/bin/clang++  -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/vm -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/memory -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/loader -I/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module -g -O0 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer -std=c++20 -Winvalid-pch -Xclang -include-pch -Xclang /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/cmake_pch.hxx -MD -MT CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o -MF CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o.d -o CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o -c /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:85:42: error: no member named 'UpvalueDesc' in namespace 'meow::core::objects'
+   85 |         std::vector<meow::core::objects::UpvalueDesc> updesc;
+      |                     ~~~~~~~~~~~~~~~~~~~~~^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:3:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/string.h:37:16: warning: explicitly defaulted move assignment operator is implicitly deleted [-Wdefaulted-function-deleted]
+   37 |     ObjString& operator=(ObjString&&) = default;
+      |                ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/string.h:16:19: note: move assignment operator of 'ObjString' is implicitly deleted because base class 'meow::core::ObjBase<ObjectType::STRING>' has a deleted move assignment operator
+   16 | class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
+      |                   ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:35:18: note: copy assignment operator of 'ObjBase<meow::core::ObjectType::STRING>' is implicitly deleted because base class 'MeowObject' has a deleted copy assignment operator
+   35 | struct ObjBase : public MeowObject {
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:24:22: note: copy assignment operator of 'MeowObject' is implicitly deleted because field 'type' is of const-qualified type 'const ObjectType'
+   24 |     const ObjectType type;
+      |                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/string.h:37:41: note: replace 'default' with 'delete'
+   37 |     ObjString& operator=(ObjString&&) = default;
+      |                                         ^~~~~~~
+      |                                         delete
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/memory/memory_manager.h:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:3:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:39:15: warning: explicitly defaulted move assignment operator is implicitly deleted [-Wdefaulted-function-deleted]
+   39 |     ObjArray& operator=(ObjArray&&) = default;
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:18:18: note: move assignment operator of 'ObjArray' is implicitly deleted because base class 'meow::core::ObjBase<ObjectType::ARRAY>' has a deleted move assignment operator
+   18 | class ObjArray : public meow::core::ObjBase<ObjectType::ARRAY> {
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:35:18: note: copy assignment operator of 'ObjBase<meow::core::ObjectType::ARRAY>' is implicitly deleted because base class 'MeowObject' has a deleted copy assignment operator
+   35 | struct ObjBase : public MeowObject {
+      |                  ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/meow_object.h:24:22: note: copy assignment operator of 'MeowObject' is implicitly deleted because field 'type' is of const-qualified type 'const ObjectType'
+   24 |     const ObjectType type;
+      |                      ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/array.h:39:39: note: replace 'default' with 'delete'
+   39 |     ObjArray& operator=(ObjArray&&) = default;
+      |                                       ^~~~~~~
+      |                                       delete
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/memory/memory_manager.h:4:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:7:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:45:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
+   45 |         return meow::core::value_t();
+      |                ^~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:53:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
+   53 |         return meow::core::value_t();
+      |                ^~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:192:27: error: no matching conversion for functional-style cast from 'meow::core::objects::ObjFunctionProto *' to 'Value'
+  192 |                     ref = Value(it->second);
+      |                           ^~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::objects::ObjFunctionProto *' to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::objects::ObjFunctionProto *' to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::objects::ObjFunctionProto *&]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjFunctionProto *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjFunctionProto *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:231:13: warning: enumeration value 'TOTAL_TOKENS' not handled in switch [-Wswitch]
+  231 |     switch (tk.type) {
+      |             ^~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:755:48: error: no matching conversion for functional-style cast from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value'
+  755 |         return Result<meow::core::value_t>::Ok(Value(heap_->new_string(unescape(inner))));
+      |                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::string_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:783:52: error: no matching conversion for functional-style cast from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value'
+  783 |             return Result<meow::core::value_t>::Ok(Value(heap_->new_string(std::string("::proto_ref::") + std::string(nm))));
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::string_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:813:31: error: no matching conversion for functional-style cast from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value'
+  813 |                 out.push_back(Value(heap_->new_string(std::string(sv.substr(pref.size())))));
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::string_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:13:
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:1:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/operator_dispatcher.h:27:62: error: no member named 'HashTable' in 'meow::core::ValueType'
+   27 |             case ObjectType::HASH_TABLE:   return ValueType::HashTable;
+      |                                                   ~~~~~~~~~~~^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/operator_dispatcher.h:35:62: error: no member named 'Module' in 'meow::core::ValueType'
+   35 |             case ObjectType::MODULE:       return ValueType::Module;
+      |                                                   ~~~~~~~~~~~^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:13:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:25:98: warning: returning reference to local temporary object [-Wreturn-stack-address]
+   25 |     binary_dispatch_table_[+ADD][+Int][+Int] = [](param_t lhs, param_t rhs) -> return_t { return Value(lhs.as_int() + rhs.as_int()); };
+      |                                                                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:28:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
+   28 |         return Value(lhs.as_float() + rhs.as_float());
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:378:37: error: no matching conversion for functional-style cast from 'function_t' (aka 'meow::core::objects::ObjClosure *') to 'Value'
+  378 |                     REGISTER(dst) = Value(closure);
+      |                                     ^~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'function_t' (aka 'meow::core::objects::ObjClosure *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'function_t' (aka 'meow::core::objects::ObjClosure *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = function_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjClosure *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjClosure *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:482:45: error: no matching conversion for functional-style cast from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value'
+  482 |                             REGISTER(dst) = Value(self);
+      |                                             ^~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = instance_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjInstance *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjInstance *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:512:66: error: no matching conversion for functional-style cast from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value'
+  512 |                             context_->registers_[new_base + 0] = Value(self);
+      |                                                                  ^~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = instance_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjInstance *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjInstance *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:605:37: error: no matching conversion for functional-style cast from 'meow::core::hash_table_t' (aka 'meow::core::objects::ObjHashTable *') to 'Value'
+  605 |                     REGISTER(dst) = Value(hash_table);
+      |                                     ^~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::hash_table_t' (aka 'meow::core::objects::ObjHashTable *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::hash_table_t' (aka 'meow::core::objects::ObjHashTable *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::hash_table_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjHashTable *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjHashTable *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:639:41: error: no matching conversion for functional-style cast from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value'
+  639 |                         REGISTER(dst) = Value(heap_->new_string(std::string(1, str->get(idx))));
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::string_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:685:46: error: no matching conversion for functional-style cast from 'const meow::core::objects::ObjString *const' to 'Value'
+  685 |                             keys_array->push(Value(it->first));
+      |                                              ^~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'const meow::core::objects::ObjString *const' to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'const meow::core::objects::ObjString *const' to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = const meow::core::objects::ObjString *const &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *const &' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *const &>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:705:37: error: no matching conversion for functional-style cast from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'Value'
+  705 |                     REGISTER(dst) = Value(keys_array);
+      |                                     ^~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::array_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjArray *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjArray *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:730:46: error: no matching conversion for functional-style cast from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value'
+  730 |                             vals_array->push(Value(heap_->new_string(std::string(1, str->get(i)))));
+      |                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::string_t' (aka 'const meow::core::objects::ObjString *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::string_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'const meow::core::objects::ObjString *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, const meow::core::objects::ObjString *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:736:37: error: no matching conversion for functional-style cast from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'Value'
+  736 |                     REGISTER(dst) = Value(vals_array);
+      |                                     ^~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::array_t' (aka 'meow::core::objects::ObjArray *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::array_t &]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjArray *&' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjArray *&>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:745:37: error: no matching conversion for functional-style cast from 'meow::core::class_t' (aka 'meow::core::objects::ObjClass *') to 'Value'
+  745 |                     REGISTER(dst) = Value(heap_->new_class(name));
+      |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::class_t' (aka 'meow::core::objects::ObjClass *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::class_t' (aka 'meow::core::objects::ObjClass *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::class_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjClass *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjClass *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:753:37: error: no matching conversion for functional-style cast from 'meow::core::instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value'
+  753 |                     REGISTER(dst) = Value(heap_->new_instance(class_val.as_class()));
+      |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::instance_t' (aka 'meow::core::objects::ObjInstance *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::instance_t' (aka 'meow::core::objects::ObjInstance *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::instance_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjInstance *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjInstance *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:774:49: error: no matching conversion for functional-style cast from 'meow::core::bound_method_t' (aka 'meow::core::objects::ObjBoundMethod *') to 'Value'
+  774 |                                 REGISTER(dst) = Value(heap_->new_bound_method(inst, k->get_method(name).as_function()));
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:37:12: note: candidate constructor not viable: no known conversion from 'meow::core::bound_method_t' (aka 'meow::core::objects::ObjBoundMethod *') to 'const Value' for 1st argument
+   37 |     inline Value(const Value& other) noexcept : data_(other.data_) {}
+      |            ^     ~~~~~~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:38:12: note: candidate constructor not viable: no known conversion from 'meow::core::bound_method_t' (aka 'meow::core::objects::ObjBoundMethod *') to 'Value' for 1st argument
+   38 |     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
+      |            ^     ~~~~~~~~~~~~~
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:33:12: note: candidate template ignored: constraints not satisfied [with T = meow::core::bound_method_t]
+   33 |     inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
+      |            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:32:15: note: because 'meow::core::objects::ObjBoundMethod *' does not satisfy 'ValueAssignable'
+   32 |     template <ValueAssignable T>
+      |               ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:16:27: note: because 'std::is_constructible_v<BaseValue, meow::core::objects::ObjBoundMethod *>' evaluated to false
+   16 | concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
+      |                           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:30:12: note: candidate constructor not viable: requires 0 arguments, but 1 was provided
+   30 |     inline Value() noexcept : data_(null_t{}) {}
+      |            ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+7 warnings and 20 errors generated.
+ninja: build stopped: subcommand failed.
