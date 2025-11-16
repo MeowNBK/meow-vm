@@ -417,18 +417,40 @@ class NaNBoxedVariant {
         return static_cast<uint8_t>((bits_ & MEOW_TAG_MASK) >> MEOW_TAG_SHIFT);
     }
 
+    // template <typename T>
+    // MEOW_ALWAYS_INLINE T reconstruct_value() const noexcept {
+    //     using U = std::decay_t<T>;
+    //     if (meow_is_raw_double(bits_)) {
+    //         return static_cast<T>(bits_to_double(bits_));
+    //     } else {
+    //         if (get_tag() == 0) {
+    //             return (is_double_like<U>::value) ? std::numeric_limits<double>::quiet_NaN() : U{};
+    //         }
+    //         return decode_payload_to_value<U>(get_payload());
+    //     }
+    // }
+
     template <typename T>
     MEOW_ALWAYS_INLINE T reconstruct_value() const noexcept {
         using U = std::decay_t<T>;
         if (meow_is_raw_double(bits_)) {
-            return static_cast<T>(bits_to_double(bits_));
+            if constexpr (is_double_like<U>::value) {
+                return static_cast<T>(bits_to_double(bits_));
+            } else {
+                return T{};
+            }
         } else {
             if (get_tag() == 0) {
                 return (is_double_like<U>::value) ? std::numeric_limits<double>::quiet_NaN() : U{};
             }
-            return decode_payload_to_value<U>(get_payload());
+            if constexpr (!is_double_like<U>::value) {
+                return decode_payload_to_value<U>(get_payload());
+            } else {
+                return T{};
+            }
         }
     }
+
 
     // visit impl
     template <typename Visitor, std::size_t... Is>

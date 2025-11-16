@@ -13,7 +13,6 @@
 #include "core/definitions.h"
 #include "core/meow_object.h"
 #include "core/type.h"
-#include "core/value.h"
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {

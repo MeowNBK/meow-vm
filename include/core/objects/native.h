@@ -12,7 +12,6 @@
 #include "common/pch.h"
 #include "core/definitions.h"
 #include "core/meow_object.h"
-#include "core/value.h"
 
 #include "utils/types/variant.h"
 
