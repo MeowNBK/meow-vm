@@ -7,56 +7,21 @@ Preset CMake variables:
   CMAKE_CXX_FLAGS_DEBUG="-g -O0 -Wall -Wextra -Wpedantic  -fmax-errors=5 -fno-omit-frame-pointer"
   CMAKE_EXPORT_COMPILE_COMMANDS="YES"
 
--- The CXX compiler identification is Clang 20.1.8
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /usr/bin/clang++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
 -- PCH: Found /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/common/pch.h -> Enabling precompiled headers.
 -- UNITY_BUILD: Enabled for meow-vm (may greatly speed up builds).
--- Configuring done (1.3s)
+-- Configuring done (0.1s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug
 ==> build (ninja -j2)
 [0/2] Re-checking globbed directories...
-[1/4] Building CXX object CMakeFiles/meow-vm.dir/cmake_pch.hxx.pch
+[1/3] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o
 clang++: warning: argument unused during compilation: '-fmax-errors=5' [-Wunused-command-line-argument]
-[2/4] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o
+[2/3] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o
 clang++: warning: argument unused during compilation: '-fmax-errors=5' [-Wunused-command-line-argument]
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/core/objects.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:7:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:46:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   46 |         return meow::core::value_t();
-      |                ^~~~~~~~~~~~~~~~~~~~~
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:54:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   54 |         return meow::core::value_t();
-      |                ^~~~~~~~~~~~~~~~~~~~~
-2 warnings generated.
-[3/4] Building CXX object CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o
-clang++: warning: argument unused during compilation: '-fmax-errors=5' [-Wunused-command-line-argument]
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/memory/memory_manager.h:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects.h:7:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:46:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   46 |         return meow::core::value_t();
-      |                ^~~~~~~~~~~~~~~~~~~~~
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/objects/native.h:54:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   54 |         return meow::core::value_t();
-      |                ^~~~~~~~~~~~~~~~~~~~~
 In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:231:13: warning: enumeration value 'TOTAL_TOKENS' not handled in switch [-Wswitch]
   231 |     switch (tk.type) {
       |             ^~~~~~~
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:13:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:25:98: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   25 |     binary_dispatch_table_[+ADD][+Int][+Int] = [](param_t lhs, param_t rhs) -> return_t { return Value(lhs.as_int() + rhs.as_int()); };
-      |                                                                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:28:16: warning: returning reference to local temporary object [-Wreturn-stack-address]
-   28 |         return Value(lhs.as_float() + rhs.as_float());
-      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:16:
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:895:30: warning: unused variable 'reg' [-Wunused-variable]
   895 |                     uint16_t reg = READ_U16();
@@ -64,285 +29,37 @@ In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/f
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:165:16: warning: unused variable 'frame' [-Wunused-variable]
   165 |     CallFrame* frame = context_->current_frame_;
       |                ^~~~~
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:71:31: warning: inline function 'meow::core::Value::is_string' is not defined [-Wundefined-inline]
-   71 |     [[nodiscard]] inline bool is_string() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:187:19: note: used here
-  187 |             if (c.is_string()) {
-      |                   ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:95:35: warning: inline function 'meow::core::Value::as_string' is not defined [-Wundefined-inline]
-   95 |     [[nodiscard]] inline string_t as_string() const noexcept;
-      |                                   ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:188:28: note: used here
-  188 |                 auto s = c.as_string()->c_str();
-      |                            ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:70:31: warning: inline function 'meow::core::Value::is_array' is not defined [-Wundefined-inline]
-   70 |     [[nodiscard]] inline bool is_array() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:130:15: note: used here
-  130 |     if (value.is_array()) return !value.as_array()->empty();
-      |               ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:94:34: warning: inline function 'meow::core::Value::as_array' is not defined [-Wundefined-inline]
-   94 |     [[nodiscard]] inline array_t as_array() const noexcept;
-      |                                  ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:130:41: note: used here
-  130 |     if (value.is_array()) return !value.as_array()->empty();
-      |                                         ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:72:31: warning: inline function 'meow::core::Value::is_hash_table' is not defined [-Wundefined-inline]
-   72 |     [[nodiscard]] inline bool is_hash_table() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:131:15: note: used here
-  131 |     if (value.is_hash_table()) return !value.as_hash_table()->empty();
-      |               ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:96:39: warning: inline function 'meow::core::Value::as_hash_table' is not defined [-Wundefined-inline]
-   96 |     [[nodiscard]] inline hash_table_t as_hash_table() const noexcept;
-      |                                       ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:131:46: note: used here
-  131 |     if (value.is_hash_table()) return !value.as_hash_table()->empty();
-      |                                              ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:98:34: warning: inline function 'meow::core::Value::as_proto' is not defined [-Wundefined-inline]
-   98 |     [[nodiscard]] inline proto_t as_proto() const noexcept;
-      |                                  ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:365:57: note: used here
-  365 |                     proto_t proto = CONSTANT(proto_idx).as_proto();
-      |                                                         ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:76:31: warning: inline function 'meow::core::Value::is_native_fn' is not defined [-Wundefined-inline]
-   76 |     [[nodiscard]] inline bool is_native_fn() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:436:32: note: used here
-  436 |                     if (callee.is_native_fn()) {
-      |                                ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:100:38: warning: inline function 'meow::core::Value::as_native_fn' is not defined [-Wundefined-inline]
-  100 |     [[nodiscard]] inline native_fn_t as_native_fn() const noexcept;
-      |                                      ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:437:53: note: used here
-  437 |                         native_fn_t native = callee.as_native_fn();
-      |                                                     ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:75:31: warning: inline function 'meow::core::Value::is_function' is not defined [-Wundefined-inline]
-   75 |     [[nodiscard]] inline bool is_function() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:463:32: note: used here
-  463 |                     if (callee.is_function()) {
-      |                                ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:99:37: warning: inline function 'meow::core::Value::as_function' is not defined [-Wundefined-inline]
-   99 |     [[nodiscard]] inline function_t as_function() const noexcept;
-      |                                     ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:465:50: note: used here
-  465 |                         closure_to_call = callee.as_function();
-      |                                                  ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:79:31: warning: inline function 'meow::core::Value::is_bound_method' is not defined [-Wundefined-inline]
-   79 |     [[nodiscard]] inline bool is_bound_method() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:466:39: note: used here
-  466 |                     } else if (callee.is_bound_method()) {
-      |                                       ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:103:41: warning: inline function 'meow::core::Value::as_bound_method' is not defined [-Wundefined-inline]
-  103 |     [[nodiscard]] inline bound_method_t as_bound_method() const noexcept;
-      |                                         ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:468:55: note: used here
-  468 |                         bound_method_t bound = callee.as_bound_method();
-      |                                                       ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:77:31: warning: inline function 'meow::core::Value::is_class' is not defined [-Wundefined-inline]
-   77 |     [[nodiscard]] inline bool is_class() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:471:39: note: used here
-  471 |                     } else if (callee.is_class()) {
-      |                                       ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:101:34: warning: inline function 'meow::core::Value::as_class' is not defined [-Wundefined-inline]
-  101 |     [[nodiscard]] inline class_t as_class() const noexcept;
-      |                                  ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:474:44: note: used here
-  474 |                         class_t k = callee.as_class();
-      |                                            ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:78:31: warning: inline function 'meow::core::Value::is_instance' is not defined [-Wundefined-inline]
-   78 |     [[nodiscard]] inline bool is_instance() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:763:29: note: used here
-  763 |                     if (obj.is_instance()) {
-      |                             ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:102:37: warning: inline function 'meow::core::Value::as_instance' is not defined [-Wundefined-inline]
-  102 |     [[nodiscard]] inline instance_t as_instance() const noexcept;
-      |                                     ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:764:47: note: used here
-  764 |                         instance_t inst = obj.as_instance();
-      |                                               ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:80:31: warning: inline function 'meow::core::Value::is_module' is not defined [-Wundefined-inline]
-   80 |     [[nodiscard]] inline bool is_module() const noexcept;
-      |                               ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:785:29: note: used here
-  785 |                     if (obj.is_module()) {
-      |                             ^
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:4:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/module/loader/parser.cpp:1:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/module/loader/parser.h:7:
-In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/chunk.h:5:
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/core/value.h:104:35: warning: inline function 'meow::core::Value::as_module' is not defined [-Wundefined-inline]
-  104 |     [[nodiscard]] inline module_t as_module() const noexcept;
-      |                                   ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:786:44: note: used here
-  786 |                         module_t mod = obj.as_module();
-      |                                            ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:85:11: warning: unused type alias 'u8' [-Wunused-local-typedef]
+   85 |     using u8 = uint8_t;
+      |           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:91:11: warning: unused type alias 'i16' [-Wunused-local-typedef]
+   91 |     using i16 = int16_t;
+      |           ^
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:90:11: warning: unused type alias 'i8' [-Wunused-local-typedef]
+   90 |     using i8 = int8_t;
+      |           ^
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:96:11: warning: unused type alias 'f64' [-Wunused-local-typedef]
    96 |     using f64 = double;
       |           ^
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:95:11: warning: unused type alias 'f32' [-Wunused-local-typedef]
    95 |     using f32 = float;
       |           ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:90:11: warning: unused type alias 'i8' [-Wunused-local-typedef]
-   90 |     using i8 = int8_t;
-      |           ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:91:11: warning: unused type alias 'i16' [-Wunused-local-typedef]
-   91 |     using i16 = int16_t;
-      |           ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:92:11: warning: unused type alias 'i32' [-Wunused-local-typedef]
-   92 |     using i32 = int32_t;
-      |           ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:85:11: warning: unused type alias 'u8' [-Wunused-local-typedef]
-   85 |     using u8 = uint8_t;
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:87:11: warning: unused type alias 'u32' [-Wunused-local-typedef]
+   87 |     using u32 = uint32_t;
       |           ^
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:93:11: warning: unused type alias 'i64' [-Wunused-local-typedef]
    93 |     using i64 = int64_t;
       |           ^
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:87:11: warning: unused type alias 'u32' [-Wunused-local-typedef]
-   87 |     using u32 = uint32_t;
+/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:92:11: warning: unused type alias 'i32' [-Wunused-local-typedef]
+   92 |     using i32 = int32_t;
       |           ^
 In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/build/fast-debug/CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx:13:
 In file included from /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/runtime/operator_dispatcher.cpp:1:
 /home/lazycat/Shared/Projects/cpp_projects/meow-vm/include/runtime/operator_dispatcher.h:54:28: warning: private field 'heap_' is not used [-Wunused-private-field]
    54 |     memory::MemoryManager* heap_;
       |                            ^
-35 warnings generated.
-[4/4] Linking CXX executable bin/meow-vm
-FAILED: bin/meow-vm 
-: && /usr/bin/clang++ -g -O0 -Wall -Wextra -Wpedantic  -fmax-errors=5 -fno-omit-frame-pointer  CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o CMakeFiles/meow-vm.dir/Unity/unity_0_cxx.cxx.o -o bin/meow-vm   && :
+12 warnings generated.
+[3/3] Linking CXX executable bin/meow-vm
 clang++: warning: argument unused during compilation: '-fmax-errors=5' [-Wunused-command-line-argument]
-/usr/bin/ld: CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o: in function `meow::vm::MeowVM::run()':
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:365:(.text+0x131e7): undefined reference to `meow::core::Value::as_proto() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:436:(.text+0x138ec): undefined reference to `meow::core::Value::is_native_fn() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:437:(.text+0x13901): undefined reference to `meow::core::Value::as_native_fn() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:463:(.text+0x13afc): undefined reference to `meow::core::Value::is_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:465:(.text+0x13b0e): undefined reference to `meow::core::Value::as_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:466:(.text+0x13b26): undefined reference to `meow::core::Value::is_bound_method() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:468:(.text+0x13b38): undefined reference to `meow::core::Value::as_bound_method() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:471:(.text+0x13b76): undefined reference to `meow::core::Value::is_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:474:(.text+0x13b8b): undefined reference to `meow::core::Value::as_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:487:(.text+0x13cf2): undefined reference to `meow::core::Value::is_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:488:(.text+0x13d04): undefined reference to `meow::core::Value::as_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:588:(.text+0x14695): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:616:(.text+0x14b2b): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:619:(.text+0x14bf2): undefined reference to `meow::core::Value::as_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:624:(.text+0x14d32): undefined reference to `meow::core::Value::is_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:626:(.text+0x14de6): undefined reference to `meow::core::Value::as_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:655:(.text+0x153f1): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:658:(.text+0x154b8): undefined reference to `meow::core::Value::as_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:664:(.text+0x155c6): undefined reference to `meow::core::Value::is_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:666:(.text+0x1567a): undefined reference to `meow::core::Value::as_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:681:(.text+0x15867): undefined reference to `meow::core::Value::is_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:682:(.text+0x1587c): undefined reference to `meow::core::Value::as_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:689:(.text+0x15987): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:690:(.text+0x1599c): undefined reference to `meow::core::Value::as_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:714:(.text+0x15cbd): undefined reference to `meow::core::Value::is_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:715:(.text+0x15cd2): undefined reference to `meow::core::Value::as_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:720:(.text+0x15db8): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:721:(.text+0x15dcd): undefined reference to `meow::core::Value::as_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:752:(.text+0x16287): undefined reference to `meow::core::Value::is_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:753:(.text+0x1633d): undefined reference to `meow::core::Value::as_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:763:(.text+0x164e5): undefined reference to `meow::core::Value::is_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:764:(.text+0x164fa): undefined reference to `meow::core::Value::as_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:774:(.text+0x16610): undefined reference to `meow::core::Value::as_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:785:(.text+0x166c5): undefined reference to `meow::core::Value::is_module() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:786:(.text+0x166da): undefined reference to `meow::core::Value::as_module() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:808:(.text+0x16942): undefined reference to `meow::core::Value::is_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:809:(.text+0x16954): undefined reference to `meow::core::Value::as_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:822:(.text+0x16b6f): undefined reference to `meow::core::Value::is_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:823:(.text+0x16c0e): undefined reference to `meow::core::Value::is_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:824:(.text+0x16cad): undefined reference to `meow::core::Value::as_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:832:(.text+0x16dc4): undefined reference to `meow::core::Value::is_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:832:(.text+0x16dd6): undefined reference to `meow::core::Value::is_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:835:(.text+0x16e75): undefined reference to `meow::core::Value::as_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:836:(.text+0x16e88): undefined reference to `meow::core::Value::as_class() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:854:(.text+0x16f99): undefined reference to `meow::core::Value::is_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:859:(.text+0x17038): undefined reference to `meow::core::Value::as_instance() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:874:(.text+0x171ec): undefined reference to `meow::core::Value::is_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:882:(.text+0x172b0): undefined reference to `meow::core::Value::as_function() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:967:(.text+0x17bca): undefined reference to `meow::core::Value::is_module() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:968:(.text+0x17c69): undefined reference to `meow::core::Value::as_module() const'
-/usr/bin/ld: CMakeFiles/meow-vm.dir/Unity/unity_1_cxx.cxx.o: in function `is_truthy(meow::core::Value const&)':
-/home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:130:(.text._Z9is_truthyRKN4meow4core5ValueE[_Z9is_truthyRKN4meow4core5ValueE]+0xea): undefined reference to `meow::core::Value::is_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:130:(.text._Z9is_truthyRKN4meow4core5ValueE[_Z9is_truthyRKN4meow4core5ValueE]+0xf9): undefined reference to `meow::core::Value::as_array() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:131:(.text._Z9is_truthyRKN4meow4core5ValueE[_Z9is_truthyRKN4meow4core5ValueE]+0x113): undefined reference to `meow::core::Value::is_hash_table() const'
-/usr/bin/ld: /home/lazycat/Shared/Projects/cpp_projects/meow-vm/src/vm/meow_vm.cpp:131:(.text._Z9is_truthyRKN4meow4core5ValueE[_Z9is_truthyRKN4meow4core5ValueE]+0x122): undefined reference to `meow::core::Value::as_hash_table() const'
-clang++: error: linker command failed with exit code 1 (use -v to see invocation)
-ninja: build stopped: subcommand failed.
+
+Build finished. Executable at build/fast-debug/bin/meow-vm
