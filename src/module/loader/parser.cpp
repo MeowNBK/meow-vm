@@ -1,8 +1,8 @@
 #include "module/loader/parser.h"
 #include "core/objects/function.h"
 #include "core/objects/string.h"
-#include "module/loader/lexer.h"
 #include "memory/memory_manager.h"
+#include "module/loader/lexer.h"
 #include "runtime/chunk.h"
 
 namespace meow::loader {
@@ -11,74 +11,71 @@ using namespace meow::runtime;
 using namespace meow::memory;
 using namespace meow::core::objects;
 
-static const std::unordered_map<std::string_view, OpCode> OP_MAP = {
-    {"LOAD_CONST", OpCode::LOAD_CONST},
-    {"LOAD_NULL", OpCode::LOAD_NULL},
-    {"LOAD_TRUE", OpCode::LOAD_TRUE},
-    {"LOAD_FALSE", OpCode::LOAD_FALSE},
-    {"LOAD_INT", OpCode::LOAD_INT},
-    {"LOAD_FLOAT", OpCode::LOAD_FLOAT},
-    {"MOVE", OpCode::MOVE},
-    {"ADD", OpCode::ADD},
-    {"SUB", OpCode::SUB},
-    {"MUL", OpCode::MUL},
-    {"DIV", OpCode::DIV},
-    {"MOD", OpCode::MOD},
-    {"POW", OpCode::POW},
-    {"EQ", OpCode::EQ},
-    {"NEQ", OpCode::NEQ},
-    {"GT", OpCode::GT},
-    {"GE", OpCode::GE},
-    {"LT", OpCode::LT},
-    {"LE", OpCode::LE},
-    {"NEG", OpCode::NEG},
-    {"NOT", OpCode::NOT},
-    {"GET_GLOBAL", OpCode::GET_GLOBAL},
-    {"SET_GLOBAL", OpCode::SET_GLOBAL},
-    {"GET_UPVALUE", OpCode::GET_UPVALUE},
-    {"SET_UPVALUE", OpCode::SET_UPVALUE},
-    {"CLOSURE", OpCode::CLOSURE},
-    {"CLOSE_UPVALUES", OpCode::CLOSE_UPVALUES},
-    {"JUMP", OpCode::JUMP},
-    {"JUMP_IF_FALSE", OpCode::JUMP_IF_FALSE},
-    {"JUMP_IF_TRUE", OpCode::JUMP_IF_TRUE},
-    {"CALL", OpCode::CALL},
-    {"CALL_VOID", OpCode::CALL_VOID},
-    {"RETURN", OpCode::RETURN},
-    {"HALT", OpCode::HALT},
-    {"NEW_ARRAY", OpCode::NEW_ARRAY},
-    {"NEW_HASH", OpCode::NEW_HASH},
-    {"GET_INDEX", OpCode::GET_INDEX},
-    {"SET_INDEX", OpCode::SET_INDEX},
-    {"GET_KEYS", OpCode::GET_KEYS},
-    {"GET_VALUES", OpCode::GET_VALUES},
-    {"NEW_CLASS", OpCode::NEW_CLASS},
-    {"NEW_INSTANCE", OpCode::NEW_INSTANCE},
-    {"GET_PROP", OpCode::GET_PROP},
-    {"SET_PROP", OpCode::SET_PROP},
-    {"SET_METHOD", OpCode::SET_METHOD},
-    {"INHERIT", OpCode::INHERIT},
-    {"GET_SUPER", OpCode::GET_SUPER},
-    {"BIT_AND", OpCode::BIT_AND},
-    {"BIT_OR", OpCode::BIT_OR},
-    {"BIT_XOR", OpCode::BIT_XOR},
-    {"BIT_NOT", OpCode::BIT_NOT},
-    {"LSHIFT", OpCode::LSHIFT},
-    {"RSHIFT", OpCode::RSHIFT},
-    {"THROW", OpCode::THROW},
-    {"SETUP_TRY", OpCode::SETUP_TRY},
-    {"POP_TRY", OpCode::POP_TRY},
-    {"IMPORT_MODULE", OpCode::IMPORT_MODULE},
-    {"EXPORT", OpCode::EXPORT},
-    {"GET_EXPORT", OpCode::GET_EXPORT},
-    {"IMPORT_ALL", OpCode::IMPORT_ALL}};
+static const std::unordered_map<std::string_view, OpCode> OP_MAP = {{"LOAD_CONST", OpCode::LOAD_CONST},
+                                                                    {"LOAD_NULL", OpCode::LOAD_NULL},
+                                                                    {"LOAD_TRUE", OpCode::LOAD_TRUE},
+                                                                    {"LOAD_FALSE", OpCode::LOAD_FALSE},
+                                                                    {"LOAD_INT", OpCode::LOAD_INT},
+                                                                    {"LOAD_FLOAT", OpCode::LOAD_FLOAT},
+                                                                    {"MOVE", OpCode::MOVE},
+                                                                    {"ADD", OpCode::ADD},
+                                                                    {"SUB", OpCode::SUB},
+                                                                    {"MUL", OpCode::MUL},
+                                                                    {"DIV", OpCode::DIV},
+                                                                    {"MOD", OpCode::MOD},
+                                                                    {"POW", OpCode::POW},
+                                                                    {"EQ", OpCode::EQ},
+                                                                    {"NEQ", OpCode::NEQ},
+                                                                    {"GT", OpCode::GT},
+                                                                    {"GE", OpCode::GE},
+                                                                    {"LT", OpCode::LT},
+                                                                    {"LE", OpCode::LE},
+                                                                    {"NEG", OpCode::NEG},
+                                                                    {"NOT", OpCode::NOT},
+                                                                    {"GET_GLOBAL", OpCode::GET_GLOBAL},
+                                                                    {"SET_GLOBAL", OpCode::SET_GLOBAL},
+                                                                    {"GET_UPVALUE", OpCode::GET_UPVALUE},
+                                                                    {"SET_UPVALUE", OpCode::SET_UPVALUE},
+                                                                    {"CLOSURE", OpCode::CLOSURE},
+                                                                    {"CLOSE_UPVALUES", OpCode::CLOSE_UPVALUES},
+                                                                    {"JUMP", OpCode::JUMP},
+                                                                    {"JUMP_IF_FALSE", OpCode::JUMP_IF_FALSE},
+                                                                    {"JUMP_IF_TRUE", OpCode::JUMP_IF_TRUE},
+                                                                    {"CALL", OpCode::CALL},
+                                                                    {"CALL_VOID", OpCode::CALL_VOID},
+                                                                    {"RETURN", OpCode::RETURN},
+                                                                    {"HALT", OpCode::HALT},
+                                                                    {"NEW_ARRAY", OpCode::NEW_ARRAY},
+                                                                    {"NEW_HASH", OpCode::NEW_HASH},
+                                                                    {"GET_INDEX", OpCode::GET_INDEX},
+                                                                    {"SET_INDEX", OpCode::SET_INDEX},
+                                                                    {"GET_KEYS", OpCode::GET_KEYS},
+                                                                    {"GET_VALUES", OpCode::GET_VALUES},
+                                                                    {"NEW_CLASS", OpCode::NEW_CLASS},
+                                                                    {"NEW_INSTANCE", OpCode::NEW_INSTANCE},
+                                                                    {"GET_PROP", OpCode::GET_PROP},
+                                                                    {"SET_PROP", OpCode::SET_PROP},
+                                                                    {"SET_METHOD", OpCode::SET_METHOD},
+                                                                    {"INHERIT", OpCode::INHERIT},
+                                                                    {"GET_SUPER", OpCode::GET_SUPER},
+                                                                    {"BIT_AND", OpCode::BIT_AND},
+                                                                    {"BIT_OR", OpCode::BIT_OR},
+                                                                    {"BIT_XOR", OpCode::BIT_XOR},
+                                                                    {"BIT_NOT", OpCode::BIT_NOT},
+                                                                    {"LSHIFT", OpCode::LSHIFT},
+                                                                    {"RSHIFT", OpCode::RSHIFT},
+                                                                    {"THROW", OpCode::THROW},
+                                                                    {"SETUP_TRY", OpCode::SETUP_TRY},
+                                                                    {"POP_TRY", OpCode::POP_TRY},
+                                                                    {"IMPORT_MODULE", OpCode::IMPORT_MODULE},
+                                                                    {"EXPORT", OpCode::EXPORT},
+                                                                    {"GET_EXPORT", OpCode::GET_EXPORT},
+                                                                    {"IMPORT_ALL", OpCode::IMPORT_ALL}};
 
-TextParser::TextParser(meow::memory::MemoryManager* h, const std::vector<Token>& t,
-                       std::string_view s) noexcept
-    : heap_(h), src_name_(s), toks_(t), ti_(0) {}
-TextParser::TextParser(meow::memory::MemoryManager* h, std::vector<Token>&& t,
-                       std::string_view s) noexcept
-    : heap_(h), src_name_(s), toks_(std::move(t)), ti_(0) {}
+TextParser::TextParser(meow::memory::MemoryManager* h, const std::vector<Token>& t, std::string_view s) noexcept : heap_(h), src_name_(s), toks_(t), ti_(0) {
+}
+TextParser::TextParser(meow::memory::MemoryManager* h, std::vector<Token>&& t, std::string_view s) noexcept : heap_(h), src_name_(s), toks_(std::move(t)), ti_(0) {
+}
 
 const Token& TextParser::cur_tok() const {
     if (ti_ >= toks_.size()) return toks_.back();
@@ -88,7 +85,9 @@ const Token& TextParser::peek_tok(size_t off) const {
     size_t i = ti_ + off;
     return i >= toks_.size() ? toks_.back() : toks_[i];
 }
-bool TextParser::at_end() const { return cur_tok().type == TokenType::END_OF_FILE; }
+bool TextParser::at_end() const {
+    return cur_tok().type == TokenType::END_OF_FILE;
+}
 void TextParser::adv() {
     if (cur_tok().type != TokenType::END_OF_FILE) ++ti_;
 }
@@ -210,8 +209,7 @@ proto_t TextParser::parse_source() {
     // throw std::runtime_error("???");
 }
 
-const std::unordered_map<std::string, meow::core::proto_t>& TextParser::get_finalized_protos()
-    const {
+const std::unordered_map<std::string, meow::core::proto_t>& TextParser::get_finalized_protos() const {
     return final_protos_;
 }
 
@@ -223,10 +221,7 @@ Result<void> TextParser::parse() {
     }
     if (cur_) {
         const Token& lt = toks_[ti_ - 1];
-        return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE,
-                                        "Thiếu chỉ thị '.endfunc' cho hàm '" + cur_->name +
-                                            "' bắt đầu tại dòng " + std::to_string(cur_->dir_line),
-                                        &lt));
+        return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Thiếu chỉ thị '.endfunc' cho hàm '" + cur_->name + "' bắt đầu tại dòng " + std::to_string(cur_->dir_line), &lt));
     }
     return Result<void>::Ok();
 }
@@ -235,73 +230,41 @@ Result<void> TextParser::stmt() {
     const Token& tk = cur_tok();
     switch (tk.type) {
         case TokenType::DIR_FUNC:
-            if (cur_)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::UNEXPECTED_TOKEN, "Không thể định nghĩa hàm lồng nhau.", &tk));
+            if (cur_) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Không thể định nghĩa hàm lồng nhau.", &tk));
             return dir_func();
         case TokenType::DIR_ENDFUNC:
-            if (!cur_)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                           "Chỉ thị '.endfunc' không mong đợi bên ngoài định nghĩa hàm.", &tk));
-            return Result<void>::Err(
-                mkdiag(ErrCode::INTERNAL_ERROR, "Gặp '.endfunc' tại stmt (logic bug).", &tk));
+            if (!cur_) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Chỉ thị '.endfunc' không mong đợi bên ngoài định nghĩa hàm.", &tk));
+            return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "Gặp '.endfunc' tại stmt (logic bug).", &tk));
         case TokenType::DIR_REGISTERS:
         case TokenType::DIR_UPVALUES:
         case TokenType::DIR_CONST:
         case TokenType::DIR_UPVALUE:
-            if (!cur_)
-                return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                                                "Chỉ thị phải nằm trong định nghĩa hàm (.func).",
-                                                &tk));
-            if ((tk.type == TokenType::DIR_CONST || tk.type == TokenType::DIR_UPVALUE) &&
-                (!cur_->regs_defined || !cur_->up_defined))
-                return Result<void>::Err(
-                    mkdiag(ErrCode::MISSING_DIRECTIVE,
-                           "Chỉ thị '.registers' và '.upvalues' phải được định nghĩa trước '" +
-                               std::string(tk.lexeme) + "'.",
-                           &tk));
+            if (!cur_) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Chỉ thị phải nằm trong định nghĩa hàm (.func).", &tk));
+            if ((tk.type == TokenType::DIR_CONST || tk.type == TokenType::DIR_UPVALUE) && (!cur_->regs_defined || !cur_->up_defined))
+                return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Chỉ thị '.registers' và '.upvalues' phải được định nghĩa trước '" + std::string(tk.lexeme) + "'.", &tk));
             if (tk.type == TokenType::DIR_REGISTERS) return dir_registers();
             if (tk.type == TokenType::DIR_UPVALUES) return dir_upvalues();
             if (tk.type == TokenType::DIR_CONST) return dir_const();
             return dir_upvalue();
         case TokenType::LABEL_DEF:
-            if (!cur_)
-                return Result<void>::Err(mkdiag(
-                    ErrCode::UNEXPECTED_TOKEN, "Nhãn phải nằm trong định nghĩa hàm (.func).", &tk));
-            if (!cur_->regs_defined || !cur_->up_defined)
-                return Result<void>::Err(mkdiag(
-                    ErrCode::MISSING_DIRECTIVE,
-                    "Chỉ thị '.registers' và '.upvalues' phải được định nghĩa trước nhãn.", &tk));
+            if (!cur_) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Nhãn phải nằm trong định nghĩa hàm (.func).", &tk));
+            if (!cur_->regs_defined || !cur_->up_defined) return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Chỉ thị '.registers' và '.upvalues' phải được định nghĩa trước nhãn.", &tk));
             return label_def();
         case TokenType::OPCODE:
-            if (!cur_)
-                return Result<void>::Err(mkdiag(
-                    ErrCode::UNEXPECTED_TOKEN, "Lệnh phải nằm trong định nghĩa hàm (.func).", &tk));
-            if (!cur_->regs_defined)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::MISSING_DIRECTIVE,
-                           "Chỉ thị '.registers' phải được định nghĩa trước lệnh đầu tiên.", &tk));
-            if (!cur_->up_defined)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::MISSING_DIRECTIVE,
-                           "Chỉ thị '.upvalues' phải được định nghĩa trước lệnh đầu tiên.", &tk));
+            if (!cur_) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Lệnh phải nằm trong định nghĩa hàm (.func).", &tk));
+            if (!cur_->regs_defined) return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Chỉ thị '.registers' phải được định nghĩa trước lệnh đầu tiên.", &tk));
+            if (!cur_->up_defined) return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Chỉ thị '.upvalues' phải được định nghĩa trước lệnh đầu tiên.", &tk));
             return instr();
         case TokenType::IDENTIFIER:
-            return Result<void>::Err(
-                mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                       "Token không mong đợi. Có thể thiếu directive hoặc opcode?", &tk));
+            return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Token không mong đợi. Có thể thiếu directive hoặc opcode?", &tk));
         case TokenType::NUMBER_INT:
         case TokenType::NUMBER_FLOAT:
         case TokenType::STRING:
-            return Result<void>::Err(
-                mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                       "Giá trị literal không hợp lệ ở đây. Có thể thiếu chỉ thị '.const'?", &tk));
+            return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Giá trị literal không hợp lệ ở đây. Có thể thiếu chỉ thị '.const'?", &tk));
         case TokenType::END_OF_FILE:
             return Result<void>::Ok();
         case TokenType::UNKNOWN:
-            return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT,
-                                            "Token không hợp lệ hoặc ký tự không nhận dạng.", &tk));
+            return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Token không hợp lệ hoặc ký tự không nhận dạng.", &tk));
     }
     return Result<void>::Ok();
 }
@@ -311,15 +274,10 @@ Result<void> TextParser::dir_func() {
     const Token& f = expect_tok(TokenType::DIR_FUNC, "internal");
     const Token& n = expect_tok(TokenType::IDENTIFIER, "internal");
     std::string fname(n.lexeme);
-    if (fname.empty() || (fname[0] != '@' && !std::isalpha(fname[0]) && fname[0] != '_'))
-        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Tên hàm không hợp lệ.", &n));
+    if (fname.empty() || (fname[0] != '@' && !std::isalpha(fname[0]) && fname[0] != '_')) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Tên hàm không hợp lệ.", &n));
     std::string key = (fname[0] == '@') ? fname.substr(1) : fname;
-    if (key.empty())
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_IDENT, "Tên hàm không hợp lệ (chỉ có '@').", &n));
-    if (map_.count(key))
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_IDENT, "Hàm '" + fname + "' đã được định nghĩa.", &n));
+    if (key.empty()) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Tên hàm không hợp lệ (chỉ có '@').", &n));
+    if (map_.count(key)) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Hàm '" + fname + "' đã được định nghĩa.", &n));
     auto [it, ins] = map_.emplace(key, PData{});
     cur_ = &it->second;
     cur_->name = key;
@@ -335,10 +293,7 @@ Result<void> TextParser::dir_func() {
         if (!s.ok) return s;
     }
     // consume .endfunc
-    if (cur_tok().type != TokenType::DIR_ENDFUNC)
-        return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE,
-                                        "Mong đợi '.endfunc' để kết thúc hàm '" + fname + "'.",
-                                        &cur_tok()));
+    if (cur_tok().type != TokenType::DIR_ENDFUNC) return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Mong đợi '.endfunc' để kết thúc hàm '" + fname + "'.", &cur_tok()));
     expect_tok(TokenType::DIR_ENDFUNC, "internal");
     cur_ = nullptr;
     return Result<void>::Ok();
@@ -346,20 +301,13 @@ Result<void> TextParser::dir_func() {
 
 Result<void> TextParser::dir_registers() {
     expect_tok(TokenType::DIR_REGISTERS, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .registers", nullptr));
-    if (cur_->regs_defined)
-        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT,
-                                        "Chỉ thị '.registers' đã được định nghĩa cho hàm này.",
-                                        &cur_tok()));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .registers", nullptr));
+    if (cur_->regs_defined) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Chỉ thị '.registers' đã được định nghĩa cho hàm này.", &cur_tok()));
     const Token& n = expect_tok(TokenType::NUMBER_INT, "internal");
     uint64_t v;
     auto r = std::from_chars(n.lexeme.data(), n.lexeme.data() + n.lexeme.size(), v);
-    if (r.ec != std::errc() || r.ptr != n.lexeme.data() + n.lexeme.size() ||
-        v > std::numeric_limits<size_t>::max())
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_NUMBER, "Số lượng thanh ghi không hợp lệ.", &n));
+    if (r.ec != std::errc() || r.ptr != n.lexeme.data() + n.lexeme.size() || v > std::numeric_limits<size_t>::max())
+        return Result<void>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Số lượng thanh ghi không hợp lệ.", &n));
     cur_->nreg = static_cast<size_t>(v);
     cur_->regs_defined = true;
     return Result<void>::Ok();
@@ -367,20 +315,13 @@ Result<void> TextParser::dir_registers() {
 
 Result<void> TextParser::dir_upvalues() {
     expect_tok(TokenType::DIR_UPVALUES, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .upvalues", nullptr));
-    if (cur_->up_defined)
-        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT,
-                                        "Chỉ thị '.upvalues' đã được định nghĩa cho hàm này.",
-                                        &cur_tok()));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .upvalues", nullptr));
+    if (cur_->up_defined) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Chỉ thị '.upvalues' đã được định nghĩa cho hàm này.", &cur_tok()));
     const Token& n = expect_tok(TokenType::NUMBER_INT, "internal");
     uint64_t v;
     auto r = std::from_chars(n.lexeme.data(), n.lexeme.data() + n.lexeme.size(), v);
-    if (r.ec != std::errc() || r.ptr != n.lexeme.data() + n.lexeme.size() ||
-        v > std::numeric_limits<size_t>::max())
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_NUMBER, "Số lượng upvalue không hợp lệ.", &n));
+    if (r.ec != std::errc() || r.ptr != n.lexeme.data() + n.lexeme.size() || v > std::numeric_limits<size_t>::max())
+        return Result<void>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Số lượng upvalue không hợp lệ.", &n));
     cur_->nup = static_cast<size_t>(v);
     cur_->updesc.resize(cur_->nup);
     cur_->up_defined = true;
@@ -389,9 +330,7 @@ Result<void> TextParser::dir_upvalues() {
 
 Result<void> TextParser::dir_const() {
     expect_tok(TokenType::DIR_CONST, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .const", nullptr));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .const", nullptr));
     auto rv = parse_const_val();
     if (!rv.ok) return Result<void>::Err(rv.diag);
     cur_->add_const(rv.val);
@@ -400,20 +339,13 @@ Result<void> TextParser::dir_const() {
 
 Result<void> TextParser::dir_upvalue() {
     expect_tok(TokenType::DIR_UPVALUE, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .upvalue", nullptr));
-    if (!cur_->up_defined)
-        return Result<void>::Err(
-            mkdiag(ErrCode::MISSING_DIRECTIVE,
-                   "Chỉ thị '.upvalues' phải được định nghĩa trước '.upvalue'.", &toks_[ti_ - 1]));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in .upvalue", nullptr));
+    if (!cur_->up_defined) return Result<void>::Err(mkdiag(ErrCode::MISSING_DIRECTIVE, "Chỉ thị '.upvalues' phải được định nghĩa trước '.upvalue'.", &toks_[ti_ - 1]));
     const Token& idxT = expect_tok(TokenType::NUMBER_INT, "internal");
     uint64_t idx;
     auto r = std::from_chars(idxT.lexeme.data(), idxT.lexeme.data() + idxT.lexeme.size(), idx);
     if (r.ec != std::errc() || r.ptr != idxT.lexeme.data() + idxT.lexeme.size() || idx >= cur_->nup)
-        return Result<void>::Err(
-            mkdiag(ErrCode::OUT_OF_RANGE,
-                   "Chỉ số upvalue không hợp lệ hoặc vượt quá số lượng đã khai báo.", &idxT));
+        return Result<void>::Err(mkdiag(ErrCode::OUT_OF_RANGE, "Chỉ số upvalue không hợp lệ hoặc vượt quá số lượng đã khai báo.", &idxT));
     const Token& typT = expect_tok(TokenType::IDENTIFIER, "internal");
     bool is_local;
     if (typT.lexeme == "local")
@@ -421,33 +353,22 @@ Result<void> TextParser::dir_upvalue() {
     else if (typT.lexeme == "parent")
         is_local = false;
     else
-        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT,
-                                        "Loại upvalue không hợp lệ. Phải là 'local' hoặc 'parent'.",
-                                        &typT));
+        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Loại upvalue không hợp lệ. Phải là 'local' hoặc 'parent'.", &typT));
     const Token& slotT = expect_tok(TokenType::NUMBER_INT, "internal");
     uint64_t si;
     auto r2 = std::from_chars(slotT.lexeme.data(), slotT.lexeme.data() + slotT.lexeme.size(), si);
-    if (r2.ec != std::errc() || r2.ptr != slotT.lexeme.data() + slotT.lexeme.size())
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_NUMBER, "Chỉ số slot không hợp lệ.", &slotT));
+    if (r2.ec != std::errc() || r2.ptr != slotT.lexeme.data() + slotT.lexeme.size()) return Result<void>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Chỉ số slot không hợp lệ.", &slotT));
     size_t slot = static_cast<size_t>(si);
-    if (is_local && slot >= cur_->nreg)
-        return Result<void>::Err(mkdiag(ErrCode::OUT_OF_RANGE,
-                                        "Chỉ số slot cho upvalue 'local' vượt quá số thanh ghi.",
-                                        &slotT));
+    if (is_local && slot >= cur_->nreg) return Result<void>::Err(mkdiag(ErrCode::OUT_OF_RANGE, "Chỉ số slot cho upvalue 'local' vượt quá số thanh ghi.", &slotT));
     cur_->updesc[static_cast<size_t>(idx)] = UpvalueDesc(is_local, slot);
     return Result<void>::Ok();
 }
 
 Result<void> TextParser::label_def() {
     const Token& L = expect_tok(TokenType::LABEL_DEF, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in label", nullptr));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in label", nullptr));
     std::string_view nm = L.lexeme;
-    if (cur_->labels.count(nm))
-        return Result<void>::Err(
-            mkdiag(ErrCode::INVALID_IDENT, "Nhãn đã được định nghĩa trong hàm này.", &L));
+    if (cur_->labels.count(nm)) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Nhãn đã được định nghĩa trong hàm này.", &L));
     cur_->labels[nm] = cur_->code.size();
     return Result<void>::Ok();
 }
@@ -455,12 +376,9 @@ Result<void> TextParser::label_def() {
 /* ---------- instruction parsing (Result-based) ---------- */
 Result<void> TextParser::instr() {
     const Token& opT = expect_tok(TokenType::OPCODE, "internal");
-    if (!cur_)
-        return Result<void>::Err(
-            mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in instr", nullptr));
+    if (!cur_) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "current proto null in instr", nullptr));
     auto it = OP_MAP.find(opT.lexeme);
-    if (it == OP_MAP.end())
-        return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Opcode không hợp lệ.", &opT));
+    if (it == OP_MAP.end()) return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Opcode không hợp lệ.", &opT));
     OpCode op = it->second;
     PData& d = *cur_;
     size_t pos = d.code.size();
@@ -472,8 +390,7 @@ Result<void> TextParser::instr() {
         uint64_t v;
         auto r = std::from_chars(tk.lexeme.data(), tk.lexeme.data() + tk.lexeme.size(), v);
         if (r.ec != std::errc() || r.ptr != tk.lexeme.data() + tk.lexeme.size() || v > UINT16_MAX)
-            return Result<uint16_t>::Err(mkdiag(
-                ErrCode::OUT_OF_RANGE, "Đối số phải là số nguyên 16-bit không dấu hợp lệ.", &tk));
+            return Result<uint16_t>::Err(mkdiag(ErrCode::OUT_OF_RANGE, "Đối số phải là số nguyên 16-bit không dấu hợp lệ.", &tk));
         return Result<uint16_t>::Ok(static_cast<uint16_t>(v));
     };
     auto rd_i64 = [&]() -> Result<int64_t> {
@@ -488,37 +405,26 @@ Result<void> TextParser::instr() {
             adv();
             try {
                 double dv = std::stod(std::string(tk.lexeme));
-                if (dv > static_cast<double>(std::numeric_limits<int64_t>::max()) ||
-                    dv < static_cast<double>(std::numeric_limits<int64_t>::min()))
-                    return Result<int64_t>::Err(mkdiag(
-                        ErrCode::OUT_OF_RANGE,
-                        "Giá trị số thực quá lớn/nhỏ để chuyển đổi thành số nguyên 64-bit.", &tk));
+                if (dv > static_cast<double>(std::numeric_limits<int64_t>::max()) || dv < static_cast<double>(std::numeric_limits<int64_t>::min()))
+                    return Result<int64_t>::Err(mkdiag(ErrCode::OUT_OF_RANGE, "Giá trị số thực quá lớn/nhỏ để chuyển đổi thành số nguyên 64-bit.", &tk));
                 return Result<int64_t>::Ok(static_cast<int64_t>(dv));
             } catch (...) {
-                return Result<int64_t>::Err(
-                    mkdiag(ErrCode::INVALID_NUMBER,
-                           "Không thể chuyển đổi số thực thành số nguyên 64-bit.", &tk));
+                return Result<int64_t>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Không thể chuyển đổi số thực thành số nguyên 64-bit.", &tk));
             }
         }
-        return Result<int64_t>::Err(
-            mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi đối số là số nguyên 64-bit.", &tk));
+        return Result<int64_t>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi đối số là số nguyên 64-bit.", &tk));
     };
     auto rd_f64 = [&]() -> Result<double> {
         const Token& tk = cur_tok();
-        if (tk.type != TokenType::NUMBER_FLOAT && tk.type != TokenType::NUMBER_INT)
-            return Result<double>::Err(
-                mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi đối số là số thực hoặc số nguyên.", &tk));
+        if (tk.type != TokenType::NUMBER_FLOAT && tk.type != TokenType::NUMBER_INT) return Result<double>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi đối số là số thực hoặc số nguyên.", &tk));
         adv();
         try {
             size_t p = 0;
             double v = std::stod(std::string(tk.lexeme), &p);
-            if (p != tk.lexeme.size())
-                return Result<double>::Err(
-                    mkdiag(ErrCode::INVALID_NUMBER, "Đối số số thực không hợp lệ.", &tk));
+            if (p != tk.lexeme.size()) return Result<double>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Đối số số thực không hợp lệ.", &tk));
             return Result<double>::Ok(v);
         } catch (...) {
-            return Result<double>::Err(
-                mkdiag(ErrCode::INVALID_NUMBER, "Đối số số thực không hợp lệ.", &tk));
+            return Result<double>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Đối số số thực không hợp lệ.", &tk));
         }
     };
     auto rd_addr_or_lbl = [&]() -> Result<void> {
@@ -536,8 +442,7 @@ Result<void> TextParser::instr() {
             d.pending.emplace_back(pos, patch_at, tk.lexeme);
             return Result<void>::Ok();
         } else
-            return Result<void>::Err(
-                mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi nhãn hoặc địa chỉ cho lệnh nhảy.", &tk));
+            return Result<void>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Mong đợi nhãn hoặc địa chỉ cho lệnh nhảy.", &tk));
     };
 
     // big switch like before, but we use Results to propagate errors
@@ -561,10 +466,7 @@ Result<void> TextParser::instr() {
             auto rc = parse_const_val();
             if (!rc.ok) return Result<void>::Err(rc.diag);
             size_t idx = d.add_const(rc.val);
-            if (idx > UINT16_MAX)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::TOO_MANY_CONST,
-                           "Quá nhiều hằng số, chỉ số vượt quá giới hạn 16-bit.", &toks_[ti_ - 1]));
+            if (idx > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số, chỉ số vượt quá giới hạn 16-bit.", &toks_[ti_ - 1]));
             d.wu16(r.val);
             d.wu16(static_cast<uint16_t>(idx));
             return Result<void>::Ok();
@@ -579,16 +481,11 @@ Result<void> TextParser::instr() {
             if (!r.ok) return Result<void>::Err(r.diag);
             const Token& nt = cur_tok();
             if (!(nt.type == TokenType::STRING || nt.type == TokenType::IDENTIFIER))
-                return Result<void>::Err(
-                    mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                           "Mong đợi tên (chuỗi hoặc @Proto) làm đối số thứ hai.", &nt));
+                return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi tên (chuỗi hoặc @Proto) làm đối số thứ hai.", &nt));
             auto rv = parse_const_val();
             if (!rv.ok) return Result<void>::Err(rv.diag);
             size_t ii = d.add_const(rv.val);
-            if (ii > UINT16_MAX)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::TOO_MANY_CONST,
-                           "Quá nhiều hằng số (tên), chỉ số vượt quá giới hạn 16-bit.", &nt));
+            if (ii > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên), chỉ số vượt quá giới hạn 16-bit.", &nt));
             d.wu16(r.val);
             d.wu16(static_cast<uint16_t>(ii));
             return Result<void>::Ok();
@@ -596,16 +493,11 @@ Result<void> TextParser::instr() {
         case OpCode::EXPORT:
         case OpCode::SET_GLOBAL: {
             const Token& nt = cur_tok();
-            if (nt.type != TokenType::STRING)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi tên (chuỗi) làm đối số đầu.", &nt));
+            if (nt.type != TokenType::STRING) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi tên (chuỗi) làm đối số đầu.", &nt));
             auto rv = parse_const_val();
             if (!rv.ok) return Result<void>::Err(rv.diag);
             size_t ii = d.add_const(rv.val);
-            if (ii > UINT16_MAX)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::TOO_MANY_CONST,
-                           "Quá nhiều hằng số (tên), chỉ số vượt quá giới hạn 16-bit.", &nt));
+            if (ii > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên), chỉ số vượt quá giới hạn 16-bit.", &nt));
             const Token* tmp = nullptr;
             auto r = rd_u16(tmp);
             if (!r.ok) return Result<void>::Err(r.diag);
@@ -713,15 +605,11 @@ Result<void> TextParser::instr() {
             auto b = rd_u16(t2);
             if (!b.ok) return Result<void>::Err(b.diag);
             const Token& nt = cur_tok();
-            if (nt.type != TokenType::STRING)
-                return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                                                "Mong đợi tên (chuỗi) làm đối số thứ ba.", &nt));
+            if (nt.type != TokenType::STRING) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi tên (chuỗi) làm đối số thứ ba.", &nt));
             auto rv = parse_const_val();
             if (!rv.ok) return Result<void>::Err(rv.diag);
             size_t ii = d.add_const(rv.val);
-            if (ii > UINT16_MAX)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên).", &nt));
+            if (ii > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên).", &nt));
             d.wu16(a.val);
             d.wu16(b.val);
             d.wu16(static_cast<uint16_t>(ii));
@@ -747,15 +635,11 @@ Result<void> TextParser::instr() {
             auto a = rd_u16(t);
             if (!a.ok) return Result<void>::Err(a.diag);
             const Token& nt = cur_tok();
-            if (nt.type != TokenType::STRING)
-                return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                                                "Mong đợi tên (chuỗi) làm đối số thứ hai.", &nt));
+            if (nt.type != TokenType::STRING) return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi tên (chuỗi) làm đối số thứ hai.", &nt));
             auto rv = parse_const_val();
             if (!rv.ok) return Result<void>::Err(rv.diag);
             size_t ii = d.add_const(rv.val);
-            if (ii > UINT16_MAX)
-                return Result<void>::Err(
-                    mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên).", &nt));
+            if (ii > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::TOO_MANY_CONST, "Quá nhiều hằng số (tên).", &nt));
             const Token* t2 = nullptr;
             auto b = rd_u16(t2);
             if (!b.ok) return Result<void>::Err(b.diag);
@@ -844,9 +728,7 @@ Result<void> TextParser::instr() {
                 d.wu16(a.val);
                 return Result<void>::Ok();
             }
-            return Result<void>::Err(
-                mkdiag(ErrCode::UNEXPECTED_TOKEN,
-                       "Mong đợi thanh ghi trả về (số nguyên không âm, -1, hoặc FFFF).", &rt));
+            return Result<void>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Mong đợi thanh ghi trả về (số nguyên không âm, -1, hoặc FFFF).", &rt));
         }
         case OpCode::THROW: {
             const Token* tmp = nullptr;
@@ -858,9 +740,7 @@ Result<void> TextParser::instr() {
         case OpCode::HALT:
             return Result<void>::Ok();
         default:
-            return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR,
-                                            "Opcode chưa được hỗ trợ xử lý đối số trong parser.",
-                                            &opT));
+            return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "Opcode chưa được hỗ trợ xử lý đối số trong parser.", &opT));
     }
 }
 
@@ -870,8 +750,7 @@ Result<meow::core::value_t> TextParser::parse_const_val() {
     if (tk.type == TokenType::STRING) {
         adv();
         if (tk.lexeme.size() < 2 || tk.lexeme.front() != '"' || tk.lexeme.back() != '"')
-            return Result<meow::core::value_t>::Err(
-                mkdiag(ErrCode::INVALID_IDENT, "Chuỗi literal không hợp lệ (thiếu dấu \").", &tk));
+            return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_IDENT, "Chuỗi literal không hợp lệ (thiếu dấu \").", &tk));
         auto inner = tk.lexeme.substr(1, tk.lexeme.size() - 2);
         return Result<meow::core::value_t>::Ok(Value(heap_->new_string(unescape(inner))));
     }
@@ -879,9 +758,7 @@ Result<meow::core::value_t> TextParser::parse_const_val() {
         adv();
         int64_t v;
         auto r = std::from_chars(tk.lexeme.data(), tk.lexeme.data() + tk.lexeme.size(), v);
-        if (r.ec != std::errc() || r.ptr != tk.lexeme.data() + tk.lexeme.size())
-            return Result<meow::core::value_t>::Err(
-                mkdiag(ErrCode::INVALID_NUMBER, "Số nguyên literal không hợp lệ.", &tk));
+        if (r.ec != std::errc() || r.ptr != tk.lexeme.data() + tk.lexeme.size()) return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Số nguyên literal không hợp lệ.", &tk));
         return Result<meow::core::value_t>::Ok(Value(v));
     }
     if (tk.type == TokenType::NUMBER_FLOAT) {
@@ -889,13 +766,10 @@ Result<meow::core::value_t> TextParser::parse_const_val() {
         try {
             size_t p = 0;
             double d = std::stod(std::string(tk.lexeme), &p);
-            if (p != tk.lexeme.size())
-                return Result<meow::core::value_t>::Err(
-                    mkdiag(ErrCode::INVALID_NUMBER, "Số thực literal không hợp lệ.", &tk));
+            if (p != tk.lexeme.size()) return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Số thực literal không hợp lệ.", &tk));
             return Result<meow::core::value_t>::Ok(Value(d));
         } catch (...) {
-            return Result<meow::core::value_t>::Err(
-                mkdiag(ErrCode::INVALID_NUMBER, "Số thực literal không hợp lệ.", &tk));
+            return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_NUMBER, "Số thực literal không hợp lệ.", &tk));
         }
     }
     if (tk.type == TokenType::IDENTIFIER) {
@@ -905,18 +779,12 @@ Result<meow::core::value_t> TextParser::parse_const_val() {
         if (tk.lexeme == "null") return Result<meow::core::value_t>::Ok(Value(null_t{}));
         if (!tk.lexeme.empty() && tk.lexeme.front() == '@') {
             auto nm = tk.lexeme.substr(1);
-            if (nm.empty())
-                return Result<meow::core::value_t>::Err(
-                    mkdiag(ErrCode::INVALID_IDENT,
-                           "Tên proto tham chiếu không được rỗng (chỉ có '@').", &tk));
-            return Result<meow::core::value_t>::Ok(
-                Value(heap_->new_string(std::string("::proto_ref::") + std::string(nm))));
+            if (nm.empty()) return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_IDENT, "Tên proto tham chiếu không được rỗng (chỉ có '@').", &tk));
+            return Result<meow::core::value_t>::Ok(Value(heap_->new_string(std::string("::proto_ref::") + std::string(nm))));
         }
-        return Result<meow::core::value_t>::Err(
-            mkdiag(ErrCode::INVALID_IDENT, "Identifier không hợp lệ cho giá trị hằng số.", &tk));
+        return Result<meow::core::value_t>::Err(mkdiag(ErrCode::INVALID_IDENT, "Identifier không hợp lệ cho giá trị hằng số.", &tk));
     }
-    return Result<meow::core::value_t>::Err(
-        mkdiag(ErrCode::UNEXPECTED_TOKEN, "Token không mong đợi cho giá trị hằng số.", &tk));
+    return Result<meow::core::value_t>::Err(mkdiag(ErrCode::UNEXPECTED_TOKEN, "Token không mong đợi cho giá trị hằng số.", &tk));
 }
 
 Result<void> TextParser::resolve_labels(PData& d) {
@@ -924,18 +792,10 @@ Result<void> TextParser::resolve_labels(PData& d) {
         size_t patch = std::get<1>(pj);
         std::string_view lbl = std::get<2>(pj);
         auto it = d.labels.find(lbl);
-        if (it == d.labels.end())
-            return Result<void>::Err(
-                mkdiag(ErrCode::LABEL_NOT_FOUND,
-                       "Không tìm thấy nhãn '" + std::string(lbl) + "' trong hàm '" + d.name + "'.",
-                       nullptr));
+        if (it == d.labels.end()) return Result<void>::Err(mkdiag(ErrCode::LABEL_NOT_FOUND, "Không tìm thấy nhãn '" + std::string(lbl) + "' trong hàm '" + d.name + "'.", nullptr));
         size_t addr = it->second;
-        if (addr > UINT16_MAX)
-            return Result<void>::Err(
-                mkdiag(ErrCode::OUT_OF_RANGE, "Địa chỉ nhãn vượt quá giới hạn 16-bit.", nullptr));
-        if (!d.patch_u16(patch, static_cast<uint16_t>(addr)))
-            return Result<void>::Err(
-                mkdiag(ErrCode::INTERNAL_ERROR, "Không thể patch địa chỉ nhảy.", nullptr));
+        if (addr > UINT16_MAX) return Result<void>::Err(mkdiag(ErrCode::OUT_OF_RANGE, "Địa chỉ nhãn vượt quá giới hạn 16-bit.", nullptr));
+        if (!d.patch_u16(patch, static_cast<uint16_t>(addr))) return Result<void>::Err(mkdiag(ErrCode::INTERNAL_ERROR, "Không thể patch địa chỉ nhảy.", nullptr));
     }
     d.pending.clear();
     return Result<void>::Ok();
@@ -965,8 +825,7 @@ meow::core::proto_t TextParser::build_proto(const std::string& name, PData& d) {
     auto final_consts = build_final_const_pool(d);
     Chunk ck(std::move(d.code), std::move(final_consts));
     auto udesc = std::move(d.updesc);
-    if (udesc.size() != d.nup)
-        throw std::runtime_error("Lỗi nội bộ: upvalue desc mismatch for " + name);
+    if (udesc.size() != d.nup) throw std::runtime_error("Lỗi nội bộ: upvalue desc mismatch for " + name);
     proto_t p = heap_->new_proto(d.nreg, d.nup, nm, std::move(ck), std::move(udesc));
     if (!p) throw std::runtime_error("Lỗi cấp phát proto cho hàm " + name);
     return p;

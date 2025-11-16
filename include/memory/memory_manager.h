@@ -33,26 +33,26 @@ class MemoryManager {
     meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {});
     meow::core::string_t new_string(const std::string& string);
     meow::core::string_t new_string(const char* chars, size_t length);
-    meow::core::hash_table_t new_hash(
-        const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {});
+    meow::core::hash_table_t new_hash(const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {});
     meow::core::upvalue_t new_upvalue(size_t index);
-    meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name,
-                                  meow::runtime::Chunk&& chunk);
-    meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name,
-                                  meow::runtime::Chunk&& chunk,
-                                  std::vector<meow::core::objects::UpvalueDesc>&& descs);
+    meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name, meow::runtime::Chunk&& chunk);
+    meow::core::proto_t new_proto(size_t registers, size_t upvalues, meow::core::string_t name, meow::runtime::Chunk&& chunk, std::vector<meow::core::objects::UpvalueDesc>&& descs);
     meow::core::function_t new_function(meow::core::proto_t proto);
-    meow::core::module_t new_module(meow::core::string_t file_name, meow::core::string_t file_path,
-                                    meow::core::proto_t main_proto = nullptr);
+    meow::core::module_t new_module(meow::core::string_t file_name, meow::core::string_t file_path, meow::core::proto_t main_proto = nullptr);
     meow::core::native_fn_t new_native(meow::core::objects::ObjNativeFunction::native_fn_simple fn);
     meow::core::native_fn_t new_native(meow::core::objects::ObjNativeFunction::native_fn_double fn);
     meow::core::class_t new_class(meow::core::string_t name = nullptr);
     meow::core::instance_t new_instance(meow::core::class_t klass);
-    meow::core::bound_method_t new_bound_method(meow::core::instance_t instance,
-                                                meow::core::function_t function);
+    meow::core::bound_method_t new_bound_method(meow::core::instance_t instance, meow::core::function_t function);
 
-    inline void enable_gc() noexcept { gc_enabled_ = true; }
-    inline void disable_gc() noexcept { gc_enabled_ = false; }
-    inline void collect() noexcept { object_allocated_ = gc_->collect(); }
+    inline void enable_gc() noexcept {
+        gc_enabled_ = true;
+    }
+    inline void disable_gc() noexcept {
+        gc_enabled_ = false;
+    }
+    inline void collect() noexcept {
+        object_allocated_ = gc_->collect();
+    }
 };
 }  // namespace meow::memory

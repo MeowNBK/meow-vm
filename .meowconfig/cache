@@ -1,0 +1,3 @@
+alias run="./build/fast-debug/bin/meow-vm"
+alias build="./scripts/build_fast.sh"
+alias setup="./scripts/setup_ccache.sh"

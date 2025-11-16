@@ -11,15 +11,23 @@ using Expected = std::expected<T, E>;
 template <typename T, typename E>
 class Expected {
    public:
-    Expected(const T& value) : data(value) {}
-    Expected(T&& value) : data(std::move(value)) {}
+    Expected(const T& value) : data(value) {
+    }
+    Expected(T&& value) : data(std::move(value)) {
+    }
 
-    Expected(const E& error) : data(error) {}
-    Expected(E&& error) : data(std::move(error)) {}
+    Expected(const E& error) : data(error) {
+    }
+    Expected(E&& error) : data(std::move(error)) {
+    }
 
-    [[nodiscard]] inline bool has_value() const noexcept { return std::holds_alternative<T>(data); }
+    [[nodiscard]] inline bool has_value() const noexcept {
+        return std::holds_alternative<T>(data);
+    }
 
-    explicit operator bool() const noexcept { return has_value(); }
+    explicit operator bool() const noexcept {
+        return has_value();
+    }
 
     [[nodiscard]] inline const T& value() const {
         if (!has_value()) {

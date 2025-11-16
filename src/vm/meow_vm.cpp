@@ -29,8 +29,7 @@ using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
 
-MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc,
-               char* argv[]) {
+MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
     args_.entry_path_ = entry_path;
     for (int i = 0; i < argc; ++i) {
@@ -50,7 +49,9 @@ MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entr
     printl("MeowVM initialized successfully!");
 }
 
-MeowVM::~MeowVM() { printl("MeowVM shutting down."); }
+MeowVM::~MeowVM() {
+    printl("MeowVM shutting down.");
+}
 
 [[nodiscard]] inline uint8_t to_byte(OpCode op_code) noexcept {
     return static_cast<uint8_t>(op_code);
@@ -61,10 +62,8 @@ using raw_value_t = meow::variant<OpCode, uint64_t, double, int64_t, uint16_t>;
     Chunk chunk;
 
     for (size_t i = 0; i < code.size(); ++i) {
-        code[i].visit([&chunk](OpCode value) { chunk.write_byte(static_cast<uint8_t>(value)); },
-                      [&chunk](uint64_t value) { chunk.write_u64(value); },
-                      [&chunk](double value) { chunk.write_f64(value); },
-                      [&chunk](int64_t value) { chunk.write_u64(std::bit_cast<uint64_t>(value)); },
+        code[i].visit([&chunk](OpCode value) { chunk.write_byte(static_cast<uint8_t>(value)); }, [&chunk](uint64_t value) { chunk.write_u64(value); },
+                      [&chunk](double value) { chunk.write_f64(value); }, [&chunk](int64_t value) { chunk.write_u64(std::bit_cast<uint64_t>(value)); },
                       [&chunk](uint16_t value) { chunk.write_u16(value); });
     }
 
@@ -98,21 +97,17 @@ void MeowVM::prepare() noexcept {
 
     using enum OpCode;
 
-    Chunk test_chunk = make_chunk(
-        {LOAD_INT, u16(0), u64(1802), LOAD_TRUE, u16(1), NEW_ARRAY, u16(2), u16(0), u16(2), HALT});
+    Chunk test_chunk = make_chunk({LOAD_INT, u16(0), u64(1802), LOAD_TRUE, u16(1), NEW_ARRAY, u16(2), u16(0), u16(2), HALT});
     size_t num_register = 3;
 
-    auto main_proto =
-        heap_->new_proto(num_register, 0, heap_->new_string("main"), std::move(test_chunk));
+    auto main_proto = heap_->new_proto(num_register, 0, heap_->new_string("main"), std::move(test_chunk));
     auto main_func = heap_->new_function(main_proto);
 
-    auto main_module = heap_->new_module(heap_->new_string("main"),
-                                         heap_->new_string(args_.entry_path_), main_proto);
+    auto main_module = heap_->new_module(heap_->new_string("main"), heap_->new_string(args_.entry_path_), main_proto);
 
     context_->registers_.resize(num_register);
 
-    context_->call_stack_.emplace_back(main_func, main_module, 0, static_cast<size_t>(-1),
-                                       main_func->get_proto()->get_chunk().get_code());
+    context_->call_stack_.emplace_back(main_func, main_module, 0, static_cast<size_t>(-1), main_func->get_proto()->get_chunk().get_code());
 
     if (context_->call_stack_.empty()) {
         printl("Execution finished: Call stack is empty.");
@@ -137,8 +132,7 @@ inline bool is_truthy(param_t value) noexcept {
     return true;
 }
 
-inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap,
-                                 size_t register_index) {
+inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap, size_t register_index) {
     // Tìm kiếm các upvalue đã mở từ trên xuống dưới (chỉ số stack cao -> thấp)
     for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
         upvalue_t uv = *it;
@@ -150,17 +144,14 @@ inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap,
     upvalue_t new_uv = heap->new_upvalue(register_index);
 
     // Chèn vào danh sách đã sắp xếp (theo chỉ số stack)
-    auto it =
-        std::lower_bound(context->open_upvalues_.begin(), context->open_upvalues_.end(), new_uv,
-                         [](auto a, auto b) { return a->get_index() < b->get_index(); });
+    auto it = std::lower_bound(context->open_upvalues_.begin(), context->open_upvalues_.end(), new_uv, [](auto a, auto b) { return a->get_index() < b->get_index(); });
     context->open_upvalues_.insert(it, new_uv);
     return new_uv;
 }
 
 inline void close_upvalues(ExecutionContext* context, size_t last_index) noexcept {
     // Đóng tất cả upvalue có chỉ số register >= last_index
-    while (!context->open_upvalues_.empty() &&
-           context->open_upvalues_.back()->get_index() >= last_index) {
+    while (!context->open_upvalues_.empty() && context->open_upvalues_.back()->get_index() >= last_index) {
         upvalue_t uv = context->open_upvalues_.back();
         uv->close(context->registers_[uv->get_index()]);
         context->open_upvalues_.pop_back();
@@ -175,11 +166,9 @@ void MeowVM::run() {
 
 #define READ_BYTE() (*ip++)
 #define READ_U16() (ip += 2, (uint16_t)((ip[-2] | (ip[-1] << 8))))
-#define READ_U64()                                                                          \
-    (ip += 8, (uint64_t)(ip[-8]) | ((uint64_t)(ip[-7]) << 8) | ((uint64_t)(ip[-6]) << 16) | \
-                  ((uint64_t)(ip[-5]) << 24) | ((uint64_t)(ip[-4]) << 32) |                 \
-                  ((uint64_t)(ip[-3]) << 40) | ((uint64_t)(ip[-2]) << 48) |                 \
-                  ((uint64_t)(ip[-1]) << 56))
+#define READ_U64()                                                                                                                                                                 \
+    (ip += 8, (uint64_t)(ip[-8]) | ((uint64_t)(ip[-7]) << 8) | ((uint64_t)(ip[-6]) << 16) | ((uint64_t)(ip[-5]) << 24) | ((uint64_t)(ip[-4]) << 32) | ((uint64_t)(ip[-3]) << 40) | \
+                  ((uint64_t)(ip[-2]) << 48) | ((uint64_t)(ip[-1]) << 56))
 
 #define READ_I64() (std::bit_cast<int64_t>(READ_U64()))
 #define READ_F64() (std::bit_cast<double>(READ_U64()))
@@ -199,12 +188,14 @@ void MeowVM::run() {
                 printl("End of chunk reached, performing implicit return.");
 
                 Value return_value = Value(null_t{});
-
                 CallFrame popped_frame = *context_->current_frame_;
                 size_t old_base = popped_frame.start_reg_;
-
-                // CẬP NHẬT: Đóng upvalues khi return
                 close_upvalues(context_.get(), popped_frame.start_reg_);
+                if (popped_frame.function_->get_proto() == popped_frame.module_->get_main_proto()) {
+                    if (popped_frame.module_->is_executing()) { //
+                        popped_frame.module_->set_executed(); //
+                    }
+                }
 
                 context_->call_stack_.pop_back();
 
@@ -218,8 +209,7 @@ void MeowVM::run() {
                 context_->current_base_ = context_->current_frame_->start_reg_;
 
                 if (popped_frame.ret_reg_ != static_cast<size_t>(-1)) {
-                    context_->registers_[context_->current_base_ + popped_frame.ret_reg_] =
-                        return_value;
+                    context_->registers_[context_->current_base_ + popped_frame.ret_reg_] = return_value;
                 }
 
                 context_->registers_.resize(old_base);
@@ -233,7 +223,6 @@ void MeowVM::run() {
                     uint16_t dst = READ_U16();
                     Value value = READ_CONSTANT();
                     REGISTER(dst) = value;
-                    // printl("load_const r{}", dst);
                     break;
                 }
                 case OpCode::LOAD_NULL: {
@@ -380,13 +369,10 @@ void MeowVM::run() {
                         const auto& desc = proto->get_desc(i);
                         if (desc.is_local_) {
                             // Bắt upvalue từ thanh ghi của frame hiện tại
-                            closure->set_upvalue(
-                                i, capture_upvalue(context_.get(), heap_.get(),
-                                                   context_->current_base_ + desc.index_));
+                            closure->set_upvalue(i, capture_upvalue(context_.get(), heap_.get(), context_->current_base_ + desc.index_));
                         } else {
                             // Chuyển tiếp upvalue từ closure cha
-                            closure->set_upvalue(
-                                i, context_->current_frame_->function_->get_upvalue(desc.index_));
+                            closure->set_upvalue(i, context_->current_frame_->function_->get_upvalue(desc.index_));
                         }
                     }
                     REGISTER(dst) = Value(closure);
@@ -436,8 +422,7 @@ void MeowVM::run() {
                         fn_reg = READ_U16();
                         arg_start = READ_U16();
                         argc = READ_U16();
-                        ret_reg =
-                            (dst == 0xFFFF) ? static_cast<size_t>(-1) : static_cast<size_t>(dst);
+                        ret_reg = (dst == 0xFFFF) ? static_cast<size_t>(-1) : static_cast<size_t>(dst);
                     } else {  // OpCode::CALL_VOID
                         fn_reg = READ_U16();
                         arg_start = READ_U16();
@@ -532,8 +517,7 @@ void MeowVM::run() {
                     // Copy các đối số từ frame cũ sang frame mới
                     for (size_t i = 0; i < argc; ++i) {
                         if ((arg_offset + i) < proto->get_num_registers()) {
-                            context_->registers_[new_base + arg_offset + i] =
-                                REGISTER(arg_start + i);
+                            context_->registers_[new_base + arg_offset + i] = REGISTER(arg_start + i);
                         }
                     }
 
@@ -545,9 +529,7 @@ void MeowVM::run() {
                     size_t frame_ret_reg = is_constructor_call ? static_cast<size_t>(-1) : ret_reg;
 
                     // Push frame mới vào call stack
-                    context_->call_stack_.emplace_back(closure_to_call, current_module, new_base,
-                                                       frame_ret_reg,
-                                                       proto->get_chunk().get_code());
+                    context_->call_stack_.emplace_back(closure_to_call, current_module, new_base, frame_ret_reg, proto->get_chunk().get_code());
 
                     // Cập nhật trạng thái VM để chạy frame mới
                     context_->current_frame_ = &context_->call_stack_.back();
@@ -560,8 +542,7 @@ void MeowVM::run() {
 
                 case OpCode::RETURN: {
                     uint16_t ret_reg_idx = READ_U16();
-                    Value return_value =
-                        (ret_reg_idx == 0xFFFF) ? Value(null_t{}) : REGISTER(ret_reg_idx);
+                    Value return_value = (ret_reg_idx == 0xFFFF) ? Value(null_t{}) : REGISTER(ret_reg_idx);
 
                     CallFrame popped_frame = *context_->current_frame_;
                     size_t old_base = popped_frame.start_reg_;
@@ -582,8 +563,7 @@ void MeowVM::run() {
                     context_->current_base_ = context_->current_frame_->start_reg_;
 
                     if (popped_frame.ret_reg_ != static_cast<size_t>(-1)) {
-                        context_->registers_[context_->current_base_ + popped_frame.ret_reg_] =
-                            return_value;
+                        context_->registers_[context_->current_base_ + popped_frame.ret_reg_] = return_value;
                     }
 
                     context_->registers_.resize(old_base);
@@ -769,8 +749,7 @@ void MeowVM::run() {
                     uint16_t dst = READ_U16();
                     uint16_t class_reg = READ_U16();
                     Value& class_val = REGISTER(class_reg);
-                    if (!class_val.is_class())
-                        throw_vm_error("NEW_INSTANCE: operand is not a class.");
+                    if (!class_val.is_class()) throw_vm_error("NEW_INSTANCE: operand is not a class.");
                     REGISTER(dst) = Value(heap_->new_instance(class_val.as_class()));
                     break;
                 }
@@ -792,8 +771,7 @@ void MeowVM::run() {
                         class_t k = inst->get_class();
                         while (k) {
                             if (k->has_method(name)) {
-                                REGISTER(dst) = Value(heap_->new_bound_method(
-                                    inst, k->get_method(name).as_function()));
+                                REGISTER(dst) = Value(heap_->new_bound_method(inst, k->get_method(name).as_function()));
                                 break;
                             }
                             k = k->get_super();
@@ -842,8 +820,7 @@ void MeowVM::run() {
                     string_t name = CONSTANT(name_idx).as_string();
                     Value& methodVal = REGISTER(method_reg);
                     if (!class_val.is_class()) throw_vm_error("SET_METHOD: target is not a class.");
-                    if (!methodVal.is_function())
-                        throw_vm_error("SET_METHOD: value is not a function.");
+                    if (!methodVal.is_function()) throw_vm_error("SET_METHOD: value is not a function.");
                     class_val.as_class()->set_method(name, methodVal);
                     break;
                 }
@@ -886,9 +863,7 @@ void MeowVM::run() {
                     class_t super = klass->get_super();
 
                     if (super == nullptr) {
-                        throw_vm_error("GET_SUPER: Class '" +
-                                       std::string(klass->get_name()->c_str()) +
-                                       "' không có superclass.");
+                        throw_vm_error("GET_SUPER: Class '" + std::string(klass->get_name()->c_str()) + "' không có superclass.");
                     }
 
                     // 3. Tìm method trong cây kế thừa của superclass
@@ -904,16 +879,14 @@ void MeowVM::run() {
                             }
 
                             // 4. Bind method của cha với 'this' hiện tại
-                            REGISTER(dst) =
-                                Value(heap_->new_bound_method(receiver, method_val.as_function()));
+                            REGISTER(dst) = Value(heap_->new_bound_method(receiver, method_val.as_function()));
                             break;
                         }
                         k = k->get_super();  // Tiếp tục tìm lên trên
                     }
 
                     if (k == nullptr) {  // Không tìm thấy
-                        throw_vm_error("GET_SUPER: Superclass không có method tên là '" +
-                                       std::string(name->c_str()) + "'.");
+                        throw_vm_error("GET_SUPER: Superclass không có method tên là '" + std::string(name->c_str()) + "'.");
                     }
                     break;
                 }
@@ -939,20 +912,43 @@ void MeowVM::run() {
                     break;
                 }
 
-                // --- MODULES (ĐÃ HOÀN THIỆN 1 phần) ---
                 case OpCode::IMPORT_MODULE: {
                     uint16_t dst = READ_U16();
                     uint16_t path_idx = READ_U16();
+                    
                     string_t path = CONSTANT(path_idx).as_string();
                     string_t importer_path = context_->current_frame_->module_->get_file_path();
+                    module_t mod = mod_manager_->load_module(path, importer_path);
 
-                    // (Logic load module thực tế nằm trong mod_manager_
-                    // và có thể yêu cầu gọi đệ quy vào VM)
-                    // module_t mod = mod_manager_->load_module(path,
-                    // importer_path, heap_.get(), this); REGISTER(dst) =
-                    // Value(mod); (TODO: Xử lý việc chạy code của module nếu
-                    // chưa chạy)
-                    throw_vm_error("Opcode IMPORT_MODULE not yet implemented in run()");
+                    REGISTER(dst) = Value(mod);
+                    if (mod->is_executed() || mod->is_executing()) {
+                        break;
+                    }
+
+                    if (!mod->is_has_main()) {
+                        mod->set_executed();
+                        break; 
+                    }
+
+                    mod->set_execution();
+                    
+                    proto_t main_proto = mod->get_main_proto();
+                    function_t main_closure = heap_->new_function(main_proto);
+
+                    context_->current_frame_->ip_ = ip;
+
+                    size_t new_base = context_->registers_.size();
+                    context_->registers_.resize(new_base + main_proto->get_num_registers());
+
+                    @main của module không trả về giá trị (ret_reg = -1)
+                    context_->call_stack_.emplace_back(main_closure, mod, new_base,
+                                                       static_cast<size_t>(-1), 
+                                                       main_proto->get_chunk().get_code());
+
+                    context_->current_frame_ = &context_->call_stack_.back();
+                    ip = context_->current_frame_->ip_;
+                    context_->current_base_ = context_->current_frame_->start_reg_;
+                    
                     break;
                 }
                 case OpCode::EXPORT: {
@@ -968,8 +964,7 @@ void MeowVM::run() {
                     uint16_t name_idx = READ_U16();
                     Value& mod_val = REGISTER(mod_reg);
                     string_t name = CONSTANT(name_idx).as_string();
-                    if (!mod_val.is_module())
-                        throw_vm_error("GET_EXPORT: operand is not a module.");
+                    if (!mod_val.is_module()) throw_vm_error("GET_EXPORT: operand is not a module.");
                     module_t mod = mod_val.as_module();
                     if (!mod->has_export(name)) throw_vm_error("Module does not export name.");
                     REGISTER(dst) = mod->get_export(name);

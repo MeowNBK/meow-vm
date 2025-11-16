@@ -22,9 +22,8 @@ class MarkSweepGC : public GarbageCollector, public GCVisitor {
     meow::runtime::BuiltinRegistry* builtins_ = nullptr;
 
    public:
-    explicit MarkSweepGC(meow::runtime::ExecutionContext* context,
-                         meow::runtime::BuiltinRegistry* builtins) noexcept
-        : context_(context), builtins_(builtins) {}
+    explicit MarkSweepGC(meow::runtime::ExecutionContext* context, meow::runtime::BuiltinRegistry* builtins) noexcept : context_(context), builtins_(builtins) {
+    }
     ~MarkSweepGC() override;
 
     // -- Collector ---

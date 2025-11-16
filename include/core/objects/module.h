@@ -17,7 +17,7 @@
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
-class ObjModule : public meow::core::MeowObject {
+class ObjModule : public meow::core::ObjBase<ObjectType::MODULE> {
    private:
     using string_t = meow::core::string_t;
     using proto_t = meow::core::proto_t;
@@ -35,9 +35,8 @@ class ObjModule : public meow::core::MeowObject {
     State state;
 
    public:
-    explicit ObjModule(string_t file_name, string_t file_path,
-                       proto_t main_proto = nullptr) noexcept
-        : file_name_(file_name), file_path_(file_path), main_proto_(main_proto) {}
+    explicit ObjModule(string_t file_name, string_t file_path, proto_t main_proto = nullptr) noexcept : file_name_(file_name), file_path_(file_path), main_proto_(main_proto) {
+    }
 
     // --- Globals ---
     [[nodiscard]] inline meow::core::return_t get_global(string_t name) noexcept {
@@ -62,19 +61,37 @@ class ObjModule : public meow::core::MeowObject {
     }
 
     // --- File info ---
-    inline string_t get_file_name() const noexcept { return file_name_; }
-    inline string_t get_file_path() const noexcept { return file_path_; }
+    inline string_t get_file_name() const noexcept {
+        return file_name_;
+    }
+    inline string_t get_file_path() const noexcept {
+        return file_path_;
+    }
 
     // --- Main proto ---
-    inline proto_t get_main_proto() const noexcept { return main_proto_; }
-    inline void set_main_proto(proto_t proto) noexcept { main_proto_ = proto; }
-    inline bool is_has_main() const noexcept { return main_proto_ != nullptr; }
+    inline proto_t get_main_proto() const noexcept {
+        return main_proto_;
+    }
+    inline void set_main_proto(proto_t proto) noexcept {
+        main_proto_ = proto;
+    }
+    inline bool is_has_main() const noexcept {
+        return main_proto_ != nullptr;
+    }
 
     // --- Execution state ---
-    inline void set_execution() noexcept { state = State::EXECUTING; }
-    inline void set_executed() noexcept { state = State::EXECUTED; }
-    [[nodiscard]] inline bool is_executing() const noexcept { return state == State::EXECUTING; }
-    [[nodiscard]] inline bool is_executed() const noexcept { return state == State::EXECUTED; }
+    inline void set_execution() noexcept {
+        state = State::EXECUTING;
+    }
+    inline void set_executed() noexcept {
+        state = State::EXECUTED;
+    }
+    [[nodiscard]] inline bool is_executing() const noexcept {
+        return state == State::EXECUTING;
+    }
+    [[nodiscard]] inline bool is_executed() const noexcept {
+        return state == State::EXECUTED;
+    }
 
     void trace(visitor_t& visitor) const noexcept override;
 };

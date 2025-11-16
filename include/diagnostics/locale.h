@@ -35,21 +35,17 @@ struct SimpleLocaleSource final : public LocaleSource {
         std::string line;
         while (std::getline(in, line)) {
             // Remove trailing spaces
-            while (!line.empty() && std::isspace(static_cast<unsigned char>(line.back())))
-                line.pop_back();
+            while (!line.empty() && std::isspace(static_cast<unsigned char>(line.back()))) line.pop_back();
 
             // Skip leading spaces
             size_t i = 0;
-            while (i < line.size() && std::isspace(static_cast<unsigned char>(line[i])))
-                ++i;
+            while (i < line.size() && std::isspace(static_cast<unsigned char>(line[i]))) ++i;
 
-            if (i >= line.size() || line[i] == '#')
-                continue; // comment or empty line
+            if (i >= line.size() || line[i] == '#') continue;  // comment or empty line
 
             // Find '=' separator
             size_t pos = line.find('=', i);
-            if (pos == std::string::npos)
-                continue;
+            if (pos == std::string::npos) continue;
 
             std::string key = line.substr(i, pos - i);
             std::string val = line.substr(pos + 1);
@@ -65,8 +61,7 @@ struct SimpleLocaleSource final : public LocaleSource {
             trim(key);
             trim(val);
 
-            if (!key.empty())
-                map[key] = val;
+            if (!key.empty()) map[key] = val;
         }
 
         return true;
@@ -74,10 +69,9 @@ struct SimpleLocaleSource final : public LocaleSource {
 
     /// Retrieve a localized message template.
     std::optional<std::string> get_template(const std::string& message_id) override {
-        if (auto it = map.find(message_id); it != map.end())
-            return it->second;
+        if (auto it = map.find(message_id); it != map.end()) return it->second;
         return std::nullopt;
     }
 };
 
-} // namespace meow::diagnostics
+}  // namespace meow::diagnostics

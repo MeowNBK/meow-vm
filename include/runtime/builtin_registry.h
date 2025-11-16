@@ -8,12 +8,8 @@
 
 namespace meow::runtime {
 struct BuiltinRegistry {
-    std::unordered_map<meow::core::string_t,
-                       std::unordered_map<meow::core::string_t, meow::core::Value>>
-        methods_;
-    std::unordered_map<meow::core::string_t,
-                       std::unordered_map<meow::core::string_t, meow::core::Value>>
-        getters_;
+    std::unordered_map<meow::core::string_t, std::unordered_map<meow::core::string_t, meow::core::Value>> methods_;
+    std::unordered_map<meow::core::string_t, std::unordered_map<meow::core::string_t, meow::core::Value>> getters_;
 
     inline void trace(meow::memory::GCVisitor& visitor) const noexcept {
         for (const auto& [name, method] : methods_) {

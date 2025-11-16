@@ -17,7 +17,7 @@
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
-class ObjClass : public meow::core::MeowObject {
+class ObjClass : public meow::core::ObjBase<ObjectType::CLASS> {
    private:
     using string_t = meow::core::string_t;
     using class_t = meow::core::class_t;
@@ -29,12 +29,19 @@ class ObjClass : public meow::core::MeowObject {
     method_map methods_;
 
    public:
-    explicit ObjClass(string_t name = nullptr) noexcept : name_(name) {}
+    explicit ObjClass(string_t name = nullptr) noexcept : name_(name) {
+    }
 
     // --- Metadata ---
-    [[nodiscard]] inline string_t get_name() const noexcept { return name_; }
-    [[nodiscard]] inline class_t get_super() const noexcept { return superclass_; }
-    inline void set_super(class_t super) noexcept { superclass_ = super; }
+    [[nodiscard]] inline string_t get_name() const noexcept {
+        return name_;
+    }
+    [[nodiscard]] inline class_t get_super() const noexcept {
+        return superclass_;
+    }
+    inline void set_super(class_t super) noexcept {
+        superclass_ = super;
+    }
 
     // --- Methods ---
     [[nodiscard]] inline bool has_method(string_t name) const noexcept {
@@ -50,7 +57,7 @@ class ObjClass : public meow::core::MeowObject {
     void trace(visitor_t& visitor) const noexcept override;
 };
 
-class ObjInstance : public meow::core::MeowObject {
+class ObjInstance : public meow::core::ObjBase<ObjectType::INSTANCE> {
    private:
     using string_t = meow::core::string_t;
     using class_t = meow::core::class_t;
@@ -61,11 +68,16 @@ class ObjInstance : public meow::core::MeowObject {
     field_map fields_;
 
    public:
-    explicit ObjInstance(class_t k = nullptr) noexcept : klass_(k) {}
+    explicit ObjInstance(class_t k = nullptr) noexcept : klass_(k) {
+    }
 
     // --- Metadata ---
-    [[nodiscard]] inline class_t get_class() const noexcept { return klass_; }
-    inline void set_class(class_t klass) noexcept { klass_ = klass; }
+    [[nodiscard]] inline class_t get_class() const noexcept {
+        return klass_;
+    }
+    inline void set_class(class_t klass) noexcept {
+        klass_ = klass;
+    }
 
     // --- Fields ---
     [[nodiscard]] inline meow::core::return_t get_field(string_t name) noexcept {
@@ -81,7 +93,7 @@ class ObjInstance : public meow::core::MeowObject {
     void trace(visitor_t& visitor) const noexcept override;
 };
 
-class ObjBoundMethod : public MeowObject {
+class ObjBoundMethod : public meow::core::ObjBase<ObjectType::BOUND_METHOD> {
    private:
     using instance_t = meow::core::instance_t;
     using function_t = meow::core::function_t;
@@ -91,11 +103,15 @@ class ObjBoundMethod : public MeowObject {
     function_t function_;
 
    public:
-    explicit ObjBoundMethod(instance_t instance = nullptr, function_t function = nullptr) noexcept
-        : instance_(instance), function_(function) {}
+    explicit ObjBoundMethod(instance_t instance = nullptr, function_t function = nullptr) noexcept : instance_(instance), function_(function) {
+    }
 
-    inline instance_t get_instance() const noexcept { return instance_; }
-    inline function_t get_function() const noexcept { return function_; }
+    inline instance_t get_instance() const noexcept {
+        return instance_;
+    }
+    inline function_t get_function() const noexcept {
+        return function_;
+    }
 
     void trace(visitor_t& visitor) const noexcept override;
 };

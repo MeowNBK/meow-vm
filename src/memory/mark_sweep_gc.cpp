@@ -43,7 +43,9 @@ void MarkSweepGC::visit_value(meow::core::param_t value) noexcept {
     if (value.is_object()) mark(value.as_object());
 }
 
-void MarkSweepGC::visit_object(const meow::core::MeowObject* object) noexcept { mark(object); }
+void MarkSweepGC::visit_object(const meow::core::MeowObject* object) noexcept {
+    mark(object);
+}
 
 void MarkSweepGC::mark(const meow::core::MeowObject* object) {
     if (object == nullptr) return;

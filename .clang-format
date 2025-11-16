@@ -13,8 +13,7 @@ UseTab: Never
 # BreakBeforeBraces: Allman
 
 # 3. Giới hạn cột: chọn 100 hoặc 80
-# (Bạn đang dùng 100, nếu muốn cổ điển đổi về 80)
-ColumnLimit: 100
+ColumnLimit: 200
 
 # --- Căn chỉnh (Alignment) ---
 # Không để Google style tự quyết PointerAlignment
@@ -43,7 +42,7 @@ IncludeCategories:
 IncludeIsMainRegex: '(.*)'
 
 # --- Các tùy chọn về dòng ngắn (giữ phong cách cũ của bạn) ---
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: false
 AllowShortLambdasOnASingleLine: All
 AllowShortEnumsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true

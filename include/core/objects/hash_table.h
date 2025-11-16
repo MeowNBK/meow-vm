@@ -17,7 +17,7 @@
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
-class ObjHashTable : public MeowObject {
+class ObjHashTable : meow::core::ObjBase<ObjectType::HASH_TABLE> {
    private:
     using key_t = meow::core::string_t;
     using map_t = std::unordered_map<key_t, value_t>;
@@ -28,8 +28,10 @@ class ObjHashTable : public MeowObject {
    public:
     // --- Constructors & destructor---
     ObjHashTable() = default;
-    explicit ObjHashTable(const map_t& fields) : fields_(fields) {}
-    explicit ObjHashTable(map_t&& fields) noexcept : fields_(std::move(fields)) {}
+    explicit ObjHashTable(const map_t& fields) : fields_(fields) {
+    }
+    explicit ObjHashTable(map_t&& fields) noexcept : fields_(std::move(fields)) {
+    }
 
     // --- Rule of 5 ---
     ObjHashTable(const ObjHashTable&) = delete;
@@ -45,25 +47,43 @@ class ObjHashTable : public MeowObject {
     // --- Lookup ---
 
     // Unchecked lookup. For performance-critical code
-    [[nodiscard]] inline meow::core::return_t get(key_t key) noexcept { return fields_[key]; }
+    [[nodiscard]] inline meow::core::return_t get(key_t key) noexcept {
+        return fields_[key];
+    }
     // Unchecked lookup/update. For performance-critical code
     template <typename T>
     inline void set(key_t key, T&& value) noexcept {
         fields_[key] = std::forward<T>(value);
     }
     // Checked lookup. Throws if key is not found
-    [[nodiscard]] inline meow::core::return_t at(key_t key) const { return fields_.at(key); }
-    [[nodiscard]] inline bool has(key_t key) const { return fields_.find(key) != fields_.end(); }
+    [[nodiscard]] inline meow::core::return_t at(key_t key) const {
+        return fields_.at(key);
+    }
+    [[nodiscard]] inline bool has(key_t key) const {
+        return fields_.find(key) != fields_.end();
+    }
 
     // --- Capacity ---
-    [[nodiscard]] inline size_t size() const noexcept { return fields_.size(); }
-    [[nodiscard]] inline bool empty() const noexcept { return fields_.empty(); }
+    [[nodiscard]] inline size_t size() const noexcept {
+        return fields_.size();
+    }
+    [[nodiscard]] inline bool empty() const noexcept {
+        return fields_.empty();
+    }
 
     // --- Iterators ---
-    inline iterator begin() noexcept { return fields_.begin(); }
-    inline iterator end() noexcept { return fields_.end(); }
-    inline const_iterator begin() const noexcept { return fields_.begin(); }
-    inline const_iterator end() const noexcept { return fields_.end(); }
+    inline iterator begin() noexcept {
+        return fields_.begin();
+    }
+    inline iterator end() noexcept {
+        return fields_.end();
+    }
+    inline const_iterator begin() const noexcept {
+        return fields_.begin();
+    }
+    inline const_iterator end() const noexcept {
+        return fields_.end();
+    }
 
     void trace(visitor_t& visitor) const noexcept override;
 };

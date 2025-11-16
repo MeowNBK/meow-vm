@@ -35,15 +35,12 @@ struct type_list_contains;
 template <typename T>
 struct type_list_contains<T, type_list<>> : std::false_type {};
 template <typename T, typename Head, typename... Tail>
-struct type_list_contains<T, type_list<Head, Tail...>>
-    : std::conditional_t<std::is_same_v<T, Head>, std::true_type,
-                         type_list_contains<T, type_list<Tail...>>> {};
+struct type_list_contains<T, type_list<Head, Tail...>> : std::conditional_t<std::is_same_v<T, Head>, std::true_type, type_list_contains<T, type_list<Tail...>>> {};
 
 // append unique
 template <typename List, typename T>
 struct type_list_append_unique {
-    using type = std::conditional_t<type_list_contains<T, List>::value, List,
-                                    typename type_list_append<List, T>::type>;
+    using type = std::conditional_t<type_list_contains<T, List>::value, List, typename type_list_append<List, T>::type>;
 };
 
 // nth_type
@@ -76,8 +73,7 @@ struct type_list_index_of<T, type_list<Head, Tail...>> {
     static constexpr std::size_t next = type_list_index_of<T, type_list<Tail...>>::value;
 
    public:
-    static constexpr std::size_t value =
-        std::is_same_v<T, Head> ? 0u : (next == invalid_index ? invalid_index : 1u + next);
+    static constexpr std::size_t value = std::is_same_v<T, Head> ? 0u : (next == invalid_index ? invalid_index : 1u + next);
 };
 
 // operator== detection
@@ -85,8 +81,7 @@ template <typename T, typename = void>
 struct has_eq : std::false_type {};
 
 template <typename T>
-struct has_eq<T, std::void_t<decltype(std::declval<const T&>() == std::declval<const T&>())>>
-    : std::true_type {};
+struct has_eq<T, std::void_t<decltype(std::declval<const T&>() == std::declval<const T&>())>> : std::true_type {};
 
 // ---------------- detect meow::variant and extract inner list ----------------
 template <typename T>

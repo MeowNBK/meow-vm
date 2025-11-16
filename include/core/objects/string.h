@@ -13,7 +13,7 @@
 #include "core/meow_object.h"
 
 namespace meow::core::objects {
-class ObjString : public MeowObject {
+class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
    private:
     using storage_t = std::string;
     using visitor_t = meow::memory::GCVisitor;
@@ -23,9 +23,12 @@ class ObjString : public MeowObject {
    public:
     // --- Constructors & destructor ---
     ObjString() = default;
-    explicit ObjString(const storage_t& data) : data_(data) {}
-    explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {}
-    explicit ObjString(const char* data) : data_(data) {}
+    explicit ObjString(const storage_t& data) : data_(data) {
+    }
+    explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {
+    }
+    explicit ObjString(const char* data) : data_(data) {
+    }
 
     // --- Rule of 5 ---
     ObjString(const ObjString&) = delete;
@@ -41,23 +44,42 @@ class ObjString : public MeowObject {
     // --- Character access ---
 
     /// @brief Unchecked character access. For performance-critical code
-    [[nodiscard]] inline char get(size_t index) const noexcept { return data_[index]; }
+    [[nodiscard]] inline char get(size_t index) const noexcept {
+        return data_[index];
+    }
     /// @brief Checked character access. Throws if index is OOB
-    [[nodiscard]] inline char at(size_t index) const { return data_.at(index); }
+    [[nodiscard]] inline char at(size_t index) const {
+        return data_.at(index);
+    }
 
     // --- String access ---
-    [[nodiscard]] inline const char* c_str() const noexcept { return data_.c_str(); }
+    [[nodiscard]] inline const char* c_str() const noexcept {
+        return data_.c_str();
+    }
 
     // --- Capacity ---
-    [[nodiscard]] inline size_t size() const noexcept { return data_.size(); }
-    [[nodiscard]] inline bool empty() const noexcept { return data_.empty(); }
+    [[nodiscard]] inline size_t size() const noexcept {
+        return data_.size();
+    }
+    [[nodiscard]] inline bool empty() const noexcept {
+        return data_.empty();
+    }
 
     // --- Iterators ---
-    inline const_iterator begin() const noexcept { return data_.begin(); }
-    inline const_iterator end() const noexcept { return data_.end(); }
-    inline const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
-    inline const_reverse_iterator rend() const noexcept { return data_.rend(); }
+    inline const_iterator begin() const noexcept {
+        return data_.begin();
+    }
+    inline const_iterator end() const noexcept {
+        return data_.end();
+    }
+    inline const_reverse_iterator rbegin() const noexcept {
+        return data_.rbegin();
+    }
+    inline const_reverse_iterator rend() const noexcept {
+        return data_.rend();
+    }
 
-    inline void trace(visitor_t&) const noexcept override {}
+    inline void trace(visitor_t&) const noexcept override {
+    }
 };
 }  // namespace meow::core::objects

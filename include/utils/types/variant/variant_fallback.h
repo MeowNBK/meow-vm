@@ -58,8 +58,7 @@ struct ops {
 
     template <typename T>
     static void move_ctor_impl(void* dst, void* src) {
-        if constexpr (std::is_trivially_move_constructible_v<T> &&
-                      std::is_trivially_copyable_v<T>) {
+        if constexpr (std::is_trivially_move_constructible_v<T> && std::is_trivially_copyable_v<T>) {
             std::memcpy(dst, src, sizeof(T));
         } else {
             new (dst) T(std::move(*reinterpret_cast<T*>(src)));
@@ -128,8 +127,7 @@ struct visitor_returns_impl<Visitor, detail::type_list<Ts...>, Mode> {
 
    public:
     using first_t = std::conditional_t<empty, void, std::tuple_element_t<0, results_tuple>>;
-    static constexpr bool value =
-        empty || ((std::is_same_v<first_t, std::invoke_result_t<Visitor, param_t<Ts>>> && ...));
+    static constexpr bool value = empty || ((std::is_same_v<first_t, std::invoke_result_t<Visitor, param_t<Ts>>> && ...));
     using first = first_t;
 };
 
@@ -147,8 +145,11 @@ class FallbackVariant {
     using index_t = std::conditional_t<(alternatives_count <= 0xFFu), uint8_t, std::size_t>;
     static constexpr index_t npos = static_cast<index_t>(-1);
 
-    FallbackVariant() noexcept : index_(npos) {}
-    ~FallbackVariant() noexcept { destroy_current(); }
+    FallbackVariant() noexcept : index_(npos) {
+    }
+    ~FallbackVariant() noexcept {
+        destroy_current();
+    }
 
     FallbackVariant(const FallbackVariant& other) : index_(npos) {
         if (other.index_ != npos) {
@@ -167,21 +168,15 @@ class FallbackVariant {
     }
 
     // construct from alternative type (implicit)
-    template <typename T, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value !=
-                                          detail::invalid_index>>
+    template <typename T, typename U = std::decay_t<T>, typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value != detail::invalid_index>>
     FallbackVariant(T&& v) noexcept(std::is_nothrow_constructible_v<U, T&&>) : index_(npos) {
         construct_by_type<U>(std::forward<T>(v));
         index_ = static_cast<index_t>(detail::type_list_index_of<U, flat_list>::value);
     }
 
     // in_place_type
-    template <typename T, typename... CArgs, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value !=
-                                          detail::invalid_index>>
-    explicit FallbackVariant(std::in_place_type_t<T>,
-                             CArgs&&... args) noexcept(std::is_nothrow_constructible_v<U, CArgs...>)
-        : index_(npos) {
+    template <typename T, typename... CArgs, typename U = std::decay_t<T>, typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value != detail::invalid_index>>
+    explicit FallbackVariant(std::in_place_type_t<T>, CArgs&&... args) noexcept(std::is_nothrow_constructible_v<U, CArgs...>) : index_(npos) {
         construct_by_type<U>(std::forward<CArgs>(args)...);
         index_ = static_cast<index_t>(detail::type_list_index_of<U, flat_list>::value);
     }
@@ -227,9 +222,7 @@ class FallbackVariant {
     }
 
     // assign from alternative type
-    template <typename T, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value !=
-                                          detail::invalid_index>>
+    template <typename T, typename U = std::decay_t<T>, typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value != detail::invalid_index>>
     FallbackVariant& operator=(T&& v) noexcept(std::is_nothrow_constructible_v<U, T&&>) {
         constexpr std::size_t idx = detail::type_list_index_of<U, flat_list>::value;
         if (index_ == static_cast<index_t>(idx)) {
@@ -243,9 +236,7 @@ class FallbackVariant {
     }
 
     // emplace by type or index
-    template <typename T, typename... CArgs, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value !=
-                                          detail::invalid_index>>
+    template <typename T, typename... CArgs, typename U = std::decay_t<T>, typename = std::enable_if_t<detail::type_list_index_of<U, flat_list>::value != detail::invalid_index>>
     void emplace(CArgs&&... args) {
         destroy_current();
         construct_by_type<U>(std::forward<CArgs>(args)...);
@@ -261,8 +252,12 @@ class FallbackVariant {
         index_ = static_cast<index_t>(I);
     }
 
-    bool valueless() const noexcept { return index_ == npos; }
-    std::size_t index() const noexcept { return static_cast<std::size_t>(index_); }
+    bool valueless() const noexcept {
+        return index_ == npos;
+    }
+    std::size_t index() const noexcept {
+        return static_cast<std::size_t>(index_);
+    }
 
     template <typename T>
     static constexpr std::size_t index_of() noexcept {
@@ -339,8 +334,7 @@ class FallbackVariant {
         static_assert(visitor_returns<Visitor, flat_list, 0>::value,
                       "FallbackVariant::visit: visitor must return same type for "
                       "all alternatives (or use void)");
-        return visit_impl(std::forward<Visitor>(vis),
-                          std::make_index_sequence<alternatives_count>{});
+        return visit_impl(std::forward<Visitor>(vis), std::make_index_sequence<alternatives_count>{});
     }
 
     template <typename Visitor>
@@ -349,8 +343,7 @@ class FallbackVariant {
         static_assert(visitor_returns<Visitor, flat_list, 1>::value,
                       "FallbackVariant::visit(const): visitor must return same "
                       "type for all alternatives (or use void)");
-        return visit_impl_const(std::forward<Visitor>(vis),
-                                std::make_index_sequence<alternatives_count>{});
+        return visit_impl_const(std::forward<Visitor>(vis), std::make_index_sequence<alternatives_count>{});
     }
 
     // convenience visit with multiple callables
@@ -390,8 +383,7 @@ class FallbackVariant {
             index_ = tmp_other.index_;
         }
         if (tmp_self.index_ != npos) {
-            other.move_from_index(static_cast<std::size_t>(tmp_self.index_),
-                                  tmp_self.storage_ptr());
+            other.move_from_index(static_cast<std::size_t>(tmp_self.index_), tmp_self.storage_ptr());
             other.index_ = tmp_self.index_;
         }
     }
@@ -429,20 +421,23 @@ class FallbackVariant {
         return nullptr;
     }
 
-    static constexpr std::size_t alternatives() noexcept { return alternatives_count; }
+    static constexpr std::size_t alternatives() noexcept {
+        return alternatives_count;
+    }
 
     bool operator==(const FallbackVariant& other) const noexcept {
         if (index_ != other.index_) return false;
         if (index_ == npos) return true;
         return equal_same_index(static_cast<std::size_t>(index_), other);
     }
-    bool operator!=(const FallbackVariant& other) const noexcept { return !(*this == other); }
+    bool operator!=(const FallbackVariant& other) const noexcept {
+        return !(*this == other);
+    }
 
     // raw bits helper (debug)
     uint64_t get_raw_bits() const noexcept {
         uint64_t out = 0;
-        uint8_t idx_byte =
-            (index_ == npos) ? static_cast<uint8_t>(0xFFu) : static_cast<uint8_t>(index_);
+        uint8_t idx_byte = (index_ == npos) ? static_cast<uint8_t>(0xFFu) : static_cast<uint8_t>(index_);
         std::size_t copy_n = std::min<std::size_t>(sizeof(storage_), 7);
         for (std::size_t i = 0; i < copy_n; ++i) {
             uint8_t b = static_cast<uint8_t>(storage_[i]);
@@ -502,8 +497,12 @@ class FallbackVariant {
     alignas(storage_align) unsigned char storage_[storage_size ? storage_size : 1];
     index_t index_ = npos;
 
-    void* storage_ptr() noexcept { return static_cast<void*>(storage_); }
-    const void* storage_ptr() const noexcept { return static_cast<const void*>(storage_); }
+    void* storage_ptr() noexcept {
+        return static_cast<void*>(storage_);
+    }
+    const void* storage_ptr() const noexcept {
+        return static_cast<const void*>(storage_);
+    }
 
     void destroy_current() noexcept {
         if (index_ == npos) return;
@@ -533,8 +532,7 @@ class FallbackVariant {
             using T = typename detail::nth_type<I, flat_list>::type;
             if (idx == static_cast<index_t>(I)) {
                 using std::swap;
-                swap(*reinterpret_cast<T*>(storage_ptr()),
-                     *reinterpret_cast<T*>(other.storage_ptr()));
+                swap(*reinterpret_cast<T*>(storage_ptr()), *reinterpret_cast<T*>(other.storage_ptr()));
                 return;
             }
             swap_same_index_impl<I + 1>(idx, other);
@@ -556,8 +554,7 @@ class FallbackVariant {
     // visit_impl jump-table (const)
     template <typename Visitor, std::size_t... Is>
     decltype(auto) visit_impl_const(Visitor&& vis, std::index_sequence<Is...>) const {
-        using R =
-            std::invoke_result_t<Visitor, const typename detail::nth_type<0, flat_list>::type&>;
+        using R = std::invoke_result_t<Visitor, const typename detail::nth_type<0, flat_list>::type&>;
         using fn_t = R (*)(const void*, Visitor&&);
         static fn_t table[] = {+[](const void* storage, Visitor&& v) -> R {
             using T = typename detail::nth_type<Is, flat_list>::type;
@@ -586,17 +583,14 @@ class FallbackVariant {
 
     // construct nested variant from index when TV is a variant
     template <typename TV>
-    std::enable_if_t<is_variant<TV>::value, TV> construct_nested_variant_from_index(
-        std::size_t idx) const noexcept {
+    std::enable_if_t<is_variant<TV>::value, TV> construct_nested_variant_from_index(std::size_t idx) const noexcept {
         return construct_nested_variant_from_index_impl<TV, 0>(idx);
     }
 
     template <typename TV, std::size_t I>
-    std::enable_if_t<(I < alternatives_count), TV> construct_nested_variant_from_index_impl(
-        std::size_t idx) const noexcept {
+    std::enable_if_t<(I < alternatives_count), TV> construct_nested_variant_from_index_impl(std::size_t idx) const noexcept {
         using U = typename detail::nth_type<I, flat_list>::type;
-        constexpr std::size_t in_nested =
-            detail::type_list_index_of<U, typename TV::inner_types>::value;
+        constexpr std::size_t in_nested = detail::type_list_index_of<U, typename TV::inner_types>::value;
         if (idx == I && in_nested != detail::invalid_index) {
             return TV(get<U>());
         }
@@ -604,8 +598,7 @@ class FallbackVariant {
     }
 
     template <typename TV, std::size_t I>
-    std::enable_if_t<(I >= alternatives_count), TV> construct_nested_variant_from_index_impl(
-        std::size_t) const noexcept {
+    std::enable_if_t<(I >= alternatives_count), TV> construct_nested_variant_from_index_impl(std::size_t) const noexcept {
         return TV{};
     }
 
@@ -622,8 +615,7 @@ class FallbackVariant {
                 if constexpr (std::is_trivially_copyable_v<T>) {
                     return std::memcmp(storage_ptr(), other.storage_ptr(), sizeof(T)) == 0;
                 } else if constexpr (detail::has_eq<T>::value) {
-                    return *reinterpret_cast<const T*>(storage_ptr()) ==
-                           *reinterpret_cast<const T*>(other.storage_ptr());
+                    return *reinterpret_cast<const T*>(storage_ptr()) == *reinterpret_cast<const T*>(other.storage_ptr());
                 } else {
                     return false;
                 }
@@ -636,8 +628,7 @@ class FallbackVariant {
 
 // non-member swap
 template <typename... Ts>
-inline void swap(FallbackVariant<Ts...>& a,
-                 FallbackVariant<Ts...>& b) noexcept(noexcept(a.swap(b))) {
+inline void swap(FallbackVariant<Ts...>& a, FallbackVariant<Ts...>& b) noexcept(noexcept(a.swap(b))) {
     a.swap(b);
 }
 

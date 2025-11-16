@@ -29,8 +29,7 @@
 #define MEOW_ORDER_LITTLE __ORDER_LITTLE_ENDIAN__
 #endif
 
-#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__)) && \
-    (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE)
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__)) && (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE)
 #define MEOW_CAN_USE_NAN_BOXING 1
 #else
 #define MEOW_CAN_USE_NAN_BOXING 0
@@ -53,11 +52,9 @@ template <typename... Ts>
 struct select_backend_impl<utils::detail::type_list<Ts...>> {
     static constexpr bool can_nanbox = MEOW_CAN_USE_NAN_BOXING != 0;
     static constexpr bool small_enough = (sizeof...(Ts) <= 8);
-    static constexpr bool all_nanboxable =
-        utils::all_nanboxable_impl<utils::detail::type_list<Ts...>>::value;
+    static constexpr bool all_nanboxable = utils::all_nanboxable_impl<utils::detail::type_list<Ts...>>::value;
     static constexpr bool use_nanbox = can_nanbox && small_enough && all_nanboxable;
-    using type = std::conditional_t<use_nanbox, utils::NaNBoxedVariant<Ts...>,
-                                    utils::FallbackVariant<Ts...>>;
+    using type = std::conditional_t<use_nanbox, utils::NaNBoxedVariant<Ts...>, utils::FallbackVariant<Ts...>>;
 };
 }  // namespace detail_backend
 
@@ -85,22 +82,17 @@ class variant {
     // Template ctor for non-meow::variant types (unchanged logic; excluded when
     // T is meow::variant)
     template <typename T,
-              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant> &&
-                                          !utils::detail::is_meow_variant<std::decay_t<T>>::value &&
-                                          std::is_constructible_v<implementation_t, T>>>
-    variant(T&& value) noexcept(noexcept(implementation_t(std::forward<T>(value))))
-        : storage_(std::forward<T>(value)) {}
+              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant> && !utils::detail::is_meow_variant<std::decay_t<T>>::value && std::is_constructible_v<implementation_t, T>>>
+    variant(T&& value) noexcept(noexcept(implementation_t(std::forward<T>(value)))) : storage_(std::forward<T>(value)) {
+    }
 
     variant& operator=(const variant&) = default;
     variant& operator=(variant&&) = default;
 
     // Template operator= for non-meow::variant types
     template <typename T,
-              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant> &&
-                                          !utils::detail::is_meow_variant<std::decay_t<T>>::value &&
-                                          std::is_assignable_v<implementation_t&, T>>>
-    variant& operator=(T&& value) noexcept(
-        noexcept(std::declval<implementation_t&>() = std::forward<T>(value))) {
+              typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, variant> && !utils::detail::is_meow_variant<std::decay_t<T>>::value && std::is_assignable_v<implementation_t&, T>>>
+    variant& operator=(T&& value) noexcept(noexcept(std::declval<implementation_t&>() = std::forward<T>(value))) {
         storage_ = std::forward<T>(value);
         return *this;
     }
@@ -160,8 +152,7 @@ class variant {
     // Assign from another meow::variant (const lvalue)
     template <typename... U>
     variant& operator=(const meow::variant<U...>& other) noexcept {
-        if (reinterpret_cast<const void*>(&other) == reinterpret_cast<const void*>(this))
-            return *this;
+        if (reinterpret_cast<const void*>(&other) == reinterpret_cast<const void*>(this)) return *this;
         if (other.valueless()) {
             storage_ = implementation_t{};
             return *this;
@@ -209,8 +200,12 @@ class variant {
     }
 
     // --- Queries ---
-    [[nodiscard]] std::size_t index() const noexcept { return storage_.index(); }
-    [[nodiscard]] bool valueless() const noexcept { return storage_.valueless(); }
+    [[nodiscard]] std::size_t index() const noexcept {
+        return storage_.index();
+    }
+    [[nodiscard]] bool valueless() const noexcept {
+        return storage_.valueless();
+    }
 
     template <typename T>
     [[nodiscard]] bool holds() const noexcept {
@@ -331,7 +326,9 @@ class variant {
         return storage_.template emplace_index<I>(std::forward<CArgs>(args)...);
     }
 
-    void swap(variant& other) noexcept { storage_.swap(other.storage_); }
+    void swap(variant& other) noexcept {
+        storage_.swap(other.storage_);
+    }
 
     // --- Visit ---
     template <typename Visitor>
@@ -355,8 +352,12 @@ class variant {
     }
 
     // --- Comparison ---
-    bool operator==(const variant& other) const { return storage_ == other.storage_; }
-    bool operator!=(const variant& other) const { return storage_ != other.storage_; }
+    bool operator==(const variant& other) const {
+        return storage_ == other.storage_;
+    }
+    bool operator!=(const variant& other) const {
+        return storage_ != other.storage_;
+    }
 };
 
 // --- Non-member utilities ---

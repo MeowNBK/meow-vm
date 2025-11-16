@@ -4,99 +4,52 @@
 namespace meow::loader {
 
 static const std::unordered_map<std::string_view, TokenType> DIRECTIVES = {
-    {".func", TokenType::DIR_FUNC},           {".endfunc", TokenType::DIR_ENDFUNC},
-    {".registers", TokenType::DIR_REGISTERS}, {".upvalues", TokenType::DIR_UPVALUES},
-    {".upvalue", TokenType::DIR_UPVALUE},     {".const", TokenType::DIR_CONST}};
+    {".func", TokenType::DIR_FUNC},
+    {".endfunc", TokenType::DIR_ENDFUNC},
+    {".registers", TokenType::DIR_REGISTERS},
+    {".upvalues", TokenType::DIR_UPVALUES},
+    {".upvalue", TokenType::DIR_UPVALUE}, {".const", TokenType::DIR_CONST}
+};
 
-static const std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)>
-    OPCODES = [] {
-        std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)> array =
-            {
-                "LOAD_CONST",
-                "LOAD_NULL",
-                "LOAD_TRUE",
-                "LOAD_FALSE",
-                "LOAD_INT",
-                "LOAD_FLOAT",
-                "MOVE",
-                "ADD",
-                "SUB",
-                "MUL",
-                "DIV",
-                "MOD",
-                "POW",
-                "EQ",
-                "NEQ",
-                "GT",
-                "GE",
-                "LT",
-                "LE",
-                "NEG",
-                "NOT",
-                "GET_GLOBAL",
-                "SET_GLOBAL",
-                "GET_UPVALUE",
-                "SET_UPVALUE",
-                "CLOSURE",
-                "CLOSE_UPVALUES",
-                "JUMP",
-                "JUMP_IF_FALSE",
-                "JUMP_IF_TRUE",
-                "CALL",
-                "CALL_VOID",
-                "RETURN",
-                "HALT",
-                "NEW_ARRAY",
-                "NEW_HASH",
-                "GET_INDEX",
-                "SET_INDEX",
-                "GET_KEYS",
-                "GET_VALUES",
-                "NEW_CLASS",
-                "NEW_INSTANCE",
-                "GET_PROP",
-                "SET_PROP",
-                "SET_METHOD",
-                "INHERIT",
-                "GET_SUPER",
-                "BIT_AND",
-                "BIT_OR",
-                "BIT_XOR",
-                "BIT_NOT",
-                "LSHIFT",
-                "RSHIFT",
-                "THROW",
-                "SETUP_TRY",
-                "POP_TRY",
-                "IMPORT_MODULE",
-                "EXPORT",
-                "GET_EXPORT",
-                "IMPORT_ALL",
-        };
-        std::sort(array.begin(), array.end());
-        return array;
-    }();
+static const std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)> OPCODES = [] {
+    std::array<std::string_view, static_cast<size_t>(meow::core::OpCode::TOTAL_OPCODES)> array = {
+        "LOAD_CONST", "LOAD_NULL",     "LOAD_TRUE",     "LOAD_FALSE", "LOAD_INT",   "LOAD_FLOAT",   "MOVE",        "ADD",       "SUB",
+        "MUL",        "DIV",           "MOD",           "POW",        "EQ",         "NEQ",          "GT",          "GE",        "LT",
+        "LE",         "NEG",           "NOT",           "GET_GLOBAL", "SET_GLOBAL", "GET_UPVALUE",  "SET_UPVALUE", "CLOSURE",   "CLOSE_UPVALUES",
+        "JUMP",       "JUMP_IF_FALSE", "JUMP_IF_TRUE",  "CALL",       "CALL_VOID",  "RETURN",       "HALT",        "NEW_ARRAY", "NEW_HASH",
+        "GET_INDEX",  "SET_INDEX",     "GET_KEYS",      "GET_VALUES", "NEW_CLASS",  "NEW_INSTANCE", "GET_PROP",    "SET_PROP",  "SET_METHOD",
+        "INHERIT",    "GET_SUPER",     "BIT_AND",       "BIT_OR",     "BIT_XOR",    "BIT_NOT",      "LSHIFT",      "RSHIFT",    "THROW",
+        "SETUP_TRY",  "POP_TRY",       "IMPORT_MODULE", "EXPORT",     "GET_EXPORT", "IMPORT_ALL",
+    };
+    std::sort(array.begin(), array.end());
+    return array;
+}();
 
-static constexpr std::array<std::string_view, static_cast<size_t>(TokenType::TOTAL_TOKENS)> TOKENS =
-    {
-        // Directives
-        "DIR_FUNC", "DIR_ENDFUNC", "DIR_REGISTERS", "DIR_UPVALUES", "DIR_UPVALUE", "DIR_CONST",
+static constexpr std::array<std::string_view, static_cast<size_t>(TokenType::TOTAL_TOKENS)> TOKENS = {
+    // Directives
+    "DIR_FUNC", "DIR_ENDFUNC", "DIR_REGISTERS", "DIR_UPVALUES", "DIR_UPVALUE", "DIR_CONST",
 
-        // Symbols
-        "LABEL_DEF", "IDENTIFIER", "OPCODE",
+    // Symbols
+    "LABEL_DEF", "IDENTIFIER", "OPCODE",
 
-        // Literals
-        "NUMBER_INT", "NUMBER_FLOAT", "STRING",
+    // Literals
+    "NUMBER_INT", "NUMBER_FLOAT", "STRING",
 
-        // Other
-        "END_OF_FILE", "UNKNOWN"};
+    // Other
+    "END_OF_FILE", "UNKNOWN"};
 
-static constexpr inline bool is_digit(unsigned char c) noexcept { return c >= '0' && c <= '9'; }
+static constexpr inline bool is_digit(unsigned char c) noexcept {
+    return c >= '0' && c <= '9';
+}
 static constexpr inline bool is_xdigit(unsigned char c) noexcept {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
-static constexpr inline bool is_bdigit(unsigned char c) noexcept { return (c == '0' || c == '1'); }
-static constexpr inline bool is_odigit(unsigned char c) noexcept { return (c >= '0' && c <= '7'); }
+static constexpr inline bool is_bdigit(unsigned char c) noexcept {
+    return (c == '0' || c == '1');
+}
+static constexpr inline bool is_odigit(unsigned char c) noexcept {
+    return (c >= '0' && c <= '7');
+}
 static constexpr inline bool is_alpha(unsigned char c) noexcept {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
@@ -122,13 +75,8 @@ std::string Token::to_string() const {
 }
 
 // --- Lexer ---
-Lexer::Lexer(std::string_view source)
-    : src_(source),
-      pos_(0),
-      line_(1),
-      col_(1),
-      curr_(src_.empty() ? '\0' : src_[0]),
-      line_starts_({0}) {}
+Lexer::Lexer(std::string_view source) : src_(source), pos_(0), line_(1), col_(1), curr_(src_.empty() ? '\0' : src_[0]), line_starts_({0}) {
+}
 
 unsigned char Lexer::peek_char(size_t range) const noexcept {
     size_t dest_pos = pos_ + range;
@@ -171,13 +119,16 @@ void Lexer::retreat(size_t range) noexcept {
     synchronize();
 }
 
-bool Lexer::is_at_end() const noexcept { return pos_ >= src_.size(); }
+bool Lexer::is_at_end() const noexcept {
+    return pos_ >= src_.size();
+}
 
-bool Lexer::is_at_end(size_t index) const noexcept { return index >= src_.size(); }
+bool Lexer::is_at_end(size_t index) const noexcept {
+    return index >= src_.size();
+}
 
 Token Lexer::make_token(TokenType type) const {
-    return Token{src_.substr(token_start_pos_, pos_ - token_start_pos_), type, token_start_line_,
-                 token_start_col_};
+    return Token{src_.substr(token_start_pos_, pos_ - token_start_pos_), type, token_start_line_, token_start_col_};
 }
 
 Token Lexer::make_token(TokenType type, size_t length) const {

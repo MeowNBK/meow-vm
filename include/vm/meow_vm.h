@@ -17,7 +17,8 @@ class ModuleManager;
 
 namespace meow::vm {
 struct VMError : public std::runtime_error {
-    explicit VMError(const std::string& message) : std::runtime_error(message) {}
+    explicit VMError(const std::string& message) : std::runtime_error(message) {
+    }
 };
 
 struct VMArgs {
@@ -29,8 +30,7 @@ struct VMArgs {
 class MeowVM : public MeowEngine {
    public:
     // --- Constructors ---
-    explicit MeowVM(const std::string& entry_point_directory, const std::string& entry_path,
-                    int argc, char* argv[]);
+    explicit MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]);
     MeowVM(const MeowVM&) = delete;
     MeowVM& operator=(const MeowVM&) = delete;
     ~MeowVM();
@@ -54,6 +54,8 @@ class MeowVM : public MeowEngine {
     void run();
 
     // --- Error helpers ---
-    [[noreturn]] inline void throw_vm_error(const std::string& message) { throw VMError(message); }
+    [[noreturn]] inline void throw_vm_error(const std::string& message) {
+        throw VMError(message);
+    }
 };
 }  // namespace meow::vm

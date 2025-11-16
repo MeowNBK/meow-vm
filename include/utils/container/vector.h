@@ -56,15 +56,16 @@ class Vector {
 
    public:
     // --- Constructors & destructor
-    Vector(size_t new_capacity = 10) noexcept
-        : data_(new value_t[new_capacity]()), size_(0), capacity_(new_capacity) {}
-    explicit Vector(const Vector& other) noexcept
-        : data_(new value_t[other.capacity_]), size_(other.size_), capacity_(other.capacity_) {
+    Vector(size_t new_capacity = 10) noexcept : data_(new value_t[new_capacity]()), size_(0), capacity_(new_capacity) {
+    }
+    explicit Vector(const Vector& other) noexcept : data_(new value_t[other.capacity_]), size_(other.size_), capacity_(other.capacity_) {
         for (size_t i = 0; i < size_; ++i) {
             data_[i] = other.data_[i];
         }
     }
-    explicit Vector(Vector&& other) noexcept { move_from(std::move(other)); }
+    explicit Vector(Vector&& other) noexcept {
+        move_from(std::move(other));
+    }
     inline Vector& operator=(const Vector& other) noexcept {
         copy_from(other);
         return *this;
@@ -73,23 +74,39 @@ class Vector {
         move_from(std::move(other));
         return *this;
     }
-    ~Vector() noexcept { delete[] data_; }
+    ~Vector() noexcept {
+        delete[] data_;
+    }
 
     // --- Element access ---
-    [[nodiscard]] inline const_reference_t get(size_t index) const noexcept { return data_[index]; }
-    [[nodiscard]] inline reference_t get(size_t index) noexcept { return data_[index]; }
+    [[nodiscard]] inline const_reference_t get(size_t index) const noexcept {
+        return data_[index];
+    }
+    [[nodiscard]] inline reference_t get(size_t index) noexcept {
+        return data_[index];
+    }
     [[nodiscard]] inline const_reference_t operator[](size_t index) const noexcept {
         return data_[index];
     }
-    [[nodiscard]] inline reference_t operator[](size_t index) noexcept { return data_[index]; }
+    [[nodiscard]] inline reference_t operator[](size_t index) noexcept {
+        return data_[index];
+    }
 
     // --- Data access ---
-    [[nodiscard]] inline const_pointer_t data() const noexcept { return data_; }
-    [[nodiscard]] inline pointer_t data() noexcept { return data_; }
+    [[nodiscard]] inline const_pointer_t data() const noexcept {
+        return data_;
+    }
+    [[nodiscard]] inline pointer_t data() noexcept {
+        return data_;
+    }
 
     // --- Capacity ---
-    [[nodiscard]] inline size_t size() const noexcept { return size_; }
-    [[nodiscard]] inline size_t capacity() const noexcept { return capacity_; }
+    [[nodiscard]] inline size_t size() const noexcept {
+        return size_;
+    }
+    [[nodiscard]] inline size_t capacity() const noexcept {
+        return capacity_;
+    }
 
     // --- Modifiers ---
     inline void push(const_reference_t value) noexcept {
@@ -117,6 +134,8 @@ class Vector {
             size_ = new_size;
         }
     }
-    inline void reserve(size_t new_capacity) noexcept { grow(new_capacity); }
+    inline void reserve(size_t new_capacity) noexcept {
+        grow(new_capacity);
+    }
 };
 }  // namespace meow::utils

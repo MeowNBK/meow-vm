@@ -11,17 +11,7 @@ class MemoryManager;
 }
 namespace meow::loader {
 
-enum class ErrCode {
-    OK = 0,
-    UNEXPECTED_TOKEN,
-    INVALID_NUMBER,
-    OUT_OF_RANGE,
-    INVALID_IDENT,
-    MISSING_DIRECTIVE,
-    LABEL_NOT_FOUND,
-    TOO_MANY_CONST,
-    INTERNAL_ERROR
-};
+enum class ErrCode { OK = 0, UNEXPECTED_TOKEN, INVALID_NUMBER, OUT_OF_RANGE, INVALID_IDENT, MISSING_DIRECTIVE, LABEL_NOT_FOUND, TOO_MANY_CONST, INTERNAL_ERROR };
 
 struct Diagnostic {
     ErrCode code = ErrCode::OK;
@@ -68,10 +58,8 @@ struct Result<void> {
 
 class TextParser {
    public:
-    explicit TextParser(meow::memory::MemoryManager* heap, const std::vector<Token>& t,
-                        std::string_view s) noexcept;
-    explicit TextParser(meow::memory::MemoryManager* heap, std::vector<Token>&& t,
-                        std::string_view s) noexcept;
+    explicit TextParser(meow::memory::MemoryManager* heap, const std::vector<Token>& t, std::string_view s) noexcept;
+    explicit TextParser(meow::memory::MemoryManager* heap, std::vector<Token>&& t, std::string_view s) noexcept;
     TextParser(const TextParser&) = delete;
     TextParser(TextParser&&) = default;
     TextParser& operator=(const TextParser&) = delete;
@@ -80,8 +68,7 @@ class TextParser {
 
     // new: returns Result<proto_t> with Diagnostic on error
     meow::core::proto_t parse_source();
-    [[nodiscard]] const std::unordered_map<std::string, meow::core::proto_t>& get_finalized_protos()
-        const;
+    [[nodiscard]] const std::unordered_map<std::string, meow::core::proto_t>& get_finalized_protos() const;
 
    private:
     meow::memory::MemoryManager* heap_{nullptr};
@@ -107,7 +94,9 @@ class TextParser {
             tmp_consts.push_back(v);
             return i;
         }
-        void wb(uint8_t b) { code.push_back(b); }
+        void wb(uint8_t b) {
+            code.push_back(b);
+        }
         void wu16(uint16_t x) {
             code.push_back(uint8_t(x & 0xFF));
             code.push_back(uint8_t((x >> 8) & 0xFF));
@@ -115,7 +104,9 @@ class TextParser {
         void wu64(uint64_t x) {
             for (int i = 0; i < 8; ++i) code.push_back(uint8_t((x >> (i * 8)) & 0xFF));
         }
-        void wf64(double d) { wu64(std::bit_cast<uint64_t>(d)); }
+        void wf64(double d) {
+            wu64(std::bit_cast<uint64_t>(d));
+        }
         bool patch_u16(size_t ofs, uint16_t v) {
             if (ofs + 1 >= code.size()) return false;
             code[ofs] = uint8_t(v & 0xFF);

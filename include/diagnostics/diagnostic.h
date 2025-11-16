@@ -43,4 +43,4 @@ struct RenderOptions {
 
 std::string render_to_human(const Diagnostic& diag, LocaleSource& locale, const RenderOptions& options);
 
-}
+}  // namespace meow::diagnostics

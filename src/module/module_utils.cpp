@@ -16,10 +16,8 @@
 
 namespace meow::module {
 
-// -------------------- internal helpers --------------------
 static inline std::string to_lower_copy(std::string s) noexcept {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return s;
 }
 
@@ -32,8 +30,7 @@ std::filesystem::path get_executable_dir() noexcept {
         return std::filesystem::path(std::string(buf, static_cast<size_t>(len))).parent_path();
 #elif defined(__APPLE__)
         uint32_t size = 0;
-        if (_NSGetExecutablePath(nullptr, &size) != 0 && size == 0)
-            return std::filesystem::current_path();
+        if (_NSGetExecutablePath(nullptr, &size) != 0 && size == 0) return std::filesystem::current_path();
         std::vector<char> buf(size ? size : 1);
         if (_NSGetExecutablePath(buf.data(), &size) != 0) return std::filesystem::current_path();
         return std::filesystem::absolute(std::filesystem::path(buf.data())).parent_path();
@@ -73,17 +70,8 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path)
         std::string line;
         while (std::getline(in, line)) {
             // trim both ends
-            auto ltrim = [](std::string& s) {
-                s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-                            return !std::isspace(ch);
-                        }));
-            };
-            auto rtrim = [](std::string& s) {
-                s.erase(std::find_if(s.rbegin(), s.rend(),
-                                     [](unsigned char ch) { return !std::isspace(ch); })
-                            .base(),
-                        s.end());
-            };
+            auto ltrim = [](std::string& s) { s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); })); };
+            auto rtrim = [](std::string& s) { s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end()); };
             rtrim(line);
             ltrim(line);
             if (!line.empty()) return line;
@@ -93,8 +81,7 @@ std::string read_first_non_empty_line_trimmed(const std::filesystem::path& path)
     return std::string();
 }
 
-std::string expand_token(const std::string& raw, const std::string& token,
-                         const std::filesystem::path& replacement) noexcept {
+std::string expand_token(const std::string& raw, const std::string& token, const std::filesystem::path& replacement) noexcept {
     if (token.empty() || raw.find(token) == std::string::npos) return raw;
     std::string out;
     out.reserve(raw.size() + replacement.string().size());
@@ -119,8 +106,7 @@ struct cache_key {
     std::string token;
     bool treat_bin_as_parent;
     bool operator==(const cache_key& o) const noexcept {
-        return config_filename == o.config_filename && token == o.token &&
-               treat_bin_as_parent == o.treat_bin_as_parent;
+        return config_filename == o.config_filename && token == o.token && treat_bin_as_parent == o.treat_bin_as_parent;
     }
 };
 namespace {
@@ -129,8 +115,7 @@ struct key_hash {
         std::hash<std::string> h;
         size_t r = h(k.config_filename);
         r = r * 1315423911u + h(k.token);
-        r ^= static_cast<size_t>(k.treat_bin_as_parent) + 0x9e3779b97f4a7c15ULL + (r << 6) +
-             (r >> 2);
+        r ^= static_cast<size_t>(k.treat_bin_as_parent) + 0x9e3779b97f4a7c15ULL + (r << 6) + (r >> 2);
         return r;
     }
 };
@@ -138,9 +123,7 @@ static std::mutex s_cache_mutex;
 static std::unordered_map<cache_key, std::filesystem::path, key_hash> s_root_cache;
 }  // namespace
 
-std::filesystem::path detect_root_cached(
-    const std::string& config_filename, const std::string& token, bool treat_bin_as_parent,
-    std::function<std::filesystem::path()> exe_dir_provider) noexcept {
+std::filesystem::path detect_root_cached(const std::string& config_filename, const std::string& token, bool treat_bin_as_parent, std::function<std::filesystem::path()> exe_dir_provider) noexcept {
     try {
         cache_key k{config_filename, token, treat_bin_as_parent};
         {
@@ -155,8 +138,7 @@ std::filesystem::path detect_root_cached(
             if (file_exists(config_path)) {
                 std::string line = read_first_non_empty_line_trimmed(config_path);
                 if (!line.empty()) {
-                    std::string expanded =
-                        token.empty() ? line : expand_token(line, token, exe_dir);
+                    std::string expanded = token.empty() ? line : expand_token(line, token, exe_dir);
                     std::filesystem::path result = normalize_path(std::filesystem::path(expanded));
                     {
                         std::lock_guard<std::mutex> lk(s_cache_mutex);
@@ -181,8 +163,7 @@ std::filesystem::path detect_root_cached(
 }
 
 // -------------------- default search roots helper --------------------
-std::vector<std::filesystem::path> make_default_search_roots(
-    const std::filesystem::path& root) noexcept {
+std::vector<std::filesystem::path> make_default_search_roots(const std::filesystem::path& root) noexcept {
     std::vector<std::filesystem::path> v;
     try {
         v.reserve(5);
@@ -196,31 +177,22 @@ std::vector<std::filesystem::path> make_default_search_roots(
     return v;
 }
 
-// -------------------- library resolution generic --------------------
-std::string resolve_library_path_generic(const std::string& module_path,
-                                         const std::string& importer, const std::string& entry_path,
-                                         const std::vector<std::string>& forbidden_extensions,
-                                         const std::vector<std::string>& candidate_extensions,
-                                         const std::vector<std::filesystem::path>& search_roots,
-                                         bool extra_relative_search) noexcept {
+std::string resolve_library_path_generic(const std::string& module_path, const std::string& importer, const std::string& entry_path, const std::vector<std::string>& forbidden_extensions,
+                                         const std::vector<std::string>& candidate_extensions, const std::vector<std::filesystem::path>& search_roots, bool extra_relative_search) noexcept {
     try {
         std::filesystem::path candidate(module_path);
         std::string ext = candidate.extension().string();
         if (!ext.empty()) {
             std::string ext_l = to_lower_copy(ext);
             for (const auto& f : forbidden_extensions) {
-                if (ext_l == to_lower_copy(f))
-                    return "";  // caller indicated do-not-treat-as-native
+                if (ext_l == to_lower_copy(f)) return "";
             }
-            if (candidate.is_absolute() && file_exists(candidate))
-                return normalize_path(candidate).string();
+            if (candidate.is_absolute() && file_exists(candidate)) return normalize_path(candidate).string();
         }
 
         std::vector<std::filesystem::path> to_try;
         to_try.reserve(8);
 
-        // If no extension on module_path and candidate_extensions provided, try
-        // each appended ext.
         if (candidate.extension().empty() && !candidate_extensions.empty()) {
             for (const auto& ce : candidate_extensions) {
                 std::filesystem::path p = candidate;
@@ -231,7 +203,6 @@ std::string resolve_library_path_generic(const std::string& module_path,
             to_try.push_back(candidate);
         }
 
-        // Try search_roots first (provided by caller)
         for (const auto& root : search_roots) {
             for (const auto& t : to_try) {
                 std::filesystem::path p = root / t;
@@ -239,12 +210,10 @@ std::string resolve_library_path_generic(const std::string& module_path,
             }
         }
 
-        // Try direct (relative to cwd or absolute)
         for (const auto& t : to_try) {
             if (file_exists(t)) return normalize_path(t).string();
         }
 
-        // Try relative to importer / entry_path
         if (extra_relative_search) {
             std::filesystem::path base_dir;
             if (importer == entry_path)
@@ -274,20 +243,15 @@ std::string get_platform_library_extension() noexcept {
 #endif
 }
 
-// -------------------- platform last error --------------------
 std::string platform_last_error() noexcept {
 #if defined(_WIN32)
     DWORD err = GetLastError();
     if (err == 0) return std::string();
     LPSTR buf = nullptr;
-    FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, nullptr);
+    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, nullptr);
     std::string s = buf ? std::string(buf) : std::string();
     if (buf) LocalFree(buf);
-    while (!s.empty() &&
-           (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
-        s.pop_back();
+    while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t')) s.pop_back();
     return s;
 #else
     const char* e = dlerror();
@@ -295,8 +259,6 @@ std::string platform_last_error() noexcept {
 #endif
 }
 
-// -------------------- native library open/get_symbol/close
-// --------------------
 void* open_native_library(const std::string& path) noexcept {
 #if defined(_WIN32)
     HMODULE h = LoadLibraryA(path.c_str());
@@ -318,7 +280,7 @@ void* get_native_symbol(void* handle, const char* symbol_name) noexcept {
     dlerror();
     void* p = dlsym(handle, symbol_name);
     const char* err = dlerror();
-    (void)err;  // caller may call platform_last_error() for details
+    (void)err;
     return p;
 #endif
 }

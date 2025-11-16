@@ -14,17 +14,17 @@ class MemoryManager;
 namespace meow::module {
 class ModuleManager {
    public:
-    explicit ModuleManager(meow::memory::MemoryManager* heap,
-                           meow::vm::MeowEngine* engine) noexcept;
+    explicit ModuleManager(meow::memory::MemoryManager* heap, meow::vm::MeowEngine* engine) noexcept;
     ModuleManager(const ModuleManager&) = delete;
     ModuleManager(ModuleManager&&) = default;
     ModuleManager& operator=(const ModuleManager&) = delete;
     ModuleManager& operator=(ModuleManager&&) = default;
     ModuleManager() = default;
-    meow::core::module_t load_module(meow::core::string_t module_path,
-                                     meow::core::string_t importer_path);
+    meow::core::module_t load_module(meow::core::string_t module_path, meow::core::string_t importer_path);
 
-    inline void reset_cache() noexcept { module_cache_.clear(); }
+    inline void reset_cache() noexcept {
+        module_cache_.clear();
+    }
 
     inline void add_cache(meow::core::string_t name, const meow::core::module_t& mod) {
         module_cache_[name] = mod;

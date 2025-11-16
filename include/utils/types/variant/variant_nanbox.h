@@ -1,12 +1,12 @@
 #pragma once
 
-#include <array>      // std::array (cho bảng hàm `visit` nhanh)
-#include <bit>        // std::bit_cast (C++20) - RẤT QUAN TRỌNG VÌ NÓ DÙNG NAN-BOXING!
-#include <cmath>      // std::isnan
-#include <cstddef>    // std::size_t, static_cast
-#include <cstdint>    // uint64_t, uint8_t, uintptr_t, int64_t
-#include <limits>     // std::numeric_limits
-#include <stdexcept>  // std::bad_variant_access
+#include <array>        // std::array (cho bảng hàm `visit` nhanh)
+#include <bit>          // std::bit_cast (C++20) - RẤT QUAN TRỌNG VÌ NÓ DÙNG NAN-BOXING!
+#include <cmath>        // std::isnan
+#include <cstddef>      // std::size_t, static_cast
+#include <cstdint>      // uint64_t, uint8_t, uintptr_t, int64_t
+#include <limits>       // std::numeric_limits
+#include <stdexcept>    // std::bad_variant_access
 #include <type_traits>  // std::integral_constant, std::decay_t, std::is_pointer, std::is_integral, std::is_floating_point
 #include <type_traits>  // std::is_same, std::enable_if_t
 #include <utility>      // std::forward, std::move
@@ -23,15 +23,13 @@ namespace meow::utils {
 #define MEOW_ORDER_LITTLE __ORDER_LITTLE_ENDIAN__
 #endif
 
-#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__)) && \
-    (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE)
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__)) && (defined(MEOW_BYTE_ORDER) && MEOW_BYTE_ORDER == MEOW_ORDER_LITTLE)
 #define MEOW_LITTLE_64 1
 #else
 #define MEOW_LITTLE_64 0
 #endif
 
-static_assert(MEOW_LITTLE_64,
-              "variant.h (NaN-boxing ultra) requires 64-bit little-endian platform.");
+static_assert(MEOW_LITTLE_64, "variant.h (NaN-boxing ultra) requires 64-bit little-endian platform.");
 
 #if defined(__GNUC__) || defined(__clang__)
 #define MEOW_ALWAYS_INLINE inline __attribute__((always_inline))
@@ -59,19 +57,15 @@ static_assert(MEOW_LITTLE_64,
 // ---------------------- classifiers ----------------------
 template <typename T>
 struct is_pointer_like {
-    static constexpr bool value = std::is_pointer<std::decay_t<T>>::value &&
-                                  sizeof(std::decay_t<T>) <= 8 && alignof(std::decay_t<T>) <= 8;
+    static constexpr bool value = std::is_pointer<std::decay_t<T>>::value && sizeof(std::decay_t<T>) <= 8 && alignof(std::decay_t<T>) <= 8;
 };
 template <typename T>
 struct is_integral_like {
-    static constexpr bool value = std::is_integral<std::decay_t<T>>::value &&
-                                  sizeof(std::decay_t<T>) <= 8 &&
-                                  !std::is_same<std::decay_t<T>, bool>::value;
+    static constexpr bool value = std::is_integral<std::decay_t<T>>::value && sizeof(std::decay_t<T>) <= 8 && !std::is_same<std::decay_t<T>, bool>::value;
 };
 template <typename T>
 struct is_double_like {
-    static constexpr bool value =
-        std::is_floating_point<std::decay_t<T>>::value && sizeof(std::decay_t<T>) == 8;
+    static constexpr bool value = std::is_floating_point<std::decay_t<T>>::value && sizeof(std::decay_t<T>) == 8;
 };
 template <typename T>
 struct is_monostate_like {
@@ -92,9 +86,7 @@ struct all_nanboxable_impl<detail::type_list<>> : std::true_type {};
 
 template <typename H, typename... Ts>
 struct all_nanboxable_impl<detail::type_list<H, Ts...>>
-    : std::integral_constant<bool, (is_double_like<H>::value || is_integral_like<H>::value ||
-                                    is_pointer_like<H>::value || is_monostate_like<H>::value ||
-                                    is_bool_like<H>::value) &&
+    : std::integral_constant<bool, (is_double_like<H>::value || is_integral_like<H>::value || is_pointer_like<H>::value || is_monostate_like<H>::value || is_bool_like<H>::value) &&
                                        all_nanboxable_impl<detail::type_list<Ts...>>::value> {};
 
 // ---------------------- NaN-box constants ----------------------
@@ -147,8 +139,7 @@ class NaNBoxedVariant {
     static constexpr index_t npos = static_cast<index_t>(-1);
 
     MEOW_ALWAYS_INLINE NaNBoxedVariant() noexcept {
-        if constexpr (std::is_same<typename detail::nth_type<0, flat_list>::type,
-                                   std::monostate>::value) {
+        if constexpr (std::is_same<typename detail::nth_type<0, flat_list>::type, std::monostate>::value) {
             index_ = 0;
             encode_non_double(0, 0ULL);
         } else {
@@ -169,18 +160,14 @@ class NaNBoxedVariant {
         o.bits_ = 0ULL;
     }
 
-    template <typename T, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value !=
-                                           detail::invalid_index)>>
+    template <typename T, typename U = std::decay_t<T>, typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value != detail::invalid_index)>>
     MEOW_ALWAYS_INLINE NaNBoxedVariant(T&& v) noexcept {
         using VT = std::decay_t<T>;
         constexpr std::size_t idx = detail::type_list_index_of<VT, flat_list>::value;
         assign_from_type_impl<VT>(idx, std::forward<T>(v));
     }
 
-    template <typename T, typename... CArgs, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value !=
-                                           detail::invalid_index)>>
+    template <typename T, typename... CArgs, typename U = std::decay_t<T>, typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value != detail::invalid_index)>>
     MEOW_ALWAYS_INLINE explicit NaNBoxedVariant(std::in_place_type_t<T>, CArgs&&... args) noexcept {
         using UT = std::decay_t<T>;
         UT tmp(std::forward<CArgs>(args)...);
@@ -189,8 +176,7 @@ class NaNBoxedVariant {
     }
 
     template <std::size_t I, typename... CArgs>
-    MEOW_ALWAYS_INLINE explicit NaNBoxedVariant(std::in_place_index_t<I>,
-                                                CArgs&&... args) noexcept {
+    MEOW_ALWAYS_INLINE explicit NaNBoxedVariant(std::in_place_index_t<I>, CArgs&&... args) noexcept {
         static_assert(I < alternatives_count, "in_place_index out of range");
         using U = typename detail::nth_type<I, flat_list>::type;
         U tmp(std::forward<CArgs>(args)...);
@@ -210,9 +196,7 @@ class NaNBoxedVariant {
         return *this;
     }
 
-    template <typename T, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value !=
-                                           detail::invalid_index)>>
+    template <typename T, typename U = std::decay_t<T>, typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value != detail::invalid_index)>>
     MEOW_ALWAYS_INLINE NaNBoxedVariant& operator=(T&& v) noexcept {
         using VT = std::decay_t<T>;
         constexpr std::size_t idx = detail::type_list_index_of<VT, flat_list>::value;
@@ -220,9 +204,7 @@ class NaNBoxedVariant {
         return *this;
     }
 
-    template <typename T, typename... CArgs, typename U = std::decay_t<T>,
-              typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value !=
-                                           detail::invalid_index)>>
+    template <typename T, typename... CArgs, typename U = std::decay_t<T>, typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value != detail::invalid_index)>>
     MEOW_ALWAYS_INLINE void emplace(CArgs&&... args) noexcept {
         using UT = std::decay_t<T>;
         UT tmp(std::forward<CArgs>(args)...);
@@ -241,7 +223,9 @@ class NaNBoxedVariant {
     [[nodiscard]] MEOW_ALWAYS_INLINE std::size_t index() const noexcept {
         return (index_ == npos ? detail::invalid_index : static_cast<std::size_t>(index_));
     }
-    [[nodiscard]] MEOW_ALWAYS_INLINE bool valueless() const noexcept { return index_ == npos; }
+    [[nodiscard]] MEOW_ALWAYS_INLINE bool valueless() const noexcept {
+        return index_ == npos;
+    }
 
     template <typename T>
     [[nodiscard]] MEOW_ALWAYS_INLINE bool holds() const noexcept {
@@ -308,7 +292,9 @@ class NaNBoxedVariant {
         o.index_ = ix;
     }
 
-    [[nodiscard]] MEOW_ALWAYS_INLINE uint64_t get_raw_bits() const noexcept { return bits_; }
+    [[nodiscard]] MEOW_ALWAYS_INLINE uint64_t get_raw_bits() const noexcept {
+        return bits_;
+    }
 
     MEOW_ALWAYS_INLINE void set_raw_bits(uint64_t b) noexcept {
         bits_ = b;
@@ -317,13 +303,8 @@ class NaNBoxedVariant {
             index_ = (dbl_idx != detail::invalid_index) ? static_cast<index_t>(dbl_idx) : npos;
         } else {
             uint8_t tag = static_cast<uint8_t>((b & MEOW_TAG_MASK) >> MEOW_TAG_SHIFT);
-            index_ = (tag == 0)
-                         ? ((detail::type_list_index_of<double, flat_list>::value !=
-                             detail::invalid_index)
-                                ? static_cast<index_t>(
-                                      detail::type_list_index_of<double, flat_list>::value)
-                                : npos)
-                         : static_cast<index_t>((tag - 1) < alternatives_count ? (tag - 1) : 255);
+            index_ = (tag == 0) ? ((detail::type_list_index_of<double, flat_list>::value != detail::invalid_index) ? static_cast<index_t>(detail::type_list_index_of<double, flat_list>::value) : npos)
+                                : static_cast<index_t>((tag - 1) < alternatives_count ? (tag - 1) : 255);
             if (index_ == 255) index_ = npos;
         }
     }
@@ -332,8 +313,7 @@ class NaNBoxedVariant {
     MEOW_ALWAYS_INLINE void emplace_or_assign(CArgs&&... args) noexcept {
         using U = std::decay_t<T>;
         constexpr std::size_t idx = detail::type_list_index_of<U, flat_list>::value;
-        static_assert(idx != detail::invalid_index,
-                      "emplace_or_assign: type not in variant alternatives");
+        static_assert(idx != detail::invalid_index, "emplace_or_assign: type not in variant alternatives");
         if (index_ == static_cast<index_t>(idx)) {
             U tmp(std::forward<CArgs>(args)...);
             assign_payload_only<U>(tmp);
@@ -400,9 +380,7 @@ class NaNBoxedVariant {
 
     MEOW_ALWAYS_INLINE void encode_non_double(std::size_t idx, uint64_t payload) noexcept {
         uint8_t tag = meow_tag_for_index(idx);
-        bits_ = MEOW_QNAN_PREFIX |
-                ((static_cast<uint64_t>(tag) << MEOW_TAG_SHIFT) & MEOW_TAG_MASK) |
-                (payload & MEOW_PAYLOAD_MASK);
+        bits_ = MEOW_QNAN_PREFIX | ((static_cast<uint64_t>(tag) << MEOW_TAG_SHIFT) & MEOW_TAG_MASK) | (payload & MEOW_PAYLOAD_MASK);
     }
 
     template <typename T>
@@ -428,13 +406,13 @@ class NaNBoxedVariant {
         } else {
             uint64_t payload = encode_value_to_payload<U>(v);
             uint8_t tag = meow_tag_for_index(static_cast<std::size_t>(index_));
-            bits_ = MEOW_QNAN_PREFIX |
-                    ((static_cast<uint64_t>(tag) << MEOW_TAG_SHIFT) & MEOW_TAG_MASK) |
-                    (payload & MEOW_PAYLOAD_MASK);
+            bits_ = MEOW_QNAN_PREFIX | ((static_cast<uint64_t>(tag) << MEOW_TAG_SHIFT) & MEOW_TAG_MASK) | (payload & MEOW_PAYLOAD_MASK);
         }
     }
 
-    MEOW_ALWAYS_INLINE uint64_t get_payload() const noexcept { return bits_ & MEOW_PAYLOAD_MASK; }
+    MEOW_ALWAYS_INLINE uint64_t get_payload() const noexcept {
+        return bits_ & MEOW_PAYLOAD_MASK;
+    }
     MEOW_ALWAYS_INLINE uint8_t get_tag() const noexcept {
         return static_cast<uint8_t>((bits_ & MEOW_TAG_MASK) >> MEOW_TAG_SHIFT);
     }
@@ -454,30 +432,25 @@ class NaNBoxedVariant {
 
     // visit impl
     template <typename Visitor, std::size_t... Is>
-    MEOW_ALWAYS_INLINE decltype(auto) visit_impl_helper(Visitor&& vis,
-                                                        std::index_sequence<Is...>) const {
-        using R = decltype(std::declval<Visitor>()(
-            reconstruct_value<typename detail::nth_type<0, flat_list>::type>()));
+    MEOW_ALWAYS_INLINE decltype(auto) visit_impl_helper(Visitor&& vis, std::index_sequence<Is...>) const {
+        using R = decltype(std::declval<Visitor>()(reconstruct_value<typename detail::nth_type<0, flat_list>::type>()));
         using fn_t = R (*)(const NaNBoxedVariant*, Visitor&&);
 
-        static constexpr std::array<fn_t, alternatives_count> fns = {
-            {+[](const NaNBoxedVariant* v, Visitor&& vis2) -> R {
-                using T = typename detail::nth_type<Is, flat_list>::type;
-                return std::forward<Visitor>(vis2)(v->template reconstruct_value<T>());
-            }...}};
+        static constexpr std::array<fn_t, alternatives_count> fns = {{+[](const NaNBoxedVariant* v, Visitor&& vis2) -> R {
+            using T = typename detail::nth_type<Is, flat_list>::type;
+            return std::forward<Visitor>(vis2)(v->template reconstruct_value<T>());
+        }...}};
         return fns[index_](this, std::forward<Visitor>(vis));
     }
 
     template <typename Visitor>
     MEOW_ALWAYS_INLINE decltype(auto) visit_impl(Visitor&& vis) {
-        return visit_impl_helper(std::forward<Visitor>(vis),
-                                 std::make_index_sequence<alternatives_count>{});
+        return visit_impl_helper(std::forward<Visitor>(vis), std::make_index_sequence<alternatives_count>{});
     }
 
     template <typename Visitor>
     MEOW_ALWAYS_INLINE decltype(auto) visit_impl_const(Visitor&& vis) const {
-        return visit_impl_helper(std::forward<Visitor>(vis),
-                                 std::make_index_sequence<alternatives_count>{});
+        return visit_impl_helper(std::forward<Visitor>(vis), std::make_index_sequence<alternatives_count>{});
     }
 };
 
