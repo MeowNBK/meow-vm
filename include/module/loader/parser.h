@@ -5,6 +5,7 @@
 #include "core/type.h"
 #include "loader/tokens.h"
 #include "runtime/chunk.h"
+#include "core/objects/function.h"
 
 namespace meow::memory {
 class MemoryManager;

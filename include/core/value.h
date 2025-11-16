@@ -10,11 +10,6 @@ namespace meow::core {
 
 using BaseValue = meow::variant<null_t, bool_t, int_t, float_t, object_t>;
 
-class Value;
-
-template <typename T>
-concept ValueAssignable = std::is_constructible_v<BaseValue, T>;
-
 class Value {
 private:
     BaseValue data_;
@@ -26,17 +21,18 @@ private:
     }
 
 public:
-    // --- Constructors ---
+// --- Constructors ---
     inline Value() noexcept : data_(null_t{}) {}
-    
-    template <ValueAssignable T>
-    inline Value(T&& value) noexcept(noexcept(data_ = std::forward<T>(value)))
-        : data_(std::forward<T>(value)) {}
+    inline Value(null_t v) noexcept : data_(std::move(v)) {}
+    inline Value(bool_t v) noexcept : data_(v) {}
+    inline Value(int_t v) noexcept : data_(v) {}
+    inline Value(float_t v) noexcept : data_(v) {}
+    inline Value(object_t v) noexcept : data_(v) {}
 
     // --- Rule of five ---
     inline Value(const Value& other) noexcept : data_(other.data_) {}
     inline Value(Value&& other) noexcept : data_(std::move(other.data_)) {}
-    
+
     inline Value& operator=(const Value& other) noexcept {
         if (this == &other) return *this;
         data_ = other.data_;
@@ -49,11 +45,12 @@ public:
     }
     inline ~Value() noexcept = default;
 
-    template <ValueAssignable T>
-    inline Value& operator=(T&& value) noexcept(noexcept(data_ = std::forward<T>(value))) {
-        data_ = std::forward<T>(value);
-        return *this;
-    }
+    // Assignment operators cho các kiểu cơ sở
+    inline Value& operator=(null_t v) noexcept { data_ = std::move(v); return *this; }
+    inline Value& operator=(bool_t v) noexcept { data_ = v; return *this; }
+    inline Value& operator=(int_t v) noexcept { data_ = v; return *this; }
+    inline Value& operator=(float_t v) noexcept { data_ = v; return *this; }
+    inline Value& operator=(object_t v) noexcept { data_ = v; return *this; }
 
     // === Các hàm kiểm tra kiểu (Type Checkers) ===
 

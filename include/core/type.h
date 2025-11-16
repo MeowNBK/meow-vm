@@ -37,5 +37,5 @@ using function_t = objects::ObjClosure*;
 using native_fn_t = objects::ObjNativeFunction*;
 using module_t = objects::ObjModule*;
 
-enum class ValueType : uint8_t { Null, Int, Float, Bool, String, Array, Object, Upvalue, Function, Class, Instance, BoundMethod, Proto, NativeFn, TotalValueTypes };
+enum class ValueType : uint8_t { Null, Int, Float, Bool, String, Array, Object, Upvalue, Function, Class, Instance, BoundMethod, Proto, NativeFn, HashTable, Module, TotalValueTypes };
 }  // namespace meow::core

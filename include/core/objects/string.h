@@ -34,7 +34,7 @@ class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
     ObjString(const ObjString&) = delete;
     ObjString(ObjString&&) = default;
     ObjString& operator=(const ObjString&) = delete;
-    ObjString& operator=(ObjString&&) = default;
+    ObjString& operator=(ObjString&&) = delete;
     ~ObjString() override = default;
 
     // --- Iterator types ---

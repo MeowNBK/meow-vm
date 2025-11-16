@@ -13,10 +13,11 @@
 #include "core/definitions.h"
 #include "core/meow_object.h"
 #include "core/type.h"
+#include "core/value.h"
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
-class ObjHashTable : meow::core::ObjBase<ObjectType::HASH_TABLE> {
+class ObjHashTable : public meow::core::ObjBase<ObjectType::HASH_TABLE> {
    private:
     using key_t = meow::core::string_t;
     using map_t = std::unordered_map<key_t, value_t>;

@@ -164,7 +164,8 @@ class NaNBoxedVariant {
     MEOW_ALWAYS_INLINE NaNBoxedVariant(T&& v) noexcept {
         using VT = std::decay_t<T>;
         constexpr std::size_t idx = detail::type_list_index_of<VT, flat_list>::value;
-        assign_from_type_impl<VT>(idx, std::forward<T>(v));
+        // assign_from_type_impl<VT>(idx, std::forward<T>(v));
+        assign_from_type_impl(idx, std::forward<T>(v));
     }
 
     template <typename T, typename... CArgs, typename U = std::decay_t<T>, typename = std::enable_if_t<(detail::type_list_index_of<U, flat_list>::value != detail::invalid_index)>>
@@ -200,7 +201,8 @@ class NaNBoxedVariant {
     MEOW_ALWAYS_INLINE NaNBoxedVariant& operator=(T&& v) noexcept {
         using VT = std::decay_t<T>;
         constexpr std::size_t idx = detail::type_list_index_of<VT, flat_list>::value;
-        assign_from_type_impl<VT>(idx, std::forward<T>(v));
+        // assign_from_type_impl<VT>(idx, std::forward<T>(v));
+        assign_from_type_impl(idx, std::forward<T>(v));
         return *this;
     }
 
@@ -441,7 +443,11 @@ class NaNBoxedVariant {
             }
         } else {
             if (get_tag() == 0) {
-                return (is_double_like<U>::value) ? std::numeric_limits<double>::quiet_NaN() : U{};
+                if constexpr (is_double_like<U>::value) {
+                    return std::numeric_limits<double>::quiet_NaN();
+                } else {
+                    return U{};
+                }
             }
             if constexpr (!is_double_like<U>::value) {
                 return decode_payload_to_value<U>(get_payload());

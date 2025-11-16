@@ -12,6 +12,7 @@
 #include "common/pch.h"
 #include "core/definitions.h"
 #include "core/meow_object.h"
+#include "core/value.h"
 #include "memory/gc_visitor.h"
 
 namespace meow::core::objects {
@@ -36,7 +37,7 @@ class ObjArray : public meow::core::ObjBase<ObjectType::ARRAY> {
     ObjArray(const ObjArray&) = delete;
     ObjArray(ObjArray&&) = default;
     ObjArray& operator=(const ObjArray&) = delete;
-    ObjArray& operator=(ObjArray&&) = default;
+    ObjArray& operator=(ObjArray&&) = delete;
     ~ObjArray() override = default;
 
     // --- Iterator types ---

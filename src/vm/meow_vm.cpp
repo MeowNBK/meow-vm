@@ -940,7 +940,7 @@ void MeowVM::run() {
                     size_t new_base = context_->registers_.size();
                     context_->registers_.resize(new_base + main_proto->get_num_registers());
 
-                    @main của module không trả về giá trị (ret_reg = -1)
+                    // @main của module không trả về giá trị (ret_reg = -1)
                     context_->call_stack_.emplace_back(main_closure, mod, new_base,
                                                        static_cast<size_t>(-1), 
                                                        main_proto->get_chunk().get_code());
