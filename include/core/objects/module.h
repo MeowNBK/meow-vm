@@ -48,6 +48,11 @@ class ObjModule : public meow::core::ObjBase<ObjectType::MODULE> {
     [[nodiscard]] inline bool has_global(string_t name) {
         return globals_.find(name) != globals_.end();
     }
+    inline void import_all_global(const module_t other) noexcept {
+        for (const auto& [key, value] : other->globals_) {
+            globals_[key] = value;
+        }
+    }
 
     // --- Exports ---
     [[nodiscard]] inline meow::core::return_t get_export(string_t name) noexcept {
@@ -58,6 +63,11 @@ class ObjModule : public meow::core::ObjBase<ObjectType::MODULE> {
     }
     [[nodiscard]] inline bool has_export(string_t name) {
         return exports_.find(name) != exports_.end();
+    }
+    inline void import_all_export(const module_t other) noexcept {
+        for (const auto& [key, value] : other->exports_) {
+            exports_[key] = value;
+        }
     }
 
     // --- File info ---

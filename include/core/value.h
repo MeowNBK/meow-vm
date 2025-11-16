@@ -52,6 +52,10 @@ public:
     inline Value& operator=(float_t v) noexcept { data_ = v; return *this; }
     inline Value& operator=(object_t v) noexcept { data_ = v; return *this; }
 
+    inline constexpr size_t index() const noexcept {
+        return data_.index();
+    }
+
     // === Type Checkers ===
 
     // --- Primary type ---

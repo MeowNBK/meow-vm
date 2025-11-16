@@ -10,7 +10,7 @@ class MemoryManager {
 public:
     explicit MemoryManager(std::unique_ptr<meow::memory::GarbageCollector> gc) noexcept;
     ~MemoryManager() noexcept;
-    [[nodiscard]] meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {});
+    [[nodiscard]] meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {}) noexcept;
     [[nodiscard]] meow::core::string_t new_string(const std::string& string) noexcept;
     [[nodiscard]] meow::core::string_t new_string(const char* chars, size_t length) noexcept;
     [[nodiscard]] meow::core::hash_table_t new_hash(const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {}) noexcept;

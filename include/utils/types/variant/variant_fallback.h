@@ -145,11 +145,8 @@ class FallbackVariant {
     using index_t = std::conditional_t<(alternatives_count <= 0xFFu), uint8_t, std::size_t>;
     static constexpr index_t npos = static_cast<index_t>(-1);
 
-    FallbackVariant() noexcept : index_(npos) {
-    }
-    ~FallbackVariant() noexcept {
-        destroy_current();
-    }
+    FallbackVariant() noexcept : index_(npos) {}
+    ~FallbackVariant() noexcept { destroy_current(); }
 
     FallbackVariant(const FallbackVariant& other) : index_(npos) {
         if (other.index_ != npos) {

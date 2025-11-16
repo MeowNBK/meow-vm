@@ -82,22 +82,17 @@ void MeowVM::interpret() noexcept {
 void MeowVM::prepare() noexcept {
     printl("Preparing for execution...");
 
-    using u8 = uint8_t;
     using u16 = uint16_t;
-    using u32 = uint32_t;
     using u64 = uint64_t;
-
-    using i8 = int8_t;
-    using i16 = int16_t;
-    using i32 = int32_t;
-    using i64 = int64_t;
-
-    using f32 = float;
-    using f64 = double;
 
     using enum OpCode;
 
-    Chunk test_chunk = make_chunk({LOAD_INT, u16(0), u64(1802), LOAD_TRUE, u16(1), NEW_ARRAY, u16(2), u16(0), u16(2), HALT});
+    Chunk test_chunk = make_chunk({
+        LOAD_INT, u16(0), u64(1802),
+        LOAD_TRUE, u16(1),
+        NEW_ARRAY, u16(2), u16(0), u16(2), 
+        HALT
+    });
     size_t num_register = 3;
 
     auto main_proto = heap_->new_proto(num_register, 0, heap_->new_string("main"), std::move(test_chunk));
@@ -970,11 +965,17 @@ void MeowVM::run() {
                     REGISTER(dst) = mod->get_export(name);
                     break;
                 }
-                case OpCode::IMPORT_ALL:
-                    // (Logic này yêu cầu sao chép tất cả export vào globals của
-                    // module hiện tại)
-                    throw_vm_error("Opcode IMPORT_ALL not yet implemented in run()");
+                case OpCode::IMPORT_ALL: {
+                    uint16_t src_idx = READ_U16();
+                    const Value& mod_val = REGISTER(src_idx);
+                    if (auto src_mod = mod_val.as_if_module()) {
+                        module_t curr_mod = frame->module_;
+                        curr_mod->import_all_export(src_mod);
+                    } else {
+                        throw_vm_error("IMPORT_ALL: Source register does not contain a Module object.");
+                    }
                     break;
+                }
 
                 // --- HALT ---
                 case OpCode::HALT: {

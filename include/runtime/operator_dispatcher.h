@@ -16,10 +16,9 @@ constexpr size_t NUM_OPCODES = static_cast<size_t>(core::OpCode::TOTAL_OPCODES);
 inline core::ValueType get_value_type(meow::core::param_t value) noexcept {
     using namespace meow::core;
     if (value.is_null()) return ValueType::Null;
+    if (value.is_bool()) return ValueType::Bool;
     if (value.is_int()) return ValueType::Int;
     if (value.is_float()) return ValueType::Float;
-    if (value.is_bool()) return ValueType::Bool;
-    
     if (value.is_object()) {
         switch (value.as_object()->get_type()) {
             case ObjectType::STRING:       return ValueType::String;
@@ -61,13 +60,13 @@ class OperatorDispatcher {
     [[nodiscard]] inline const BinaryOpFunction* find(core::OpCode op_code, meow::core::param_t left, meow::core::param_t right) const noexcept {
         auto left_type = get_value_type(left);
         auto right_type = get_value_type(right);
-        const BinaryOpFunction* function = &binary_dispatch_table_[+op_code][+left_type][+right_type];
+        const BinaryOpFunction* function = &binary_dispatch_table_[+op_code][left.index()][right.index()];
         return function;
     }
 
     [[nodiscard]] inline const UnaryOpFunction* find(core::OpCode op_code, meow::core::param_t right) const noexcept {
         auto right_type = get_value_type(right);
-        const UnaryOpFunction* function = &unary_dispatch_table_[+op_code][+right_type];
+        const UnaryOpFunction* function = &unary_dispatch_table_[+op_code][right.index()];
         return function;
     }
 };
