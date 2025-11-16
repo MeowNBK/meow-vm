@@ -32,7 +32,7 @@ struct MeowObject {
 };
 
 template <ObjectType type_tag>
-struct ObjBase {
+struct ObjBase : public MeowObject {
     ObjBase() noexcept : MeowObject(type_tag) {}
 };
 

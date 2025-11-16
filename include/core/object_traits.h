@@ -1,7 +1,9 @@
+// include/core/object_traits.h
+
 #pragma once
 
-#include "core/meow_object.h" //
-#include "core/objects.h"     //
+#include "core/meow_object.h"
+#include "core/type.h"
 
 namespace meow::core {
 
