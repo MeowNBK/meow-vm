@@ -13,7 +13,7 @@ namespace meow::memory {
  */
 class GarbageCollector {
    public:
-    virtual ~GarbageCollector() = default;
+    virtual ~GarbageCollector() noexcept = default;
 
     /**
      * @brief Đăng kí một object để GC quản lí

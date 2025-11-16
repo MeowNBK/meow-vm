@@ -5,7 +5,7 @@
 
 namespace meow::memory {
 
-MarkSweepGC::~MarkSweepGC() {
+MarkSweepGC::~MarkSweepGC() noexcept {
     std::cout << "[destroy] Đang xử lí các object khi hủy GC" << std::endl;
     for (auto const& [obj, data] : metadata_) {
         delete obj;
