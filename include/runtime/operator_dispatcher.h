@@ -35,13 +35,13 @@ class OperatorDispatcher {
 public:
     explicit OperatorDispatcher(memory::MemoryManager* heap) noexcept;
 
-    [[nodiscard]] inline const binary_function_t find(core::OpCode op_code, meow::core::param_t left, meow::core::param_t right) const noexcept {
+    [[nodiscard]] inline binary_function_t find(core::OpCode op_code, meow::core::param_t left, meow::core::param_t right) const noexcept {
         auto left_type = get_value_type(left);
         auto right_type = get_value_type(right);
         return binary_dispatch_table_[+op_code][+left_type][+right_type];
     }
 
-    [[nodiscard]] inline const unary_function_t find(core::OpCode op_code, meow::core::param_t right) const noexcept {
+    [[nodiscard]] inline unary_function_t find(core::OpCode op_code, meow::core::param_t right) const noexcept {
         auto right_type = get_value_type(right);
         return unary_dispatch_table_[+op_code][+right_type];
     }

@@ -265,6 +265,8 @@ Result<void> TextParser::stmt() {
             return Result<void>::Ok();
         case TokenType::UNKNOWN:
             return Result<void>::Err(mkdiag(ErrCode::INVALID_IDENT, "Token không hợp lệ hoặc ký tự không nhận dạng.", &tk));
+        default:
+            break;
     }
     return Result<void>::Ok();
 }
