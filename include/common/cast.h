@@ -1,171 +1,138 @@
 #pragma once
 
+#include "common/pch.h"
 #include "core/definitions.h"
 #include "core/objects.h"
 #include "core/value.h"
 
-// #include "common/disassemble.h"
-
 namespace meow::common {
+
 inline int64_t to_int(meow::core::param_t value) noexcept {
+    using namespace meow::core;
     using i64_limits = std::numeric_limits<int64_t>;
-    return value.visit([](meow::core::null_t) -> int64_t { return 0; }, [](meow::core::int_t i) -> int64_t { return i; },
-                       [](meow::core::float_t r) -> int64_t {
-                           if (std::isinf(r)) {
-                               return (r > 0) ? i64_limits::max() : i64_limits::min();
-                           }
-                           if (std::isnan(r)) return 0;
-                           return static_cast<int64_t>(r);
-                       },
-                       [](meow::core::bool_t b) -> int64_t { return b ? 1 : 0; },
-                       [](meow::core::string_t s) -> int64_t {
-                           // By using std::string_view, it's make everything safe and faster
-                           std::string_view str = s->c_str();
+    return value.visit(
+        [](null_t) -> int64_t { return 0; },
+        [](int_t i) -> int64_t { return i; },
+        [](float_t r) -> int64_t {
+            if (std::isinf(r)) return (r > 0) ? i64_limits::max() : i64_limits::min();
+            if (std::isnan(r)) return 0;
+            return static_cast<int64_t>(r);
+        },
+        [](bool_t b) -> int64_t { return b ? 1 : 0; },
+        [](string_t s) -> int64_t {
+            std::string_view sv = s->c_str();
 
-                           // By using unsigned long long - the largest primitive integer type
-                           // We can avoid many issues about overflow
-                           using ull = unsigned long long;
+            size_t left = 0;
+            while (left < sv.size() && std::isspace(static_cast<unsigned char>(sv[left]))) ++left;
+            size_t right = sv.size();
+            while (right > left && std::isspace(static_cast<unsigned char>(sv[right - 1]))) --right;
+            if (left >= right) return 0;
+            sv = sv.substr(left, right - left);
 
-                           // Trim whitespace in the first and end of the string
-                           // We can't do many way to trim whitespace instead
-                           // Like using trim() function or using erase and find_if,...
-                           size_t left = 0;
-                           while (left < str.size() && std::isspace(static_cast<unsigned char>(str[left]))) ++left;
-                           size_t right = str.size();
-                           while (right > left && std::isspace(static_cast<unsigned char>(str[right - 1]))) --right;
-                           if (left >= right) return 0;
+            bool negative = false;
+            if (!sv.empty() && sv[0] == '-') {
+                negative = true;
+                sv.remove_prefix(1);
+            } else if (!sv.empty() && sv[0] == '+') {
+                sv.remove_prefix(1);
+            }
 
-                           // str.remove_prefix(left);
-                           // str.remove_suffix(str.size() - right);
-                           str = str.substr(left, right - left);
+            if (sv.size() >= 2) {
+                auto prefix = sv.substr(0, 2);
+                if (prefix == "0b" || prefix == "0B") {
+                    using ull = unsigned long long;
+                    ull acc = 0;
+                    const ull limit = static_cast<ull>(i64_limits::max());
+                    sv.remove_prefix(2);
+                    for (char c : sv) {
+                        if (c == '0' || c == '1') {
+                            int d = c - '0';
+                            if (acc > (limit - d) / 2) {
+                                return negative ? i64_limits::min() : i64_limits::max();
+                            }
+                            acc = (acc << 1) | static_cast<ull>(d);
+                        } else {
+                            break;
+                        }
+                    }
+                    int64_t result = static_cast<int64_t>(acc);
+                    return negative ? -result : result;
+                }
+            }
 
-                           bool negative = false;
-                           size_t pos = 0;
-                           if (str[0] == '-') {
-                               negative = true;
-                               str.remove_prefix(1);
-                           } else if (str[0] == '+') {
-                               str.remove_prefix(1);
-                           }
+            int base = 10;
+            std::string token(sv.begin(), sv.end());
+            if (token.size() >= 2) {
+                std::string p = token.substr(0, 2);
+                if (p == "0x" || p == "0X") {
+                    base = 16;
+                    token = token.substr(2);
+                } else if (p == "0o" || p == "0O") {
+                    base = 8;
+                    token = token.substr(2);
+                }
+            }
 
-                           int base = 10;
+            if (negative) token.insert(token.begin(), '-');
 
-                           if (str.size() >= 2) {
-                               std::string_view prefix = str.substr(0, 2);
-
-                               // We can handle binary right there
-                               if (prefix == "0b" || prefix == "0B") {
-                                   ull accumulator = 0;
-                                   const ull limit = static_cast<ull>(i64_limits::max());  // The maximum value
-                                                                                           // Integer can reach
-
-                                   str.remove_prefix(2);
-                                   for (char c : str) {
-                                       if (c == '0' || c == '1') {
-                                           int d = c - '0';
-
-                                           // Here is our algorithm
-                                           // accumulator_new = old_accumulator * 2 + d
-                                           // And new_accumulator must be less than or equal to
-                                           // limit new_accumulator <= limits We can't do that
-                                           // right on the accumulator, it's can overflow But
-                                           // we can operate on limits by transform our formula
-                                           // old_accumulator * 2 + d <= limits
-                                           // -> old_accumulator <= (limits - d) / 2
-                                           // And now, we can know if the value is overflow and
-                                           // handle it
-
-                                           if (accumulator > (limit - d) / 2) {
-                                               return negative ? i64_limits::min() : i64_limits::max();
-                                           }
-
-                                           // This expression equals to accumulator * 2 + d
-                                           // But we can use this to make a bit faster
-                                           accumulator = (accumulator << 1) | static_cast<ull>(d);
-                                       } else
-                                           break;
-                                   }
-
-                                   int64_t result = static_cast<int64_t>(accumulator);
-                                   return negative ? -result : result;
-                               } else if (prefix == "0x" || prefix == "0X") {
-                                   base = 16;
-                                   str.remove_prefix(2);
-                               } else if (prefix == "0o" || prefix == "0O") {
-                                   base = 8;
-                                   str.remove_prefix(2);
-                               }
-                           }
-
-                           // Handles Integer casting
-                           // Using strtoll is a bit faster than using stoll
-                           // We still can use stoll if we need C++ casting style
-                           // However it's just a choice between many different choices
-
-                           errno = 0;
-                           char* endptr = nullptr;
-                           const std::string token(str.begin(), str.end());
-                           int64_t value = std::strtoll(token.c_str(), &endptr, base);
-                           if (endptr == token.c_str()) return 0;
-                           if (errno == ERANGE) {
-                               return (value > 0) ? i64_limits::max() : i64_limits::min();
-                           }
-                           if (value > static_cast<int64_t>(i64_limits::max())) {
-                               return i64_limits::max();
-                           }
-                           if (value < static_cast<int64_t>(i64_limits::min())) {
-                               return i64_limits::min();
-                           }
-
-                           return static_cast<int64_t>(value);
-                       },
-                       [](auto&&) -> int64_t { return 0; });
+            errno = 0;
+            char* endptr = nullptr;
+            long long parsed = std::strtoll(token.c_str(), &endptr, base);
+            if (endptr == token.c_str()) return 0;
+            if (errno == ERANGE) return (parsed > 0) ? i64_limits::max() : i64_limits::min();
+            if (parsed > i64_limits::max()) return i64_limits::max();
+            if (parsed < i64_limits::min()) return i64_limits::min();
+            return static_cast<int64_t>(parsed);
+        },
+        [](auto&&) -> int64_t { return 0; }
+    );
 }
 
 inline double to_float(meow::core::param_t value) noexcept {
-    return value.visit([](meow::core::null_t) -> double { return 0.0; }, [](meow::core::int_t i) -> double { return static_cast<double>(i); }, [](meow::core::float_t f) -> double { return f; },
-                       [](meow::core::bool_t b) -> double { return b ? 1.0 : 0.0; },
-                       [](meow::core::string_t s) -> double {
-                           std::string str = s->c_str();
+    using namespace meow::core;
+    return value.visit(
+        [](null_t) -> double { return 0.0; },
+        [](int_t i) -> double { return static_cast<double>(i); },
+        [](float_t f) -> double { return f; },
+        [](bool_t b) -> double { return b ? 1.0 : 0.0; },
+        [](string_t s) -> double {
+            std::string str = s->c_str();
+            for (auto& c : str) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 
-                           for (auto& c : str) {
-                               c = static_cast<char>(std::tolower((unsigned char)c));
-                           }
-
-                           if (str == "nan") {
-                               return std::numeric_limits<double>::quiet_NaN();
-                           }
-                           if (str == "infinity" || str == "+infinity" || str == "inf" || str == "+inf") {
-                               return std::numeric_limits<double>::infinity();
-                           }
-                           if (str == "-infinity" || str == "-inf") {
-                               return -std::numeric_limits<double>::infinity();
-                           }
-
-                           const char* cs = str.c_str();
-                           errno = 0;
-                           char* endptr = nullptr;
-                           double val = std::strtod(cs, &endptr);
-
-                           if (cs == endptr) return 0.0;
-
-                           // Checks range
-                           if (errno == ERANGE) {
-                               return (val > 0) ? std::numeric_limits<double>::infinity() : -std::numeric_limits<double>::infinity();
-                           }
-                           return static_cast<double>(val);
-                       },
-                       [](auto&&) -> double { return 0.0; });
+            if (str == "nan") return std::numeric_limits<double>::quiet_NaN();
+            if (str == "infinity" || str == "+infinity" || str == "inf" || str == "+inf")
+                return std::numeric_limits<double>::infinity();
+            if (str == "-infinity" || str == "-inf")
+                return -std::numeric_limits<double>::infinity();
+            const char* cs = str.c_str();
+            errno = 0;
+            char* endptr = nullptr;
+            double val = std::strtod(cs, &endptr);
+            if (cs == endptr) return 0.0;
+            if (errno == ERANGE) return (val > 0) ? std::numeric_limits<double>::infinity()
+                                                 : -std::numeric_limits<double>::infinity();
+            return val;
+        },
+        [](auto&&) -> double { return 0.0; }
+    );
 }
 
 inline bool to_bool(meow::core::param_t value) noexcept {
-    return value.visit([](meow::core::null_t) -> bool { return 0; }, [](meow::core::int_t i) -> bool { return i != 0; }, [](meow::core::float_t f) -> bool { return f != 0.0 && !std::isnan(f); },
-                       [](meow::core::bool_t b) -> bool { return b; }, [](meow::core::string_t s) -> bool { !s->empty(); }, [](meow::core::array_t a) -> bool { return !a->empty(); },
-                       [](meow::core::hash_table_t o) -> bool { return !o->empty(); }, [](auto&&) -> bool { return true; });
+    using namespace meow::core;
+    return value.visit(
+        [](null_t) -> bool { return false; },
+        [](int_t i) -> bool { return i != 0; },
+        [](float_t f) -> bool { return f != 0.0 && !std::isnan(f); },
+        [](bool_t b) -> bool { return b; },
+        [](string_t s) -> bool { return !s->empty(); },
+        [](array_t a) -> bool { return !a->empty(); },
+        [](hash_table_t o) -> bool { return !o->empty(); },
+        [](auto&&) -> bool { return true; }
+    );
 }
+
 }  // namespace meow::common
 
-// --- Old codes ---
 
 // inline std::string toString(Value value) noexcept {
 //     return value.visit(
@@ -249,10 +216,7 @@ inline bool to_bool(meow::core::param_t value) noexcept {
 //             } else {
 //                 os << "  - (Bytecode rỗng)\n";
 //             }
-
-//             // local helper: in ngắn cho các Value (giữ tương tự như trước,
-//             trả Str để fit với code cũ) auto valueToString = [&](Value val)
-//             -> std::string {
+//             auto valueToString = [&](Value val) -> std::string {
 //                 if (val.is<Null>()) return "<null>";
 //                 if (val.is<Int>()) return std::to_string(val.get<Int>());
 //                 if (val.is<Real>()) {

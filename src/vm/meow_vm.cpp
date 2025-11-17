@@ -7,6 +7,7 @@
 #include "runtime/builtin_registry.h"
 #include "runtime/execution_context.h"
 #include "runtime/operator_dispatcher.h"
+#include "debug/print.h"
 
 #include "core/objects/array.h"
 #include "core/objects/function.h"
@@ -14,20 +15,11 @@
 #include "core/objects/module.h"
 #include "core/objects/oop.h"
 
-template <typename... Args>
-inline void print(const std::format_string<Args...> fmt, Args&&... args) {
-    std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...);
-}
-
-template <typename... Args>
-inline void printl(const std::format_string<Args...> fmt, Args&&... args) {
-    std::cout << "[log] " << std::format(fmt, std::forward<Args>(args)...) << '\n';
-}
-
 using namespace meow::vm;
 using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
+using namespace meow::debug;
 
 MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
@@ -267,7 +259,7 @@ void MeowVM::run() {
         auto& left = REGISTER(r1);                                       \
         auto& right = REGISTER(r2);                                      \
         if (auto func = op_dispatcher_->find(OpCode::OP, left, right)) { \
-            REGISTER(dst) = (*func)(left, right);                        \
+            REGISTER(dst) = func(left, right);                        \
         } else {                                                         \
             throw_vm_error("Unsupported binary operator " #OP);          \
         }                                                                \
@@ -298,7 +290,7 @@ void MeowVM::run() {
         uint16_t src = READ_U16();                               \
         auto& val = REGISTER(src);                               \
         if (auto func = op_dispatcher_->find(OpCode::OP, val)) { \
-            REGISTER(dst) = (*func)(val);                        \
+            REGISTER(dst) = func(val);                        \
         } else {                                                 \
             throw_vm_error("Unsupported unary operator " #OP);   \
         }                                                        \
