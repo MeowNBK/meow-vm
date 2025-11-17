@@ -4,6 +4,7 @@
 #include "core/definitions.h"
 #include "core/objects.h"
 #include "core/value.h"
+#include "debug/disassemble.h"
 
 namespace meow::common {
 
@@ -131,140 +132,125 @@ inline bool to_bool(meow::core::param_t value) noexcept {
     );
 }
 
+inline std::string to_string(meow::core::param_t value) noexcept;
+
+namespace detail {
+inline std::string object_to_string(meow::core::object_t obj) noexcept {
+    if (obj == nullptr) {
+        return "<null_object_ptr>";
+    }
+    
+    using namespace meow::core;
+    using namespace meow::core::objects;
+
+    switch (obj->get_type()) {
+        case ObjectType::STRING:
+            return "\"" + std::string(reinterpret_cast<string_t>(obj)->c_str()) + "\"";
+
+        case ObjectType::ARRAY: {
+            array_t arr = reinterpret_cast<array_t>(obj);
+            std::string out = "[";
+            for (size_t i = 0; i < arr->size(); ++i) {
+                if (i > 0) out += ", ";
+                out += meow::common::to_string(arr->get(i)); 
+            }
+            out += "]";
+            return out;
+        }
+
+        case ObjectType::HASH_TABLE: {
+            hash_table_t hash = reinterpret_cast<hash_table_t>(obj);
+            std::string out = "{";
+            bool first = true;
+            for (auto it = hash->begin(); it != hash->end(); ++it) {
+                if (!first) out += ", ";
+                out += "\"" + std::string(it->first->c_str()) + "\": ";
+                out += meow::common::to_string(it->second);
+                first = false;
+            }
+            out += "}";
+            return out;
+        }
+
+        case ObjectType::CLASS: {
+            auto name = reinterpret_cast<class_t>(obj)->get_name();
+            return "<class '" + (name ? std::string(name->c_str()) : "??") + "'>";
+        }
+
+        case ObjectType::INSTANCE: {
+            auto name = reinterpret_cast<instance_t>(obj)->get_class()->get_name();
+            return "<" + (name ? std::string(name->c_str()) : "??") + " instance>";
+        }
+
+        case ObjectType::BOUND_METHOD:
+            return "<bound_method>";
+
+        case ObjectType::MODULE: {
+            auto name = reinterpret_cast<module_t>(obj)->get_file_name();
+            return "<module '" + (name ? std::string(name->c_str()) : "??") + "'>";
+        }
+
+        case ObjectType::NATIVE_FN:
+            return "<native_fn>";
+
+        case ObjectType::FUNCTION: {
+            auto name = reinterpret_cast<function_t>(obj)->get_proto()->get_name();
+            return "<function '" + (name ? std::string(name->c_str()) : "??") + "'>";
+        }
+
+        case ObjectType::PROTO: {
+            auto proto = reinterpret_cast<proto_t>(obj);
+            auto name = proto->get_name();
+            std::ostringstream os;
+            os << "<proto '" << (name ? std::string(name->c_str()) : "??") << "'>\n";
+            os << "  - registers: " << proto->get_num_registers() << "\n";
+            os << "  - upvalues:  " << proto->get_num_upvalues() << "\n";
+            os << "  - constants: " << proto->get_chunk().get_pool_size() << "\n";
+            
+            os << meow::debug::disassemble_chunk(proto->get_chunk());
+            return os.str();
+        }
+
+        case ObjectType::UPVALUE:
+            return "<upvalue>";
+
+        default:
+            return "<unknown_object_type>";
+    }
+}
+} // namespace detail
+
+inline std::string to_string(meow::core::param_t value) noexcept {
+    using namespace meow::core;
+    return value.visit(
+        [](null_t) -> std::string { return "null"; },
+        [](int_t val) -> std::string { return std::to_string(val); },
+        [](float_t val) -> std::string {
+            if (std::isnan(val)) return "NaN";
+            if (std::isinf(val)) return (val > 0) ? "Infinity" : "-Infinity";
+
+            if (val == 0.0 && std::signbit(val)) return "-0.0";
+            
+            std::string str = std::format("{}", val);
+            
+            auto pos = str.find('.');
+            if (pos != std::string::npos) {
+                size_t end = str.size();
+                while (end > pos + 1 && str[end - 1] == '0') {
+                    --end;
+                }
+                if (end == pos + 1) {
+                    end++; 
+                }
+                return str.substr(0, end);
+            }
+            return str;
+        },
+        [](bool_t val) -> std::string { return val ? "true" : "false"; },
+        [](object_t obj) -> std::string {
+            return detail::object_to_string(obj);
+        }
+    );
+}
+
 }  // namespace meow::common
-
-
-// inline std::string toString(Value value) noexcept {
-//     return value.visit(
-//         [](Null) -> std::string { return "null"; },
-//         [](Int val) -> std::string { return std::to_string(val); },
-//         [](Real val) -> std::string {
-//             if (std::isnan(val)) return "NaN";
-//             if (std::isinf(val)) return (val > 0) ? "Infinity" : "-Infinity";
-
-//             if (val == 0.0 && std::signbit(val)) return "-0";
-//             std::ostringstream os;
-//             os << std::fixed << std::setprecision(15) << val;
-
-//             // Removes extra '0' character
-//             std::string str = os.str();
-//             auto pos = str.find('.');
-
-//             // This is impossible for floating-point string value
-//             // How it can be? Maybe C++ casted failed
-//             if (pos == std::string::npos) return str;
-//             size_t end = str.size();
-
-//             // Search from the end of string makes a bit faster
-//             while (end > pos + 1 && str[end - 1] == '0') --end;
-//             if (end == pos + 1) --pos;
-//             return str.substr(0, end);
-//         },
-//         [](Bool val) -> std::string { return val ? "true" : "false"; },
-//         [](String str) -> std::string { return str->utf8(); },
-//         [](Array arr) -> std::string {
-//             std::string out = "[";
-//             for (size_t i = 0; i < arr->size(); ++i) {
-//                 if (i > 0) out += ", ";
-//                 out += toString(arr->getElement(i));
-//             }
-//             out += "]";
-//             return out;
-//         },
-//         [](Object obj) -> std::string {
-//             std::string out = "{";
-//             bool first = true;
-//             for (auto it = obj->begin(); it != obj->end(); ++it) {
-//                 if (!first) out += ", ";
-//                 out += it->first + ": " + toString((it->second));
-//                 first = false;
-//             }
-//             out += "}";
-//             return out;
-//         },
-//         [](Class klass) {
-//             return "<class '" + klass->getName() + "'>";
-//         },
-//         [](Instance inst) {
-//             return "<" + inst->getClass()->getName() + " object>";
-//         },
-//         [](BoundMethod) {
-//             return "<bound method>";
-//         },
-//         [](Module mod) {
-//             return "<module '" + mod->getName() + "'>";
-//         },
-//         [](NativeFn) {
-//             return "<native fn>";
-//         },
-//         [](Function func) {
-//             return "<fn '" + func->getProto()->getSourceName() + "'>";
-//         },
-//         [](Proto proto) -> std::string {
-//             if (!proto) return "<null proto>";
-//             std::ostringstream os;
-
-//             os << "<function proto '" << proto->getSourceName() << "'>\n";
-
-//             // code size (chunk-based)
-//             os << "  - code size: " << proto->getChunk().getCodeSize() <<
-//             "\n";
-
-//             // disassemble bằng helper chung
-//             if (!proto->getChunk().isCodeEmpty()) {
-//                 os << disassembleChunk(proto->getChunk());
-//             } else {
-//                 os << "  - (Bytecode rỗng)\n";
-//             }
-//             auto valueToString = [&](Value val) -> std::string {
-//                 if (val.is<Null>()) return "<null>";
-//                 if (val.is<Int>()) return std::to_string(val.get<Int>());
-//                 if (val.is<Real>()) {
-//                     std::ostringstream t;
-//                     Real r = val.get<Real>();
-//                     if (std::isnan(r)) return "NaN";
-//                     if (std::isinf(r)) return (r > 0) ? "Infinity" :
-//                     "-Infinity"; t << r; return t.str();
-//                 }
-//                 if (val.is<Bool>()) return val.get<Bool>() ? "true" :
-//                 "false"; if (val.is<String>()) {
-//                     return "\"" + val.get<String>()->utf8() + "\"";
-//                 }
-//                 if (val.is<Proto>()) {
-//                     ObjFunctionProto* p = val.get<Proto>();
-//                     return p ? ("<function proto '" + p->getSourceName() +
-//                     "'>") : "<function proto>";
-//                 }
-//                 if (val.is<Function>()) return "<closure>";
-//                 if (val.is<Instance>()) return "<instance>";
-//                 if (val.is<Class>()) return "<class>";
-//                 if (val.is<Array>()) return "<array>";
-//                 if (val.is<Object>()) return "<object>";
-//                 if (val.is<Upvalue>()) return "<upvalue>";
-//                 if (val.is<Module>()) return "<module>";
-//                 if (val.is<BoundMethod>()) return "<bound method>";
-//                 if (val.is<NativeFn>()) return "<native fn>";
-//                 return "<unknown value>";
-//             };
-
-//             // constant pool preview (up to 10)
-//             if (!proto->getChunk().isConstantPoolEmpty()) {
-//                 os << "\n  - Constant pool (preview up to 10):\n";
-//                 size_t maxShow =
-//                 std::min<size_t>(proto->getChunk().getConstantPoolSize(),
-//                 10); for (size_t ci = 0; ci < maxShow; ++ci) {
-//                     os << "     [" << ci << "]: " <<
-//                     valueToString(proto->getChunk().getConstant(ci)) << "\n";
-//                 }
-//             }
-
-//             return os.str();
-//         },
-//     [](Upvalue) {
-//         return "<upvalue>";
-//     },
-//     [](auto&&) {
-//         return "<unknown value>";
-//     }
-//     );
-// }

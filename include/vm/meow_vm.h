@@ -4,21 +4,16 @@
 #include "vm/meow_engine.h"
 
 namespace meow::runtime {
-struct ExecutionContext;
-struct BuiltinRegistry;
-class OperatorDispatcher;
+    struct ExecutionContext;
+    struct BuiltinRegistry;
+    class OperatorDispatcher;
 }  // namespace meow::runtime
-namespace meow::memory {
-class MemoryManager;
-}
-namespace meow::module {
-class ModuleManager;
-}
+namespace meow::memory { class MemoryManager;}
+namespace meow::module { class ModuleManager; }
 
 namespace meow::vm {
 struct VMError : public std::runtime_error {
-    explicit VMError(const std::string& message) : std::runtime_error(message) {
-    }
+    explicit VMError(const std::string& message) : std::runtime_error(message) {}
 };
 
 struct VMArgs {
@@ -32,8 +27,10 @@ class MeowVM : public MeowEngine {
     // --- Constructors ---
     explicit MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]);
     MeowVM(const MeowVM&) = delete;
+    MeowVM(MeowVM&&) = delete;
     MeowVM& operator=(const MeowVM&) = delete;
-    ~MeowVM();
+    MeowVM& operator=(MeowVM&&) = delete;
+    ~MeowVM() noexcept;
 
     // --- Public API ---
     void interpret() noexcept;

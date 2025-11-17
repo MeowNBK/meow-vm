@@ -7,7 +7,7 @@ struct GCVisitor;
 namespace meow::core {
 
 enum class ObjectType : uint8_t {
-    ARRAY,
+    ARRAY = 5,
     STRING,
     HASH_TABLE,
     INSTANCE,

@@ -15,18 +15,18 @@ constexpr size_t NUM_OPCODES = static_cast<size_t>(core::OpCode::TOTAL_OPCODES);
 using binary_function_t = meow::core::return_t (*)(meow::core::param_t, meow::core::param_t);
 using unary_function_t = meow::core::return_t (*)(meow::core::param_t);
 
-[[nodiscard]] inline constexpr size_t operator+(core::ValueType value_type) noexcept {
+[[nodiscard]] inline constexpr size_t operator+(meow::core::ValueType value_type) noexcept {
     return static_cast<size_t>(value_type);
 }
-[[nodiscard]] inline constexpr size_t operator+(core::OpCode op_code) noexcept {
+[[nodiscard]] inline constexpr size_t operator+(meow::core::OpCode op_code) noexcept {
     return static_cast<size_t>(op_code);
 }
 
-inline core::ValueType get_value_type(meow::core::param_t value) noexcept {
+inline meow::core::ValueType get_value_type(meow::core::param_t value) noexcept {
     using namespace meow::core;
     ValueType type = static_cast<ValueType>(value.index());
     if (type == ValueType::Object) {
-        return static_cast<ValueType>(static_cast<size_t>(value.as_object()->get_type()) + 5);
+        return static_cast<ValueType>(value.as_object()->get_type());
     }
     return type;
 }

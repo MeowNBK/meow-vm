@@ -7,6 +7,7 @@
 #include "runtime/builtin_registry.h"
 #include "runtime/execution_context.h"
 #include "runtime/operator_dispatcher.h"
+#include "common/cast.h"
 #include "debug/print.h"
 
 #include "core/objects/array.h"
@@ -20,6 +21,7 @@ using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
 using namespace meow::debug;
+using namespace meow::common;
 
 MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
@@ -41,7 +43,7 @@ MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entr
     printl("MeowVM initialized successfully!");
 }
 
-MeowVM::~MeowVM() {
+MeowVM::~MeowVM() noexcept {
     printl("MeowVM shutting down.");
 }
 
@@ -379,8 +381,8 @@ void MeowVM::run() {
                 case OpCode::JUMP_IF_FALSE: {
                     uint16_t reg = READ_U16();
                     uint16_t target = READ_ADDRESS();
-                    // CẬP NHẬT: Dùng helper is_truthy
-                    bool is_truthy_val = is_truthy(REGISTER(reg));
+                    // CẬP NHẬT: Dùng helper to_bool
+                    bool is_truthy_val = to_bool(REGISTER(reg));
                     if (!is_truthy_val) {
                         ip = CURRENT_CHUNK().get_code() + target;
                     }
@@ -389,8 +391,8 @@ void MeowVM::run() {
                 case OpCode::JUMP_IF_TRUE: {
                     uint16_t reg = READ_U16();
                     uint16_t target = READ_ADDRESS();
-                    // CẬP NHẬT: Dùng helper is_truthy
-                    bool is_truthy_val = is_truthy(REGISTER(reg));
+                    // CẬP NHẬT: Dùng helper to_bool
+                    bool is_truthy_val = to_bool(REGISTER(reg));
                     if (is_truthy_val) {
                         ip = CURRENT_CHUNK().get_code() + target;
                     }
