@@ -22,6 +22,18 @@ string_t MemoryManager::new_string(const std::string& string) noexcept {
     return new_string_object;
 }
 
+string_t MemoryManager::new_string(std::string_view str_view) noexcept {
+    auto it = string_pool_.find(str_view);
+    if (it != string_pool_.end()) {
+        return it->second;
+    }
+    
+    std::string s(str_view);
+    string_t new_obj = new_object<objects::ObjString>(s);
+    string_pool_.emplace(std::move(s), new_obj);
+    return new_obj;
+}
+
 string_t MemoryManager::new_string(const char* chars, size_t length) noexcept {
     return new_string(std::string(chars, length));
 }

@@ -12,6 +12,7 @@ public:
     ~MemoryManager() noexcept;
     [[nodiscard]] meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {}) noexcept;
     [[nodiscard]] meow::core::string_t new_string(const std::string& string) noexcept;
+    [[nodiscard]] meow::core::string_t new_string(std::string_view str_view) noexcept;
     [[nodiscard]] meow::core::string_t new_string(const char* chars, size_t length) noexcept;
     [[nodiscard]] meow::core::hash_table_t new_hash(const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {}) noexcept;
     [[nodiscard]] meow::core::upvalue_t new_upvalue(size_t index) noexcept;
@@ -35,8 +36,16 @@ public:
         object_allocated_ = gc_->collect();
     }
 private:
+    struct StringHash {
+        using is_transparent = void;
+        
+        size_t operator()(const char* txt) const { return std::hash<std::string_view>{}(txt); }
+        size_t operator()(std::string_view txt) const { return std::hash<std::string_view>{}(txt); }
+        size_t operator()(const std::string& txt) const { return std::hash<std::string>{}(txt); }
+    };
+
     std::unique_ptr<meow::memory::GarbageCollector> gc_;
-    std::unordered_map<std::string, meow::core::string_t> string_pool_;
+    std::unordered_map<std::string, meow::core::string_t, StringHash, std::equal_to<>> string_pool_;
 
     size_t gc_threshold_;
     size_t object_allocated_;
