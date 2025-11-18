@@ -16,12 +16,122 @@
 #include "core/objects/module.h"
 #include "core/objects/oop.h"
 
+// === Di chuyển các using namespace lên trên ===
 using namespace meow::vm;
 using namespace meow::core;
 using namespace meow::runtime;
 using namespace meow::memory;
 using namespace meow::debug;
 using namespace meow::common;
+
+// === Di chuyển các Macro lên trên ===
+
+// --- Macro đọc bytecode ---
+#define READ_BYTE() (*ip++)
+#define READ_U16() (ip += 2, (uint16_t)((ip[-2] | (ip[-1] << 8))))
+#define READ_U64()                                                                                                                                                                 \
+    (ip += 8, (uint64_t)(ip[-8]) | ((uint64_t)(ip[-7]) << 8) | ((uint64_t)(ip[-6]) << 16) | ((uint64_t)(ip[-5]) << 24) | ((uint64_t)(ip[-4]) << 32) | ((uint64_t)(ip[-3]) << 40) | \
+                  ((uint64_t)(ip[-2]) << 48) | ((uint64_t)(ip[-1]) << 56))
+
+#define READ_I64() (std::bit_cast<int64_t>(READ_U64()))
+#define READ_F64() (std::bit_cast<double>(READ_U64()))
+#define READ_ADDRESS() READ_U16()
+
+#define CURRENT_CHUNK() (context_->current_frame_->function_->get_proto()->get_chunk())
+#define READ_CONSTANT() (CURRENT_CHUNK().get_constant(READ_U16()))
+
+#define REGISTER(idx) (context_->registers_[context_->current_base_ + (idx)])
+#define CONSTANT(idx) (CURRENT_CHUNK().get_constant(idx))
+
+#define UNARY_OP_HANDLER(OPCODE, OPNAME) \
+    op_##OPCODE: { \
+        uint16_t dst = READ_U16(); \
+        uint16_t src = READ_U16(); \
+        auto& val = REGISTER(src); \
+        if (auto func = op_dispatcher_->find(OpCode::OPCODE, val)) { \
+            REGISTER(dst) = func(val); \
+        } else { \
+            throw_vm_error("Unsupported unary operator " OPNAME); \
+        } \
+        DISPATCH(); \
+    }
+
+#define BINARY_OP_HANDLER(OPCODE, OPNAME) \
+    op_##OPCODE: { \
+        uint16_t dst = READ_U16(); \
+        uint16_t r1 = READ_U16(); \
+        uint16_t r2 = READ_U16(); \
+        auto& left = REGISTER(r1); \
+        auto& right = REGISTER(r2); \
+        if (auto func = op_dispatcher_->find(OpCode::OPCODE, left, right)) { \
+            REGISTER(dst) = func(left, right); \
+        } else { \
+            throw_vm_error("Unsupported binary operator " OPNAME); \
+        } \
+        DISPATCH(); \
+    }
+
+#define DISPATCH()                                           \
+    do {                                                          \
+        context_->current_frame_->ip_ = ip;                       \
+        uint8_t instruction = READ_BYTE();                        \
+        goto *dispatch_table[instruction];                         \
+    } while (0)
+
+
+// === SỬA LỖI: Di chuyển các hàm helper lên trên ===
+
+inline bool is_truthy(param_t value) noexcept {
+    if (value.is_null()) return false;
+    if (value.is_bool()) return value.as_bool();
+    if (value.is_int()) return value.as_int() != 0;
+    if (value.is_float()) {
+        double r = value.as_float();
+        return r != 0.0 && !std::isnan(r);
+    }
+    if (value.is_string()) return !value.as_string()->empty();
+    if (value.is_array()) return !value.as_array()->empty();
+    if (value.is_hash_table()) return !value.as_hash_table()->empty();
+    return true;
+}
+
+inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap, size_t register_index) {
+    // Tìm kiếm các upvalue đã mở từ trên xuống dưới (chỉ số stack cao -> thấp)
+    for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
+        upvalue_t uv = *it;
+        if (uv->get_index() == register_index) return uv;
+        if (uv->get_index() < register_index) break;  // Đã đi qua, không cần tìm nữa
+    }
+
+    // Không tìm thấy, tạo mới
+    upvalue_t new_uv = heap->new_upvalue(register_index);
+
+    // Chèn vào danh sách đã sắp xếp (theo chỉ số stack)
+    auto it = std::lower_bound(context->open_upvalues_.begin(), context->open_upvalues_.end(), new_uv, [](auto a, auto b) { return a->get_index() < b->get_index(); });
+    context->open_upvalues_.insert(it, new_uv);
+    return new_uv;
+}
+
+inline void close_upvalues(ExecutionContext* context, size_t last_index) noexcept {
+    // Đóng tất cả upvalue có chỉ số register >= last_index
+    while (!context->open_upvalues_.empty() && context->open_upvalues_.back()->get_index() >= last_index) {
+        upvalue_t uv = context->open_upvalues_.back();
+        uv->close(context->registers_[uv->get_index()]);
+        context->open_upvalues_.pop_back();
+    }
+}
+
+
+// === Include các file handler (Bây giờ đã an toàn) ===
+#include "handlers/load.inl"
+#include "handlers/memory.inl"
+#include "handlers/data.inl"
+#include "handlers/oop.inl"
+#include "handlers/module.inl"
+#include "handlers/exception.inl"
+
+
+// === Bắt đầu phần code logic của meow_vm.cpp ===
 
 MeowVM::MeowVM(const std::string& entry_point_directory, const std::string& entry_path, int argc, char* argv[]) {
     args_.entry_point_directory_ = entry_point_directory;
@@ -107,97 +217,7 @@ void MeowVM::prepare() noexcept {
     context_->current_base_ = context_->current_frame_->start_reg_;
 }
 
-inline bool is_truthy(param_t value) noexcept {
-    if (value.is_null()) return false;
-    if (value.is_bool()) return value.as_bool();
-    if (value.is_int()) return value.as_int() != 0;
-    if (value.is_float()) {
-        double r = value.as_float();
-        return r != 0.0 && !std::isnan(r);
-    }
-    if (value.is_string()) return !value.as_string()->empty();
-    if (value.is_array()) return !value.as_array()->empty();
-    if (value.is_hash_table()) return !value.as_hash_table()->empty();
-    return true;
-}
-
-inline upvalue_t capture_upvalue(ExecutionContext* context, MemoryManager* heap, size_t register_index) {
-    // Tìm kiếm các upvalue đã mở từ trên xuống dưới (chỉ số stack cao -> thấp)
-    for (auto it = context->open_upvalues_.rbegin(); it != context->open_upvalues_.rend(); ++it) {
-        upvalue_t uv = *it;
-        if (uv->get_index() == register_index) return uv;
-        if (uv->get_index() < register_index) break;  // Đã đi qua, không cần tìm nữa
-    }
-
-    // Không tìm thấy, tạo mới
-    upvalue_t new_uv = heap->new_upvalue(register_index);
-
-    // Chèn vào danh sách đã sắp xếp (theo chỉ số stack)
-    auto it = std::lower_bound(context->open_upvalues_.begin(), context->open_upvalues_.end(), new_uv, [](auto a, auto b) { return a->get_index() < b->get_index(); });
-    context->open_upvalues_.insert(it, new_uv);
-    return new_uv;
-}
-
-inline void close_upvalues(ExecutionContext* context, size_t last_index) noexcept {
-    // Đóng tất cả upvalue có chỉ số register >= last_index
-    while (!context->open_upvalues_.empty() && context->open_upvalues_.back()->get_index() >= last_index) {
-        upvalue_t uv = context->open_upvalues_.back();
-        uv->close(context->registers_[uv->get_index()]);
-        context->open_upvalues_.pop_back();
-    }
-}
-
-    // --- Macro đọc bytecode ---
-#define READ_BYTE() (*ip++)
-#define READ_U16() (ip += 2, (uint16_t)((ip[-2] | (ip[-1] << 8))))
-#define READ_U64()                                                                                                                                                                 \
-    (ip += 8, (uint64_t)(ip[-8]) | ((uint64_t)(ip[-7]) << 8) | ((uint64_t)(ip[-6]) << 16) | ((uint64_t)(ip[-5]) << 24) | ((uint64_t)(ip[-4]) << 32) | ((uint64_t)(ip[-3]) << 40) | \
-                  ((uint64_t)(ip[-2]) << 48) | ((uint64_t)(ip[-1]) << 56))
-
-#define READ_I64() (std::bit_cast<int64_t>(READ_U64()))
-#define READ_F64() (std::bit_cast<double>(READ_U64()))
-#define READ_ADDRESS() READ_U16()
-
-#define CURRENT_CHUNK() (context_->current_frame_->function_->get_proto()->get_chunk())
-#define READ_CONSTANT() (CURRENT_CHUNK().get_constant(READ_U16()))
-
-#define REGISTER(idx) (context_->registers_[context_->current_base_ + (idx)])
-#define CONSTANT(idx) (CURRENT_CHUNK().get_constant(idx))
-
-#define UNARY_OP_HANDLER(OPCODE, OPNAME) \
-    op_##OPCODE: { \
-        uint16_t dst = READ_U16(); \
-        uint16_t src = READ_U16(); \
-        auto& val = REGISTER(src); \
-        if (auto func = op_dispatcher_->find(OpCode::OPCODE, val)) { \
-            REGISTER(dst) = func(val); \
-        } else { \
-            throw_vm_error("Unsupported unary operator " OPNAME); \
-        } \
-        DISPATCH(); \
-    }
-
-#define BINARY_OP_HANDLER(OPCODE, OPNAME) \
-    op_##OPCODE: { \
-        uint16_t dst = READ_U16(); \
-        uint16_t r1 = READ_U16(); \
-        uint16_t r2 = READ_U16(); \
-        auto& left = REGISTER(r1); \
-        auto& right = REGISTER(r2); \
-        if (auto func = op_dispatcher_->find(OpCode::OPCODE, left, right)) { \
-            REGISTER(dst) = func(left, right); \
-        } else { \
-            throw_vm_error("Unsupported binary operator " OPNAME); \
-        } \
-        DISPATCH(); \
-    }
-
-#define DISPATCH()                                           \
-    do {                                                          \
-        context_->current_frame_->ip_ = ip;                       \
-        uint8_t instruction = READ_BYTE();                        \
-        goto *dispatch_table[instruction];                         \
-    } while (0)
+// --- HÀM RUN() CHÍNH (ĐÃ TÁI CẤU TRÚC) ---
 
 void MeowVM::run() {
     printl("Starting MeowVM execution loop (Computed Goto)...");
@@ -206,7 +226,6 @@ void MeowVM::run() {
     throw_vm_error("Computed goto dispatch loop requires GCC or Clang.");
 #endif
 
-    CallFrame* frame = context_->current_frame_;
     const uint8_t* ip = context_->current_frame_->ip_;
 
     // --- Bảng nhảy (Dispatch Table) ---
@@ -312,50 +331,35 @@ dispatch_start:
         // --- Các Label thực thi Opcode (chuyển đổi từ 'case') ---
 
         op_LOAD_CONST: {
-            uint16_t dst = READ_U16();
-            Value value = READ_CONSTANT();
-            REGISTER(dst) = value;
+            op_load_const(ip);
             DISPATCH();
         }
         op_LOAD_NULL: {
-            uint16_t dst = READ_U16();
-            REGISTER(dst) = Value(null_t{});
-            printl("load_null r{}", dst);
+            op_load_null(ip);
             DISPATCH();
         }
         op_LOAD_TRUE: {
-            uint16_t dst = READ_U16();
-            REGISTER(dst) = Value(true);
-            printl("load_true r{}", dst);
+            op_load_true(ip);
             DISPATCH();
         }
         op_LOAD_FALSE: {
-            uint16_t dst = READ_U16();
-            REGISTER(dst) = Value(false);
-            printl("load_false r{}", dst);
+            op_load_false(ip);
             DISPATCH();
         }
         op_MOVE: {
-            uint16_t dst = READ_U16();
-            uint16_t src = READ_U16();
-            REGISTER(dst) = REGISTER(src);
+            op_move(ip);
             DISPATCH();
         }
         op_LOAD_INT: {
-            uint16_t dst = READ_U16();
-            int64_t value = READ_I64();
-            REGISTER(dst) = Value(value);
-            printl("load_int r{}, {}", dst, value);
+            op_load_int(ip);
             DISPATCH();
         }
         op_LOAD_FLOAT: {
-            uint16_t dst = READ_U16();
-            double value = READ_F64();
-            REGISTER(dst) = Value(value);
-            printl("load_float r{}, {}", dst, value);
+            op_load_float(ip);
             DISPATCH();
         }
 
+        // --- Các Op Handler dùng Macro (Giữ nguyên) ---
         BINARY_OP_HANDLER(ADD,     "ADD")
         BINARY_OP_HANDLER(SUB,     "SUB")
         BINARY_OP_HANDLER(MUL,     "MUL")
@@ -377,70 +381,34 @@ dispatch_start:
         UNARY_OP_HANDLER(NEG,     "NEG")
         UNARY_OP_HANDLER(NOT,     "NOT")
         UNARY_OP_HANDLER(BIT_NOT, "BIT_NOT")
-
+        
+        // --- Các Op Handler đã refactor ---
         op_GET_GLOBAL: {
-            uint16_t dst = READ_U16();
-            uint16_t name_idx = READ_U16();
-            string_t name = CONSTANT(name_idx).as_string();
-            module_t module = context_->current_frame_->module_;
-            if (module->has_global(name)) {
-                REGISTER(dst) = module->get_global(name);
-            } else {
-                REGISTER(dst) = Value(null_t{});
-            }
+            op_get_global(ip);
             DISPATCH();
         }
         op_SET_GLOBAL: {
-            uint16_t name_idx = READ_U16();
-            uint16_t src = READ_U16();
-            string_t name = CONSTANT(name_idx).as_string();
-            module_t module = context_->current_frame_->module_;
-            module->set_global(name, REGISTER(src));
+            op_set_global(ip);
             DISPATCH();
         }
         op_GET_UPVALUE: {
-            uint16_t dst = READ_U16();
-            uint16_t uv_idx = READ_U16();
-            upvalue_t uv = context_->current_frame_->function_->get_upvalue(uv_idx);
-            if (uv->is_closed()) {
-                REGISTER(dst) = uv->get_value();
-            } else {
-                REGISTER(dst) = context_->registers_[uv->get_index()];
-            }
+            op_get_upvalue(ip);
             DISPATCH();
         }
         op_SET_UPVALUE: {
-            uint16_t uv_idx = READ_U16();
-            uint16_t src = READ_U16();
-            upvalue_t uv = context_->current_frame_->function_->get_upvalue(uv_idx);
-            if (uv->is_closed()) {
-                uv->close(REGISTER(src));
-            } else {
-                context_->registers_[uv->get_index()] = REGISTER(src);
-            }
+            op_set_upvalue(ip);
             DISPATCH();
         }
         op_CLOSURE: {
-            uint16_t dst = READ_U16();
-            uint16_t proto_idx = READ_U16();
-            proto_t proto = CONSTANT(proto_idx).as_proto();
-            function_t closure = heap_->new_function(proto);
-            for (size_t i = 0; i < proto->get_num_upvalues(); ++i) {
-                const auto& desc = proto->get_desc(i);
-                if (desc.is_local_) {
-                    closure->set_upvalue(i, capture_upvalue(context_.get(), heap_.get(), context_->current_base_ + desc.index_));
-                } else {
-                    closure->set_upvalue(i, context_->current_frame_->function_->get_upvalue(desc.index_));
-                }
-            }
-            REGISTER(dst) = Value(closure);
+            op_closure(ip);
             DISPATCH();
         }
         op_CLOSE_UPVALUES: {
-            uint16_t last_reg = READ_U16();
-            close_upvalues(context_.get(), context_->current_base_ + last_reg);
+            op_close_upvalues(ip);
             DISPATCH();
         }
+
+        // --- Các Op control flow (Giữ nguyên) ---
         op_JUMP: {
             uint16_t target = READ_ADDRESS();
             ip = CURRENT_CHUNK().get_code() + target;
@@ -580,267 +548,62 @@ dispatch_start:
             
             DISPATCH();
         }
+
+        // --- Các Op Handler đã refactor ---
         op_NEW_ARRAY: {
-            uint16_t dst = READ_U16();
-            uint16_t start_idx = READ_U16();
-            uint16_t count = READ_U16();
-            auto array = heap_->new_array();
-            array->reserve(count);
-            for (size_t i = 0; i < count; ++i) {
-                array->push(REGISTER(start_idx + i));
-            }
-            REGISTER(dst) = Value(object_t(array));
-            printl("new_array r{}, r{}, {}", dst, start_idx, count);
-            printl("is_array(): {}", REGISTER(dst).is_array());
+            op_new_array(ip);
             DISPATCH();
         }
         op_NEW_HASH: {
-            uint16_t dst = READ_U16();
-            uint16_t start_idx = READ_U16();
-            uint16_t count = READ_U16();
-            auto hash_table = heap_->new_hash();
-            for (size_t i = 0; i < count; ++i) {
-                Value& key = REGISTER(start_idx + i * 2);
-                Value& val = REGISTER(start_idx + i * 2 + 1);
-                if (!key.is_string()) {
-                    throw_vm_error("NEW_HASH: Key is not a string.");
-                }
-                hash_table->set(key.as_string(), val);
-            }
-            REGISTER(dst) = Value(hash_table);
+            op_new_hash(ip);
             DISPATCH();
         }
         op_GET_INDEX: {
-            uint16_t dst = READ_U16();
-            uint16_t src_reg = READ_U16();
-            uint16_t key_reg = READ_U16();
-            Value& src = REGISTER(src_reg);
-            Value& key = REGISTER(key_reg);
-            if (src.is_array()) {
-                if (!key.is_int()) throw_vm_error("Array index must be an integer.");
-                int64_t idx = key.as_int();
-                array_t arr = src.as_array();
-                if (idx < 0 || (uint64_t)idx >= arr->size()) {
-                    throw_vm_error("Array index out of bounds.");
-                }
-                REGISTER(dst) = arr->get(idx);
-            } else if (src.is_hash_table()) {
-                if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
-                hash_table_t hash = src.as_hash_table();
-                if (hash->has(key.as_string())) {
-                    REGISTER(dst) = hash->get(key.as_string());
-                } else {
-                    REGISTER(dst) = Value(null_t{});
-                }
-            } else if (src.is_string()) {
-                if (!key.is_int()) throw_vm_error("String index must be an integer.");
-                int64_t idx = key.as_int();
-                string_t str = src.as_string();
-                if (idx < 0 || (uint64_t)idx >= str->size()) {
-                    throw_vm_error("String index out of bounds.");
-                }
-                REGISTER(dst) = Value(heap_->new_string(std::string(1, str->get(idx))));
-            } else {
-                throw_vm_error("Cannot apply index operator to this type.");
-            }
+            op_get_index(ip);
             DISPATCH();
         }
         op_SET_INDEX: {
-            uint16_t src_reg = READ_U16();
-            uint16_t key_reg = READ_U16();
-            uint16_t val_reg = READ_U16();
-            Value& src = REGISTER(src_reg);
-            Value& key = REGISTER(key_reg);
-            Value& val = REGISTER(val_reg);
-            if (src.is_array()) {
-                if (!key.is_int()) throw_vm_error("Array index must be an integer.");
-                int64_t idx = key.as_int();
-                array_t arr = src.as_array();
-                if (idx < 0) throw_vm_error("Array index cannot be negative.");
-                if ((uint64_t)idx >= arr->size()) {
-                    arr->resize(idx + 1);
-                }
-                arr->set(idx, val);
-            } else if (src.is_hash_table()) {
-                if (!key.is_string()) throw_vm_error("Hash table key must be a string.");
-                hash_table_t hash = src.as_hash_table();
-                hash->set(key.as_string(), val);
-            } else {
-                throw_vm_error("Cannot apply index set operator to this type.");
-            }
+            op_set_index(ip);
             DISPATCH();
         }
         op_GET_KEYS: {
-            uint16_t dst = READ_U16();
-            uint16_t src_reg = READ_U16();
-            Value& src = REGISTER(src_reg);
-            auto keys_array = heap_->new_array();
-            if (src.is_hash_table()) {
-                hash_table_t hash = src.as_hash_table();
-                keys_array->reserve(hash->size());
-                for (auto it = hash->begin(); it != hash->end(); ++it) {
-                    keys_array->push(Value(it->first));
-                }
-            }
-            else if (src.is_array()) {
-                array_t arr = src.as_array();
-                keys_array->reserve(arr->size());
-                for (size_t i = 0; i < arr->size(); ++i) {
-                    keys_array->push(Value(static_cast<int64_t>(i)));
-                }
-            } else if (src.is_string()) {
-                string_t str = src.as_string();
-                keys_array->reserve(str->size());
-                for (size_t i = 0; i < str->size(); ++i) {
-                    keys_array->push(Value(static_cast<int64_t>(i)));
-                }
-            }
-            REGISTER(dst) = Value(keys_array);
+            op_get_keys(ip);
             DISPATCH();
         }
         op_GET_VALUES: {
-            uint16_t dst = READ_U16();
-            uint16_t src_reg = READ_U16();
-            Value& src = REGISTER(src_reg);
-            auto vals_array = heap_->new_array();
-            if (src.is_hash_table()) {
-                hash_table_t hash = src.as_hash_table();
-                vals_array->reserve(hash->size());
-                for (auto it = hash->begin(); it != hash->end(); ++it) {
-                    vals_array->push(it->second);
-                }
-            } else if (src.is_array()) {
-                array_t arr = src.as_array();
-                vals_array->reserve(arr->size());
-                for (size_t i = 0; i < arr->size(); ++i) {
-                    vals_array->push(arr->get(i));
-                }
-            } else if (src.is_string()) {
-                string_t str = src.as_string();
-                vals_array->reserve(str->size());
-                for (size_t i = 0; i < str->size(); ++i) {
-                    vals_array->push(Value(heap_->new_string(std::string(1, str->get(i)))));
-                }
-            }
-            REGISTER(dst) = Value(vals_array);
+            op_get_values(ip);
             DISPATCH();
         }
         op_NEW_CLASS: {
-            uint16_t dst = READ_U16();
-            uint16_t name_idx = READ_U16();
-            string_t name = CONSTANT(name_idx).as_string();
-            REGISTER(dst) = Value(heap_->new_class(name));
+            op_new_class(ip);
             DISPATCH();
         }
         op_NEW_INSTANCE: {
-            uint16_t dst = READ_U16();
-            uint16_t class_reg = READ_U16();
-            Value& class_val = REGISTER(class_reg);
-            if (!class_val.is_class()) throw_vm_error("NEW_INSTANCE: operand is not a class.");
-            REGISTER(dst) = Value(heap_->new_instance(class_val.as_class()));
+            op_new_instance(ip);
             DISPATCH();
         }
         op_GET_PROP: {
-            uint16_t dst = READ_U16();
-            uint16_t obj_reg = READ_U16();
-            uint16_t name_idx = READ_U16();
-            Value& obj = REGISTER(obj_reg);
-            string_t name = CONSTANT(name_idx).as_string();
-            if (obj.is_instance()) {
-                instance_t inst = obj.as_instance();
-                if (inst->has_field(name)) {
-                    REGISTER(dst) = inst->get_field(name);
-                    DISPATCH();
-                }
-                class_t k = inst->get_class();
-                while (k) {
-                    if (k->has_method(name)) {
-                        REGISTER(dst) = Value(heap_->new_bound_method(inst, k->get_method(name).as_function()));
-                        goto op_GET_PROP_found; 
-                    }
-                    k = k->get_super();
-                }
-            }
-            if (obj.is_module()) {
-                module_t mod = obj.as_module();
-                if (mod->has_export(name)) {
-                    REGISTER(dst) = mod->get_export(name);
-                    DISPATCH();
-                }
-            }
-            REGISTER(dst) = Value(null_t{});
-            DISPATCH();
-        op_GET_PROP_found:
+            op_get_prop(ip);
             DISPATCH();
         }
         op_SET_PROP: {
-            uint16_t obj_reg = READ_U16();
-            uint16_t name_idx = READ_U16();
-            uint16_t val_reg = READ_U16();
-            Value& obj = REGISTER(obj_reg);
-            string_t name = CONSTANT(name_idx).as_string();
-            Value& val = REGISTER(val_reg);
-            if (obj.is_instance()) {
-                obj.as_instance()->set_field(name, val);
-            } else {
-                throw_vm_error("SET_PROP: can only set properties on instances.");
-            }
+            op_set_prop(ip);
             DISPATCH();
         }
         op_SET_METHOD: {
-            uint16_t call_reg = READ_U16();
-            uint16_t name_idx = READ_U16();
-            uint16_t method_reg = READ_U16();
-            Value& class_val = REGISTER(call_reg);
-            string_t name = CONSTANT(name_idx).as_string();
-            Value& methodVal = REGISTER(method_reg);
-            if (!class_val.is_class()) throw_vm_error("SET_METHOD: target is not a class.");
-            if (!methodVal.is_function()) throw_vm_error("SET_METHOD: value is not a function.");
-            class_val.as_class()->set_method(name, methodVal);
+            op_set_method(ip);
             DISPATCH();
         }
         op_INHERIT: {
-            uint16_t sub_reg = READ_U16();
-            uint16_t super_reg = READ_U16();
-            Value& sub_val = REGISTER(sub_reg);
-            Value& super_val = REGISTER(super_reg);
-            if (!sub_val.is_class() || !super_val.is_class()) {
-                throw_vm_error("INHERIT: Toán hạng phải là class.");
-            }
-            class_t sub = sub_val.as_class();
-            class_t super = super_val.as_class();
-            sub->set_super(super);
+            op_inherit(ip);
             DISPATCH();
         }
         op_GET_SUPER: {
-            uint16_t dst = READ_U16(), name_idx = READ_U16();
-            string_t name = CONSTANT(name_idx).as_string();
-            Value& receiver_val = REGISTER(0);
-            if (!receiver_val.is_instance()) {
-                throw_vm_error("GET_SUPER: 'super' phải được dùng bên trong một method.");
-            }
-            instance_t receiver = receiver_val.as_instance();
-            class_t klass = receiver->get_class();
-            class_t super = klass->get_super();
-            if (super == nullptr) {
-                throw_vm_error("GET_SUPER: Class không có superclass.");
-            }
-            class_t k = super;
-            while (k) {
-                if (k->has_method(name)) {
-                    Value method_val = k->get_method(name);
-                    if (!method_val.is_function()) {
-                        throw_vm_error("GET_SUPER: Thành viên của superclass không phải là function.");
-                    }
-                    REGISTER(dst) = Value(heap_->new_bound_method(receiver, method_val.as_function()));
-                    goto op_GET_SUPER_found;
-                }
-                k = k->get_super();
-            }
-            throw_vm_error("GET_SUPER: Superclass không có method tên là '" + std::string(name->c_str()) + "'.");
-        op_GET_SUPER_found:
+            op_get_super(ip);
             DISPATCH();
         }
+
+        // --- Các Op control flow (Giữ nguyên) ---
         op_THROW: {
             uint16_t reg = READ_U16(); // Sửa warning
             // Sử dụng thanh ghi để tạo thông báo lỗi
@@ -856,9 +619,7 @@ dispatch_start:
             DISPATCH();
         }
         op_POP_TRY: {
-            if (!context_->exception_handlers_.empty()) {
-                context_->exception_handlers_.pop_back();
-            }
+            op_pop_try();
             DISPATCH();
         }
         op_IMPORT_MODULE: {
@@ -889,36 +650,22 @@ dispatch_start:
             
             DISPATCH();
         }
+
+        // --- Các Op Handler đã refactor ---
         op_EXPORT: {
-            uint16_t name_idx = READ_U16();
-            uint16_t src_reg = READ_U16();
-            string_t name = CONSTANT(name_idx).as_string();
-            context_->current_frame_->module_->set_export(name, REGISTER(src_reg));
+            op_export(ip);
             DISPATCH();
         }
         op_GET_EXPORT: {
-            uint16_t dst = READ_U16();
-            uint16_t mod_reg = READ_U16();
-            uint16_t name_idx = READ_U16();
-            Value& mod_val = REGISTER(mod_reg);
-            string_t name = CONSTANT(name_idx).as_string();
-            if (!mod_val.is_module()) throw_vm_error("GET_EXPORT: operand is not a module.");
-            module_t mod = mod_val.as_module();
-            if (!mod->has_export(name)) throw_vm_error("Module does not export name.");
-            REGISTER(dst) = mod->get_export(name);
+            op_get_export(ip);
             DISPATCH();
         }
         op_IMPORT_ALL: {
-            uint16_t src_idx = READ_U16();
-            const Value& mod_val = REGISTER(src_idx);
-            if (auto src_mod = mod_val.as_if_module()) {
-                module_t curr_mod = context_->current_frame_->module_;
-                curr_mod->import_all_export(src_mod);
-            } else {
-                throw_vm_error("IMPORT_ALL: Source register does not contain a Module object.");
-            }
+            op_import_all(ip);
             DISPATCH();
         }
+
+        // --- Op cuối cùng (Giữ nguyên) ---
         op_HALT: {
             printl("halt");
             if (!context_->registers_.empty()) {

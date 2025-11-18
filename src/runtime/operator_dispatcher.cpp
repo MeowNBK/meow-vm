@@ -5,8 +5,8 @@ using namespace meow::runtime;
 using namespace meow::core;
 
 #define BINARY(opcode, type1, type2) \
-    binary_dispatch_table_[static_cast<size_t>(OpCode::opcode)][static_cast<size_t>(ValueType::type1)][static_cast<size_t>(ValueType::type2)] = [](param_t lhs, param_t rhs) -> return_t
-#define UNARY(opcode, type) unary_dispatch_table_[static_cast<size_t>(OpCode::opcode)][static_cast<size_t>(ValueType::type)] = [](param_t rhs) -> return_t
+    binary_dispatch_table_[+OpCode::opcode][+ValueType::type1][+ValueType::type2] = [](param_t lhs, param_t rhs) -> return_t
+#define UNARY(opcode, type) unary_dispatch_table_[+OpCode::opcode][+ValueType::type] = [](param_t rhs) -> return_t
 
 OperatorDispatcher::OperatorDispatcher(meow::memory::MemoryManager* heap) noexcept : heap_(heap) {
     for (size_t op_code = 0; op_code < NUM_OPCODES; ++op_code) {
@@ -29,4 +29,7 @@ OperatorDispatcher::OperatorDispatcher(meow::memory::MemoryManager* heap) noexce
     };
 
     // too lazy to implement ~300 lambdas like old vm
+    BINARY(ADD, String, String) {
+        return Value(lhs.as_string()->c_str() + rhs.as_string()->c_str());
+    }
 }

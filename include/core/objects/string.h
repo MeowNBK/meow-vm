@@ -14,21 +14,16 @@
 
 namespace meow::core::objects {
 class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
-   private:
+private:
     using storage_t = std::string;
     using visitor_t = meow::memory::GCVisitor;
-
     storage_t data_;
-
-   public:
+public:
     // --- Constructors & destructor ---
     ObjString() = default;
-    explicit ObjString(const storage_t& data) : data_(data) {
-    }
-    explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {
-    }
-    explicit ObjString(const char* data) : data_(data) {
-    }
+    explicit ObjString(const storage_t& data) : data_(data) {}
+    explicit ObjString(storage_t&& data) noexcept : data_(std::move(data)) {}
+    explicit ObjString(const char* data) : data_(data) {}
 
     // --- Rule of 5 ---
     ObjString(const ObjString&) = delete;
@@ -36,6 +31,18 @@ class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
     ObjString& operator=(const ObjString&) = delete;
     ObjString& operator=(ObjString&&) = delete;
     ~ObjString() override = default;
+
+    // --- Assignments ---
+    inline ObjString operator+(const ObjString& other) const noexcept {
+        return ObjString(data_ + other.data_);
+    }
+    inline ObjString operator!() const noexcept {
+        std::string temp(data_.size(), '\0');
+        for (size_t i = 0; i < data_.size(); ++i) {
+            temp[i] = 127 - data_[i];
+        }
+        return ObjString(temp);
+    }
 
     // --- Iterator types ---
     using const_iterator = storage_t::const_iterator;
@@ -79,7 +86,6 @@ class ObjString : public meow::core::ObjBase<ObjectType::STRING> {
         return data_.rend();
     }
 
-    inline void trace(visitor_t&) const noexcept override {
-    }
+    inline void trace(visitor_t&) const noexcept override {}
 };
 }  // namespace meow::core::objects

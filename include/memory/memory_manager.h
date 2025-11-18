@@ -53,5 +53,15 @@ private:
         ++object_allocated_;
         return new_object;
     }
+
+    inline void MemoryManager::register_object(const meow::core::MeowObject* object) noexcept {
+        if (!object) return;
+        if (object_allocated_ >= gc_threshold_ && gc_enabled_) {
+            collect();
+            gc_threshold_ *= 2;
+        }
+        gc_->register_object(object);
+        ++object_allocated_;
+    }
 };
 }  // namespace meow::memory
