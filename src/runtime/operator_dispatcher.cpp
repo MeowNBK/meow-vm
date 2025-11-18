@@ -30,6 +30,11 @@ OperatorDispatcher::OperatorDispatcher(meow::memory::MemoryManager* heap) noexce
 
     // too lazy to implement ~300 lambdas like old vm
     BINARY(ADD, String, String) {
-        return Value(lhs.as_string()->c_str() + rhs.as_string()->c_str());
-    }
+        // the enclosing-function 'this' cannot be referenced in a lambda body unless it is in the capture list
+        // but dispatch table need function pointer
+        // return Value(heap_->new_string(std::string(lhs.as_string()->c_str()) + rhs.as_string()->c_str()));
+        // TODO: Change this later
+        auto str = new meow::core::objects::ObjString(std::string(lhs.as_string()->c_str()) + rhs.as_string()->c_str());
+        return Value(str);
+    };
 }

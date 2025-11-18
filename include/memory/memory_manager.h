@@ -11,7 +11,7 @@ public:
     explicit MemoryManager(std::unique_ptr<meow::memory::GarbageCollector> gc) noexcept;
     ~MemoryManager() noexcept;
     [[nodiscard]] meow::core::array_t new_array(const std::vector<meow::core::Value>& elements = {}) noexcept;
-    [[nodiscard]] meow::core::string_t new_string(const std::string& string) noexcept;
+    // [[nodiscard]] meow::core::string_t new_string(const std::string& string) noexcept;
     [[nodiscard]] meow::core::string_t new_string(std::string_view str_view) noexcept;
     [[nodiscard]] meow::core::string_t new_string(const char* chars, size_t length) noexcept;
     [[nodiscard]] meow::core::hash_table_t new_hash(const std::unordered_map<meow::core::string_t, meow::core::Value>& fields = {}) noexcept;
@@ -63,7 +63,7 @@ private:
         return new_object;
     }
 
-    inline void MemoryManager::register_object(const meow::core::MeowObject* object) noexcept {
+    inline void register_object(const meow::core::MeowObject* object) noexcept {
         if (!object) return;
         if (object_allocated_ >= gc_threshold_ && gc_enabled_) {
             collect();

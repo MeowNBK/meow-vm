@@ -11,16 +11,16 @@ MemoryManager::MemoryManager(std::unique_ptr<GarbageCollector> gc) noexcept : gc
 
 MemoryManager::~MemoryManager() noexcept = default;
 
-string_t MemoryManager::new_string(const std::string& string) noexcept {
-    auto it = string_pool_.find(string);
-    if (it != string_pool_.end()) {
-        return it->second;
-    }
+// string_t MemoryManager::new_string(const std::string& string) noexcept {
+//     auto it = string_pool_.find(string);
+//     if (it != string_pool_.end()) {
+//         return it->second;
+//     }
 
-    string_t new_string_object = new_object<objects::ObjString>(string);
-    string_pool_[string] = new_string_object;
-    return new_string_object;
-}
+//     string_t new_string_object = new_object<objects::ObjString>(string);
+//     string_pool_[string] = new_string_object;
+//     return new_string_object;
+// }
 
 string_t MemoryManager::new_string(std::string_view str_view) noexcept {
     auto it = string_pool_.find(str_view);
