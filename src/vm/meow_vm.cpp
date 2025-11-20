@@ -453,7 +453,6 @@ dispatch_start:
             Value& callee = REGISTER(fn_reg);
 
             if (callee.is_native_fn()) {
-                // --- SỬA LỖI 2: Bọc scope cho std::vector ---
                 {
                     native_fn_t native = callee.as_native_fn();
                     std::vector<Value> args(argc);
@@ -464,8 +463,8 @@ dispatch_start:
                     if (ret_reg != static_cast<size_t>(-1)) {
                         REGISTER(dst) = result;
                     }
-                } // <-- `args` (std::vector) được hủy ở đây
-                DISPATCH(); // <-- `goto` bây giờ an toàn
+                }
+                DISPATCH();
             }
 
             instance_t self = nullptr;
